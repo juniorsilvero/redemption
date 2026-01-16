@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@theme {
+  --color-background: #F8F9FA;
+  --color-sidebar: #1A1A1B;
+  --color-card: #FFFFFF;
+  --color-text-primary: #2D3436;
+  --color-text-secondary: #636E72;
+  --color-accent: #0984E3;
+  --color-accent-hover: #0773C5;
+  --color-success: #00B894;
+  --color-alert-error: #FAB1A0;
+  --color-alert-warning: #FFEAA7;
+
+  --radius-card: 12px;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    @apply antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight text-[var(--color-text-primary)];
+  }
+
+  /* Scrollbar styling for a cleaner look */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #DFE6E9;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    background-color: var(--color-accent);
+    color: white;
+    @apply px-4 py-2 rounded-[var(--radius-card)] font-medium transition-colors shadow-sm hover:bg-[var(--color-accent-hover)];
+  }
+
+  .card {
+    background-color: var(--color-card);
+    border-radius: var(--radius-card);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    @apply p-5 border;
+    border-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .input-field {
+    @apply block w-full rounded-lg border-gray-200 bg-white px-4 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)];
+  }
+}
