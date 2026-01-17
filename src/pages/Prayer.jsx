@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { addHours, format, parseISO, isSameHour, isWithinInterval, startOfHour } from 'date-fns'; // Basic usage
@@ -12,31 +14,26 @@ import { generatePrayerClockPDF } from '../utils/pdfGenerator';
 
 
 export default function Prayer() {
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [viewingWorker, setViewingWorker] = useState(null);
 
-    // Define Event Start (Mock Date for "Friday")
-    // Let's assume the event is "next Friday". For mock, we'll fix a date or just use Generic "Fri/Sat/Sun".
-    // User Requirement: "Friday 19:00 to Sunday 19:00".
-    // Ideally, this should be configurable. For now, I'll generate generic slots 0-47.
-    // And label them "Sexta 19:00", "Sexta 20:00"...
-
+    // ... slots logic stays same
     const slots = useMemo(() => {
         const slotsArr = [];
         const days = ['Sexta', 'Sábado', 'Domingo'];
         let dayIndex = 0;
-        let hour = 19; // Start Friday 19:00
+        let hour = 19;
 
-        for (let i = 0; i < 49; i++) { // 48 hours + 1 to close? No, 48 slots.
-            // Format label
+        for (let i = 0; i < 49; i++) {
             const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
             const dayLabel = days[dayIndex];
 
             slotsArr.push({
                 id: `slot-${i}`,
-                day: dayLabel, // For display
+                day: dayLabel,
                 time: timeLabel,
-                absoluteHour: i // 0 to 47
+                absoluteHour: i
             });
 
             hour++;
@@ -50,30 +47,33 @@ export default function Prayer() {
 
     // Fetch Data
     const { data: prayerAssignments } = useQuery({
-        queryKey: ['prayer_clock'],
+        queryKey: ['prayer_clock', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('prayer_clock').select('*');
+            const { data } = await supabase.from('prayer_clock').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     // Fetch Cells to map names
     const { data: cells } = useQuery({
-        queryKey: ['cells'],
+        queryKey: ['cells', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('cells').select('*');
+            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: workers } = useQuery({
-        queryKey: ['workers'],
+        queryKey: ['workers', churchId],
         queryFn: async () => {
-            // Join isn't real in mock, so we just fetch all workers
-            const { data } = await supabase.from('workers').select('*');
+            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
+
 
     // Helper to get worker display info
     const getWorkerDisplay = (workerId) => {

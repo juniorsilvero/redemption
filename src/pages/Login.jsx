@@ -60,7 +60,7 @@ export default function Login() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                                    className="block w-full rounded-md border border-slate-300 py-1.5 text-slate-900 shadow-sm focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
                                 />
                             </div>
                         </div>
@@ -78,7 +78,7 @@ export default function Login() {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
+                                    className="block w-full rounded-md border border-slate-300 py-1.5 text-slate-900 shadow-sm focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
                                 />
                             </div>
                         </div>
@@ -93,28 +93,8 @@ export default function Login() {
                             </button>
                         </div>
                     </form>
-
-                    <div className="mt-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-300" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="bg-white px-2 text-slate-500">Credenciais Demo</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 grid grid-cols-1 gap-3">
-                            <div className="text-xs text-center text-slate-500">
-                                Admin: admin@redemption.com / password
-                            </div>
-                            <div className="text-xs text-center text-slate-500">
-                                Leader: leader@redemption.com / password
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
+
             </div>
         </div>
     );
