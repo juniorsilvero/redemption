@@ -21,7 +21,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
                     </button>
                 </div>
                 <div className="sm:flex sm:items-start w-full">
-                    <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                    <div className="mt-3 text-left sm:ml-4 sm:mt-0 w-full">
                         <h3 className="text-base font-semibold leading-6 text-gray-900 mb-4">
                             {title}
                         </h3>

@@ -9,17 +9,17 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Detalhes">
             <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden">
+                <div className="flex items-start gap-4">
+                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden shrink-0">
                         {worker.photo_url ? (
                             <img src={worker.photo_url} alt="" className="h-full w-full object-cover" />
                         ) : (
                             <User className="h-8 w-8" />
                         )}
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900">{worker.name} {worker.surname}</h3>
-                        <p className="text-sm text-slate-500">{worker.phone || 'Sem telefone'}</p>
+                    <div className="min-w-0">
+                        <h3 className="text-xl font-bold text-slate-900 leading-tight">{worker.name} {worker.surname}</h3>
+                        <p className="text-sm font-medium text-slate-500 mt-1">{worker.phone || 'Sem telefone'}</p>
                     </div>
                 </div>
 
