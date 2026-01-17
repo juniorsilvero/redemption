@@ -230,8 +230,32 @@ export default function Dashboard() {
             </Modal>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                {/* Quick Actions - Moved to top on mobile */}
+                <Card className="col-span-full lg:col-span-3 order-1 lg:order-2">
+                    <CardHeader>
+                        <CardTitle>Ações Rápidas</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <button
+                            onClick={() => { setAddPersonType('worker'); setSelectedCell(null); }}
+                            className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors"
+                        >
+                            Adicionar Trabalhador
+                        </button>
+                        <button
+                            onClick={() => { setAddPersonType('passer'); setSelectedCell(null); }}
+                            className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
+                        >
+                            Adicionar Passante
+                        </button>
+                        <Link to="/accommodation" className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-white px-3 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-inset ring-[var(--color-accent)]/30 hover:bg-indigo-50 transition-colors">
+                            Gerenciar Acomodações
+                        </Link>
+                    </CardContent>
+                </Card>
+
                 {/* Pending Payments Section */}
-                <Card className="col-span-4">
+                <Card className="col-span-full lg:col-span-4 order-2 lg:order-1">
                     <CardHeader>
                         <CardTitle>Pagamentos Pendentes</CardTitle>
                     </CardHeader>
@@ -273,30 +297,6 @@ export default function Dashboard() {
                                 ))
                             )}
                         </div>
-                    </CardContent>
-                </Card>
-
-                {/* Quick Actions */}
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Ações Rápidas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <button
-                            onClick={() => { setAddPersonType('worker'); setSelectedCell(null); }}
-                            className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[var(--color-accent-hover)] transition-colors"
-                        >
-                            Adicionar Trabalhador
-                        </button>
-                        <button
-                            onClick={() => { setAddPersonType('passer'); setSelectedCell(null); }}
-                            className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
-                        >
-                            Adicionar Passante
-                        </button>
-                        <Link to="/accommodation" className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-white px-3 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-inset ring-[var(--color-accent)]/30 hover:bg-indigo-50 transition-colors">
-                            Gerenciar Acomodações
-                        </Link>
                     </CardContent>
                 </Card>
             </div>
