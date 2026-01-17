@@ -38,13 +38,6 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
                         </div>
                     </div>
 
-                    {worker.full_name && (
-                        <div>
-                            <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Nome Completo</p>
-                            <p className="text-sm text-slate-900">{worker.full_name}</p>
-                        </div>
-                    )}
-
                     {(worker.birth_date || worker.age) && (
                         <div className="grid grid-cols-2 gap-4">
                             {worker.birth_date && (
@@ -87,23 +80,22 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
                     )}
 
                     {(worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
-                        <div className="pt-2 border-t border-slate-200 space-y-2">
-                            <p className="text-xs font-bold text-slate-400 uppercase">Saúde / Restrições</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {worker.food_restrictions && (
                                 <div>
-                                    <p className="text-xs text-slate-500 font-semibold">Restrição Alimentar</p>
+                                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Restrição Alimentar</p>
                                     <p className="text-sm text-slate-900">{worker.food_restrictions}</p>
                                 </div>
                             )}
                             {worker.controlled_medication && (
                                 <div>
-                                    <p className="text-xs text-slate-500 font-semibold">Medicamento Controlado</p>
+                                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Medicamento Controlado</p>
                                     <p className="text-sm text-slate-900">{worker.controlled_medication}</p>
                                 </div>
                             )}
                             {worker.physical_restrictions && (
-                                <div>
-                                    <p className="text-xs text-slate-500 font-semibold">Restrição Física</p>
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Restrição Física</p>
                                     <p className="text-sm text-slate-900">{worker.physical_restrictions}</p>
                                 </div>
                             )}
