@@ -44,7 +44,8 @@ function UserManagement() {
 
     return (
         <div className="space-y-4">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto border border-slate-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -72,7 +73,7 @@ function UserManagement() {
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
                                                 placeholder="Nova senha"
-                                                className="px-2 py-1 border rounded text-sm"
+                                                className="px-2 py-1 border rounded text-sm w-32"
                                             />
                                             <button
                                                 onClick={() => handleUpdatePassword(leader.id)}
@@ -104,6 +105,62 @@ function UserManagement() {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid gap-4 md:hidden">
+                {leaders?.map(leader => (
+                    <div key={leader.id} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h4 className="font-bold text-slate-900">{leader.user_metadata?.name || 'Sem nome'}</h4>
+                                <p className="text-xs text-slate-500">{leader.email}</p>
+                            </div>
+                            <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                {leader.cells?.[0]?.name || 'Sem célula'}
+                            </span>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100">
+                            {editingUser === leader.id ? (
+                                <div className="space-y-2">
+                                    <input
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Nova senha"
+                                        className="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleUpdatePassword(leader.id)}
+                                            className="flex-1 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium"
+                                        >
+                                            Salvar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingUser(null);
+                                                setNewPassword('');
+                                            }}
+                                            className="px-4 py-2 bg-slate-100 text-slate-600 rounded-md text-sm font-medium"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setEditingUser(leader.id)}
+                                    className="flex items-center justify-center gap-2 w-full py-2 text-indigo-600 bg-indigo-50 rounded-md text-sm font-medium"
+                                >
+                                    <Key className="h-4 w-4" />
+                                    Alterar Senha
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
             <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
                 <p className="font-semibold mb-1">ℹ️ Informações de Login dos Líderes:</p>
@@ -239,15 +296,13 @@ export default function Settings() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            {/* Desktop Table */}
+                            <div className="hidden md:block overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg">
                                 <table className="min-w-full divide-y divide-gray-300">
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Nome</th>
-                                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                                <span className="md:hidden">Qtd.</span>
-                                                <span className="hidden md:inline">Pessoas Necessárias</span>
-                                            </th>
+                                            <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Pessoas Necessárias</th>
                                             <th className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Ações</span></th>
                                         </tr>
                                     </thead>
@@ -265,17 +320,36 @@ export default function Settings() {
                                 </table>
                             </div>
 
-                            <form onSubmit={handleAddArea} className="flex gap-4 items-end bg-slate-50 p-4 rounded-lg">
+                            {/* Mobile Grid */}
+                            <div className="grid grid-cols-1 gap-3 md:hidden">
+                                {areas?.map(area => (
+                                    <div key={area.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900">{area.name}</h4>
+                                            <p className="text-xs text-slate-500">{area.required_people} pessoas necessárias</p>
+                                        </div>
+                                        <button
+                                            onClick={() => deleteAreaMutation.mutate(area.id)}
+                                            className="p-2 text-red-500 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <form onSubmit={handleAddArea} className="flex flex-col md:flex-row gap-4 items-stretch md:items-end bg-slate-50 p-4 rounded-lg border border-slate-200">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700">Nova Área</label>
-                                    <input name="name" required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2" placeholder="Ex: Estacionamento" />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Nova Área</label>
+                                    <input name="name" required className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" placeholder="Ex: Estacionamento" />
                                 </div>
-                                <div className="w-32">
-                                    <label className="block text-sm font-medium text-gray-700">Qtd. Pessoas</label>
-                                    <input name="required_people" type="number" required min="1" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2" placeholder="2" />
+                                <div className="md:w-32">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Qtd. Pessoas</label>
+                                    <input name="required_people" type="number" required min="1" className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" placeholder="2" />
                                 </div>
-                                <button type="submit" className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 h-10 mb-0.5">
-                                    <Plus className="h-5 w-5" />
+                                <button type="submit" className="flex justify-center items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 h-10 transition-colors">
+                                    <Plus className="h-5 w-5 mr-1 md:mr-0" />
+                                    <span className="md:hidden">Adicionar Área</span>
                                 </button>
                             </form>
                         </div>
