@@ -114,8 +114,18 @@ export default function Prayer() {
     });
 
     const handleAssign = (slotId, workerId, position) => {
+        if (workerId) {
+            const assignment = prayerAssignments?.find(p => p.id === slotId);
+            const otherWorkerId = position === 1 ? assignment?.worker_2_id : assignment?.worker_1_id;
+
+            if (workerId === otherWorkerId) {
+                toast.error('Esta pessoa já está escalada nesta mesma posição para este horário!');
+                return;
+            }
+        }
         assignMutation.mutate({ slotId, workerId: workerId === "" ? null : workerId, position });
     };
+
 
     // Conflict Detection
     const hasConflict = () => false; // Disabled as per user request
