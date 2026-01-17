@@ -4,9 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Users, UserPlus, Trash2, Edit2, AlertCircle } from 'lucide-react';
+import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+
 
 export default function CellDetails() {
     const { id } = useParams();
@@ -18,6 +20,8 @@ export default function CellDetails() {
     const [isPasserModalOpen, setIsPasserModalOpen] = useState(false);
     const [editingPasser, setEditingPasser] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
+
 
 
     // Cell Data
@@ -296,11 +300,18 @@ export default function CellDetails() {
                                             <p className="text-xs text-slate-500">R$ {person.payment_amount.toFixed(2)}</p>
                                         </div>
                                         <button
+                                            onClick={() => setSelectedInfoPerson(person)}
+                                            className="p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                                        >
+                                            <Info className="h-4 w-4" />
+                                        </button>
+                                        <button
                                             onClick={() => { setEditingWorker(person); setIsWorkerModalOpen(true); }}
                                             className="p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
+
                                     </div>
                                 </div>
                             ))}
@@ -354,11 +365,18 @@ export default function CellDetails() {
                                             <p className="text-xs text-slate-500 mt-1">R$ {person.payment_amount.toFixed(2)}</p>
                                         </div>
                                         <button
+                                            onClick={() => setSelectedInfoPerson(person)}
+                                            className="p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                                        >
+                                            <Info className="h-4 w-4" />
+                                        </button>
+                                        <button
                                             onClick={() => { setEditingPasser(person); setIsPasserModalOpen(true); }}
                                             className="p-1 rounded-full text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
+
                                     </div>
                                 </div>
                             ))}
@@ -539,6 +557,16 @@ export default function CellDetails() {
                 </form>
             </Modal>
 
+            <WorkerInfoModal
+                worker={selectedInfoPerson}
+                cells={[]} // We don't need the cell list here as much since we have workers/passers lists
+                allWorkers={workers}
+                allPassers={passers}
+                isOpen={!!selectedInfoPerson}
+                onClose={() => setSelectedInfoPerson(null)}
+            />
+
         </div>
+
     );
 }

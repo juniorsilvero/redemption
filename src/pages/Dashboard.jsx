@@ -314,7 +314,8 @@ export default function Dashboard() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-slate-500 font-medium">{person.type === 'worker' ? 'Trabalhador' : 'Passante'}</p>
+                                            <p className="text-xs text-slate-500 font-medium">{person.type}</p>
+
                                         </div>
                                         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
                                             <div className="text-right">
@@ -476,9 +477,12 @@ export default function Dashboard() {
             <WorkerInfoModal
                 worker={selectedInfoPerson}
                 cells={stats?.cells}
+                allWorkers={stats?.allWorkers}
+                allPassers={stats?.allPassers}
                 isOpen={!!selectedInfoPerson}
                 onClose={() => setSelectedInfoPerson(null)}
             />
+
         </div>
     );
 }

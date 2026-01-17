@@ -1,7 +1,10 @@
 import { Modal } from './Modal';
 import { User } from 'lucide-react';
+import { cn } from '../lib/utils';
 
-export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
+
+export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
+
     if (!worker) return null;
 
     const cell = cells?.find(c => c.id === worker.cell_id);
@@ -11,8 +14,9 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
 
     // Find the responsible worker if this is a passer
     const responsibleWorker = !isWorkerType && worker.responsible_worker_id
-        ? cell?.workers?.find(w => w.id === worker.responsible_worker_id)
+        ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
         : null;
+
 
     return (
 
@@ -118,10 +122,11 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
                             <div className="flex items-center gap-2 text-indigo-600">
                                 <User className="h-3 w-3" />
                                 <p className="text-sm font-medium">
-                                    {cells?.flatMap(c => c.workers || []).find(w => w.id === worker.responsible_worker_id)?.name || 'Carregando...'}
+                                    {allWorkers?.find(w => w.id === worker.responsible_worker_id)?.name || 'Carregando...'}
                                     {' '}
-                                    {cells?.flatMap(c => c.workers || []).find(w => w.id === worker.responsible_worker_id)?.surname || ''}
+                                    {allWorkers?.find(w => w.id === worker.responsible_worker_id)?.surname || ''}
                                 </p>
+
                             </div>
                         </div>
                     )}
@@ -130,20 +135,34 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
                         <div>
                             <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Passantes (Responsabilidade)</p>
                             <div className="space-y-1">
-                                {cells?.flatMap(c => c.passers || [])
-                                    .filter(p => p.responsible_worker_id === worker.id)
+                                {allPassers
+                                    ?.filter(p => p.responsible_worker_id === worker.id)
                                     .map(passer => (
-                                        <div key={passer.id} className="flex items-center gap-2 text-slate-700 bg-white p-1.5 rounded border border-slate-100">
-                                            <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden">
-                                                {passer.photo_url ? <img src={passer.photo_url} alt="" /> : <User className="h-3 w-3 text-slate-400" />}
+                                        <div key={passer.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-all hover:bg-slate-50">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden shrink-0">
+                                                    {passer.photo_url ? (
+                                                        <img src={passer.photo_url} alt="" className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <User className="h-3 w-3 text-slate-400" />
+                                                    )}
+                                                </div>
+                                                <span className="text-xs font-semibold text-slate-700">{passer.name} {passer.surname}</span>
                                             </div>
-                                            <span className="text-xs font-medium">{passer.name} {passer.surname}</span>
+                                            <span className={cn(
+                                                "text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ring-1 ring-inset",
+                                                passer.payment_status === 'paid'
+                                                    ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
+                                                    : "bg-orange-50 text-orange-700 ring-orange-600/20"
+                                            )}>
+                                                {passer.payment_status === 'paid' ? 'Pago' : 'Pendente'}
+                                            </span>
                                         </div>
                                     ))}
-                                {cells?.flatMap(c => c.passers || [])
-                                    .filter(p => p.responsible_worker_id === worker.id).length === 0 && (
-                                        <p className="text-xs text-slate-400 italic">Nenhum passante vinculado</p>
-                                    )}
+                                {allPassers?.filter(p => p.responsible_worker_id === worker.id).length === 0 && (
+                                    <p className="text-xs text-slate-400 italic py-1">Nenhum passante vinculado</p>
+                                )}
+
                             </div>
                         </div>
                     )}
