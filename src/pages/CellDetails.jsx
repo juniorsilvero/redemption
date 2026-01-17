@@ -104,6 +104,31 @@ export default function CellDetails() {
         }
     });
 
+    const deletePasserMutation = useMutation({
+        mutationFn: async (passerId) => {
+            return supabase.from('passers').delete().eq('id', passerId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['cellPassers', id]);
+            queryClient.invalidateQueries(['dashboardStats']);
+            toast.success('Passante excluído');
+        },
+        onError: () => toast.error('Erro ao excluir passante')
+    });
+
+    const deleteAllPassersMutation = useMutation({
+        mutationFn: async () => {
+            return supabase.from('passers').delete().eq('cell_id', id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['cellPassers', id]);
+            queryClient.invalidateQueries(['dashboardStats']);
+            toast.success('Todos os passantes foram excluídos');
+        },
+        onError: () => toast.error('Erro ao excluir todos os passantes')
+    });
+
+
     // Very simplified Form handling
     const handleWorkerSubmit = async (e) => {
         e.preventDefault();
@@ -202,7 +227,23 @@ export default function CellDetails() {
     };
 
 
+    const handleDeletePasser = (passerId) => {
+        if (window.confirm('Tem certeza que deseja excluir determinado passante?')) {
+            deletePasserMutation.mutate(passerId);
+        }
+    };
+
+    const handleDeleteAllPassers = () => {
+        const password = window.prompt('Para excluir TODOS os passantes desta célula, digite a senha de confirmação:');
+        if (password === 'gpredencao') {
+            deleteAllPassersMutation.mutate();
+        } else if (password !== null) {
+            toast.error('Senha incorreta!');
+        }
+    };
+
     if (!cell) return <div>Carregando...</div>;
+
 
     return (
         <div className="space-y-6">
@@ -324,9 +365,18 @@ export default function CellDetails() {
                 {/* Passers Column */}
                 {/* Passers Column */}
                 <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
-                    <CardHeader className="border-b border-slate-50 bg-slate-50/50">
-                        <CardTitle>Passantes <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/10">{passers?.length || 0}</span></CardTitle>
+                    <CardHeader className="border-b border-slate-50 bg-slate-50/50 flex flex-row items-center justify-between py-3">
+                        <CardTitle className="text-sm">Passantes <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/10">{passers?.length || 0}</span></CardTitle>
+                        {passers?.length > 0 && (
+                            <button
+                                onClick={handleDeleteAllPassers}
+                                className="text-[10px] font-bold uppercase text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100"
+                            >
+                                Excluir Todos
+                            </button>
+                        )}
                     </CardHeader>
+
                     <CardContent className="p-0">
                         <div className="divide-y divide-gray-100">
                             {passers?.map((person) => (
@@ -378,8 +428,15 @@ export default function CellDetails() {
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
+                                        <button
+                                            onClick={() => handleDeletePasser(person.id)}
+                                            className="p-1 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
 
                                     </div>
+
                                 </div>
                             ))}
                         </div>
