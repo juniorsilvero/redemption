@@ -225,9 +225,10 @@ export default function Scale() {
                             ))}
                         </nav>
                         <button
-                            onClick={() => generateScalePDF(activeTab, scales, areas, workers)}
+                            onClick={() => generateScalePDF(activeTab, scales, areas, workers, cells)}
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
                         >
+
                             <FileText className="h-4 w-4" />
                             Gerar PDF ({activeTab === 'Friday' ? 'Sexta' : activeTab === 'Saturday' ? 'Sábado' : 'Domingo'})
                         </button>
