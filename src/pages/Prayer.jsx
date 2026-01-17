@@ -172,9 +172,10 @@ export default function Prayer() {
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
                                             >
                                                 <option value="">-- Vazio --</option>
-                                                {workers?.map(w => (
+                                                {workers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
+
                                             </select>
                                             {assignment?.worker_1_id && workers?.find(w => w.id === assignment.worker_1_id) && (
                                                 <button
@@ -206,9 +207,10 @@ export default function Prayer() {
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
                                             >
                                                 <option value="">-- Vazio --</option>
-                                                {workers?.map(w => (
+                                                {workers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
+
                                             </select>
                                             {assignment?.worker_2_id && workers?.find(w => w.id === assignment.worker_2_id) && (
                                                 <button
