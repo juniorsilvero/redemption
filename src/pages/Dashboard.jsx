@@ -147,9 +147,11 @@ export default function Dashboard() {
                     family_contact_2: formData.get('family_contact_2'),
                     food_restrictions: formData.get('food_restrictions'),
                     controlled_medication: formData.get('controlled_medication'),
-                    physical_restrictions: formData.get('physical_restrictions')
+                    physical_restrictions: formData.get('physical_restrictions'),
+                    responsible_worker_id: formData.get('responsible_worker_id') || null
                 })
             };
+
             addPersonMutation.mutate(data);
         } catch (error) {
             console.error('Upload error:', error);
@@ -442,9 +444,21 @@ export default function Dashboard() {
                                         <label className="block text-sm font-medium text-gray-700">Restrição ou Deficiência Física?</label>
                                         <input name="physical_restrictions" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Responsável (Trabalhador)</label>
+                                        <select name="responsible_worker_id" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm">
+                                            <option value="">Selecione um responsável</option>
+                                            {stats?.allWorkers?.filter(w => w.cell_id === selectedCell.id).map(worker => (
+                                                <option key={worker.id} value={worker.id}>
+                                                    {worker.name} {worker.surname}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </>
                         )}
+
 
                         <div className="flex gap-2 pt-2">
                             <button type="button" onClick={() => setSelectedCell(null)} className="flex-1 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200" disabled={isUploading}>

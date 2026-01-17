@@ -5,8 +5,17 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
     if (!worker) return null;
 
     const cell = cells?.find(c => c.id === worker.cell_id);
+    const isPasser = !!worker.responsible_worker_id || !worker.is_room_leader; // Simple check, but we can be more robust if needed.
+    // Actually, in the DB, workers don't have responsible_worker_id. Passers do.
+    const isWorkerType = 'is_room_leader' in worker;
+
+    // Find the responsible worker if this is a passer
+    const responsibleWorker = !isWorkerType && worker.responsible_worker_id
+        ? cell?.workers?.find(w => w.id === worker.responsible_worker_id)
+        : null;
 
     return (
+
         <Modal isOpen={isOpen} onClose={onClose} title="Detalhes">
             <div className="space-y-4">
                 <div className="flex items-start gap-4">
@@ -101,7 +110,45 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
                             )}
                         </div>
                     )}
+
+                    {/* Relationship Display */}
+                    {!isWorkerType && worker.responsible_worker_id && (
+                        <div>
+                            <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Responsável</p>
+                            <div className="flex items-center gap-2 text-indigo-600">
+                                <User className="h-3 w-3" />
+                                <p className="text-sm font-medium">
+                                    {cells?.flatMap(c => c.workers || []).find(w => w.id === worker.responsible_worker_id)?.name || 'Carregando...'}
+                                    {' '}
+                                    {cells?.flatMap(c => c.workers || []).find(w => w.id === worker.responsible_worker_id)?.surname || ''}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {isWorkerType && (
+                        <div>
+                            <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Passantes (Responsabilidade)</p>
+                            <div className="space-y-1">
+                                {cells?.flatMap(c => c.passers || [])
+                                    .filter(p => p.responsible_worker_id === worker.id)
+                                    .map(passer => (
+                                        <div key={passer.id} className="flex items-center gap-2 text-slate-700 bg-white p-1.5 rounded border border-slate-100">
+                                            <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center text-[10px] overflow-hidden">
+                                                {passer.photo_url ? <img src={passer.photo_url} alt="" /> : <User className="h-3 w-3 text-slate-400" />}
+                                            </div>
+                                            <span className="text-xs font-medium">{passer.name} {passer.surname}</span>
+                                        </div>
+                                    ))}
+                                {cells?.flatMap(c => c.passers || [])
+                                    .filter(p => p.responsible_worker_id === worker.id).length === 0 && (
+                                        <p className="text-xs text-slate-400 italic">Nenhum passante vinculado</p>
+                                    )}
+                            </div>
+                        </div>
+                    )}
                 </div>
+
 
                 <div className="pt-2">
                     <button

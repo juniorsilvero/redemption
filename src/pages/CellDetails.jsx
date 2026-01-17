@@ -501,7 +501,19 @@ export default function CellDetails() {
 
                         <div className="space-y-3">
                             <div>
+                                <label className="block text-sm font-medium text-gray-700">Responsável (Trabalhador)</label>
+                                <select name="responsible_worker_id" defaultValue={editingPasser?.responsible_worker_id} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm">
+                                    <option value="">Selecione um responsável</option>
+                                    {workers?.map(worker => (
+                                        <option key={worker.id} value={worker.id}>
+                                            {worker.name} {worker.surname}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700">Restrição Alimentar ou Alergia?</label>
+
                                 <input name="food_restrictions" defaultValue={editingPasser?.food_restrictions} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                             </div>
                             <div>
