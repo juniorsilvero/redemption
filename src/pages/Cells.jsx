@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Link } from 'react-router-dom';
-import { Plus, Users, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Users, UserPlus, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function Cells() {
