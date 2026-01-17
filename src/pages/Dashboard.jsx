@@ -49,15 +49,29 @@ export default function Dashboard() {
                 ...pendingPassers.map(p => ({ ...p, type: 'Passante', cell: cellMap[p.cell_id] }))
             ];
 
+            // Calculate ranking: Number of passers per worker
+            const workerPassersMap = (passers || []).reduce((acc, p) => {
+                if (p.responsible_worker_id) {
+                    acc[p.responsible_worker_id] = (acc[p.responsible_worker_id] || 0) + 1;
+                }
+                return acc;
+            }, {});
+
+            const workersWithRanking = (workers || []).map(w => ({
+                ...w,
+                passers_count: workerPassersMap[w.id] || 0
+            })).sort((a, b) => b.passers_count - a.passers_count);
+
             return {
                 totalWorkers,
                 totalPassers,
                 totalRevenue,
                 pendingPayments: allPending,
-                allWorkers: workers,
+                allWorkers: workersWithRanking,
                 allPassers: passers,
                 cells: cells || []
             };
+
         }
     });
 
@@ -195,9 +209,17 @@ export default function Dashboard() {
                             <div key={w.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                 <span className="font-medium text-slate-700">{w.name} {w.surname}</span>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-1 rounded-full ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                        {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                    </span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                            {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
+                                        </span>
+                                        {w.passers_count > 0 && (
+                                            <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded leading-none shrink-0">
+                                                {w.passers_count} {w.passers_count === 1 ? 'passante' : 'passantes'}
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <button
                                         onClick={() => setSelectedInfoPerson(w)}
                                         className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"

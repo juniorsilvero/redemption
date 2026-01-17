@@ -33,7 +33,27 @@ export default function Cells() {
         }
     });
 
+    const { data: cellStats } = useQuery({
+        queryKey: ['cellStats'],
+        queryFn: async () => {
+            const { data: workers } = await supabase.from('workers').select('id, cell_id');
+            const { data: passers } = await supabase.from('passers').select('id, cell_id');
+
+            const stats = {};
+            (workers || []).forEach(w => {
+                if (!stats[w.cell_id]) stats[w.cell_id] = { workers: 0, passers: 0 };
+                stats[w.cell_id].workers++;
+            });
+            (passers || []).forEach(p => {
+                if (!stats[p.cell_id]) stats[p.cell_id] = { workers: 0, passers: 0 };
+                stats[p.cell_id].passers++;
+            });
+            return stats;
+        }
+    });
+
     const { data: profiles } = useQuery({
+
         queryKey: ['profiles'],
         queryFn: async () => {
             const { data } = await supabase.from('users').select('*');
@@ -233,9 +253,20 @@ export default function Cells() {
                                     <div className="text-sm text-slate-500">
                                         <span className="font-semibold text-slate-700">Líder:</span> {getLeaderName(cell.leader_id)}
                                     </div>
-                                    <div className="mt-4 flex gap-2">
-                                        <span className="text-xs font-medium text-slate-400">Clique para ver detalhes</span>
+                                    <div className="mt-4 flex flex-wrap gap-2 pt-4 border-t border-slate-50">
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded">
+                                            <Users className="h-3 w-3" />
+                                            {cellStats?.[cell.id]?.workers || 0} {(cellStats?.[cell.id]?.workers === 1) ? 'Trab.' : 'Trabs.'}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                                            <UserPlus className="h-3 w-3" />
+                                            {cellStats?.[cell.id]?.passers || 0} {(cellStats?.[cell.id]?.passers === 1) ? 'Passante' : 'Passantes'}
+                                        </div>
                                     </div>
+                                    <div className="mt-3 flex gap-2">
+                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Clique para gerenciar</span>
+                                    </div>
+
                                 </CardContent>
                             </Card>
                         </Link>
