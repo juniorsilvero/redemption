@@ -1,6 +1,6 @@
 import { Modal } from './Modal';
 import { User } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '../../lib/utils';
 
 
 export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
