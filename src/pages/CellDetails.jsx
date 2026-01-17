@@ -129,7 +129,21 @@ export default function CellDetails() {
     });
 
 
+    const deleteWorkerMutation = useMutation({
+        mutationFn: async (workerId) => {
+            return supabase.from('workers').delete().eq('id', workerId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['cellWorkers', id]);
+            queryClient.invalidateQueries(['dashboardStats']);
+            toast.success('Trabalhador excluído');
+        },
+        onError: () => toast.error('Erro ao excluir trabalhador')
+    });
+
+
     // Very simplified Form handling
+
     const handleWorkerSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -242,7 +256,14 @@ export default function CellDetails() {
         }
     };
 
+    const handleDeleteWorker = (workerId) => {
+        if (window.confirm('Tem certeza que deseja excluir este trabalhador?')) {
+            deleteWorkerMutation.mutate(workerId);
+        }
+    };
+
     if (!cell) return <div>Carregando...</div>;
+
 
 
     return (
@@ -295,14 +316,16 @@ export default function CellDetails() {
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Workers Column */}
                 <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
-                    <CardHeader className="border-b border-slate-50 bg-slate-50/50">
-                        <CardTitle>Trabalhadores <span className="ml-2 inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/10">{workers?.length || 0}</span></CardTitle>
+                    <CardHeader className="border-b border-slate-50 bg-slate-50/50 flex flex-row items-center justify-between min-h-[64px] py-3">
+                        <CardTitle className="text-sm font-semibold text-slate-900">Trabalhadores <span className="ml-2 inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/10">{workers?.length || 0}</span></CardTitle>
                     </CardHeader>
+
                     <CardContent className="p-0">
                         <div className="divide-y divide-gray-100">
                             {workers?.map((person) => (
-                                <div key={person.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center gap-3">
+                                <div key={person.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition-colors gap-3 sm:gap-4 leading-tight">
+                                    <div className="flex items-center gap-3 min-w-0">
+
                                         {/* Avatar */}
                                         <div className="h-10 w-10 flex-shrink-0">
                                             {person.photo_url ? (
@@ -354,6 +377,13 @@ export default function CellDetails() {
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
+                                        <button
+                                            onClick={() => handleDeleteWorker(person.id)}
+                                            className="p-1 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+
 
                                     </div>
                                 </div>
@@ -365,23 +395,25 @@ export default function CellDetails() {
                 {/* Passers Column */}
                 {/* Passers Column */}
                 <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
-                    <CardHeader className="border-b border-slate-50 bg-slate-50/50 flex flex-row items-center justify-between py-3">
-                        <CardTitle className="text-sm">Passantes <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/10">{passers?.length || 0}</span></CardTitle>
+                    <CardHeader className="border-b border-slate-50 bg-slate-50/50 flex flex-row items-center justify-between min-h-[64px] py-3">
+                        <CardTitle className="text-sm font-semibold text-slate-900">Passantes <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/10">{passers?.length || 0}</span></CardTitle>
                         {passers?.length > 0 && (
                             <button
                                 onClick={handleDeleteAllPassers}
-                                className="text-[10px] font-bold uppercase text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100"
+                                className="text-[10px] font-bold uppercase text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100 shrink-0"
                             >
                                 Excluir Todos
                             </button>
                         )}
                     </CardHeader>
 
+
                     <CardContent className="p-0">
                         <div className="divide-y divide-gray-100">
                             {passers?.map((person) => (
-                                <div key={person.id} className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center gap-3">
+                                <div key={person.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50 transition-colors gap-3 sm:gap-4 leading-tight">
+                                    <div className="flex items-center gap-3 min-w-0">
+
                                         {/* Avatar */}
                                         <div className="h-10 w-10 flex-shrink-0">
                                             {person.photo_url ? (
