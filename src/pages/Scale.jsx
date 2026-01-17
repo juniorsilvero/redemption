@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import { AlertTriangle, Save, Plus, Trash2, Users, Info } from 'lucide-react';
+import { AlertTriangle, Save, Plus, Trash2, Users, Info, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
+import { generateScalePDF, generateFixedScalePDF } from '../utils/pdfGenerator';
+
 import { Modal } from '../components/ui/Modal';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
@@ -205,7 +207,7 @@ export default function Scale() {
             {viewMode === 'daily' ? (
                 <>
                     {/* Tabs */}
-                    <div className="border-b border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 mt-6 pb-2 gap-4">
                         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                             {days.map((day) => (
                                 <button
@@ -222,7 +224,15 @@ export default function Scale() {
                                 </button>
                             ))}
                         </nav>
+                        <button
+                            onClick={() => generateScalePDF(activeTab, scales, areas, workers)}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
+                        >
+                            <FileText className="h-4 w-4" />
+                            Gerar PDF ({activeTab === 'Friday' ? 'Sexta' : activeTab === 'Saturday' ? 'Sábado' : 'Domingo'})
+                        </button>
                     </div>
+
 
                     <div className="space-y-8 mt-6">
                         {periods.map(period => (
@@ -314,7 +324,14 @@ export default function Scale() {
             ) : (
                 /* Fixed Scales View */
                 <div className="space-y-6">
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-3">
+                        <button
+                            onClick={() => generateFixedScalePDF(fixedScales, workers)}
+                            className="flex items-center gap-2 rounded-md bg-white border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                        >
+                            <FileText className="h-4 w-4 text-green-600" />
+                            Gerar PDF de Equipes
+                        </button>
                         <button
                             onClick={() => setIsFixedScaleModalOpen(true)}
                             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
@@ -323,6 +340,7 @@ export default function Scale() {
                             Nova Equipe Fixa
                         </button>
                     </div>
+
 
                     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                         {fixedScales?.map(scale => (

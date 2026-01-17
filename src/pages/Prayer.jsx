@@ -4,10 +4,12 @@ import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { addHours, format, parseISO, isSameHour, isWithinInterval, startOfHour } from 'date-fns'; // Basic usage
 import { ptBR } from 'date-fns/locale';
-import { AlertCircle, Clock, Info } from 'lucide-react';
+import { AlertCircle, Clock, Info, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+import { generatePrayerClockPDF } from '../utils/pdfGenerator';
+
 
 export default function Prayer() {
     const queryClient = useQueryClient();
@@ -140,7 +142,15 @@ export default function Prayer() {
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">Relógio de Oração</h1>
                     <p className="text-slate-500">Cobre 48 horas ininterruptas de oração.</p>
                 </div>
+                <button
+                    onClick={() => generatePrayerClockPDF(prayerAssignments || [], slots, workers, cells || [])}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
+                >
+                    <FileText className="h-4 w-4" />
+                    Gerar PDF do Relógio
+                </button>
             </div>
+
 
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <div className="grid grid-cols-12 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 py-3 text-center">

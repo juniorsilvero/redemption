@@ -3,8 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Plus, User, Trash2, Edit } from 'lucide-react';
+import { Plus, User, Trash2, Edit, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { generateRoomPDF } from '../utils/pdfGenerator';
+
 
 export default function Accommodation() {
     const queryClient = useQueryClient();
@@ -195,9 +197,17 @@ export default function Accommodation() {
                                 <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                     <div className="flex items-center gap-2">
                                         <CardTitle className="text-base">{room.name}</CardTitle>
-                                        <button onClick={() => openModal(room)} className="text-slate-400 hover:text-indigo-600">
-                                            <Edit className="h-3 w-3" />
+                                        <button onClick={() => openModal(room)} className="text-slate-400 hover:text-indigo-600" title="Editar Quarto">
+                                            <Edit className="h-4 w-4" />
                                         </button>
+                                        <button
+                                            onClick={() => generateRoomPDF(room, room.room_leader_ids.map(id => workers.find(w => w.id === id)).filter(Boolean), passers.filter(p => p.room_id === room.id), cellMap)}
+                                            className="text-slate-400 hover:text-green-600"
+                                            title="Gerar PDF"
+                                        >
+                                            <FileText className="h-4 w-4" />
+                                        </button>
+
                                     </div>
                                     <span className={`text-xs px-2 py-1 rounded-full ${room.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
                                         {room.gender === 'male' ? 'Masculino' : 'Feminino'}
