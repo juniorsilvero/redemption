@@ -189,8 +189,10 @@ export default function CellDetails() {
                 family_contact_2: formData.get('family_contact_2'),
                 food_restrictions: formData.get('food_restrictions'),
                 controlled_medication: formData.get('controlled_medication'),
-                physical_restrictions: formData.get('physical_restrictions')
+                physical_restrictions: formData.get('physical_restrictions'),
+                responsible_worker_id: formData.get('responsible_worker_id') || null
             };
+
             addPasserMutation.mutate(data);
         } catch (error) {
             console.error('Upload error:', error);
@@ -559,7 +561,8 @@ export default function CellDetails() {
 
             <WorkerInfoModal
                 worker={selectedInfoPerson}
-                cells={[]} // We don't need the cell list here as much since we have workers/passers lists
+                cells={cell ? [cell] : []}
+
                 allWorkers={workers}
                 allPassers={passers}
                 isOpen={!!selectedInfoPerson}

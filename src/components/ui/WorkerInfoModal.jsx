@@ -8,9 +8,8 @@ export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen,
     if (!worker) return null;
 
     const cell = cells?.find(c => c.id === worker.cell_id);
-    const isPasser = !!worker.responsible_worker_id || !worker.is_room_leader; // Simple check, but we can be more robust if needed.
-    // Actually, in the DB, workers don't have responsible_worker_id. Passers do.
-    const isWorkerType = 'is_room_leader' in worker;
+    const isWorkerType = 'is_room_leader' in worker || worker.type === 'worker' || worker.type === 'Trabalhador';
+
 
     // Find the responsible worker if this is a passer
     const responsibleWorker = !isWorkerType && worker.responsible_worker_id
@@ -116,20 +115,24 @@ export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen,
                     )}
 
                     {/* Relationship Display */}
-                    {!isWorkerType && worker.responsible_worker_id && (
+                    {!isWorkerType && (
                         <div>
                             <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Responsável</p>
                             <div className="flex items-center gap-2 text-indigo-600">
-                                <User className="h-3 w-3" />
-                                <p className="text-sm font-medium">
-                                    {allWorkers?.find(w => w.id === worker.responsible_worker_id)?.name || 'Carregando...'}
-                                    {' '}
-                                    {allWorkers?.find(w => w.id === worker.responsible_worker_id)?.surname || ''}
-                                </p>
-
+                                {responsibleWorker ? (
+                                    <>
+                                        <User className="h-3 w-3" />
+                                        <p className="text-sm font-medium">
+                                            {responsibleWorker.name} {responsibleWorker.surname}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-slate-400 italic">Nenhum responsável vinculado</p>
+                                )}
                             </div>
                         </div>
                     )}
+
 
                     {isWorkerType && (
                         <div>
