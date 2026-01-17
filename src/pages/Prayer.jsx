@@ -118,38 +118,8 @@ export default function Prayer() {
     };
 
     // Conflict Detection
-    const hasConflict = (workerId, slot) => {
-        if (!workerId || !workScale) return false;
+    const hasConflict = () => false; // Disabled as per user request
 
-        // We need to map Slot Time (e.g., Sat 12:00) to Work Scale Period (Lunch @ Sat).
-        // Hardcoded mapping for MVP:
-        // Friday 19:00 - 24:00 ? Dinner maybe?
-        // Saturday 07:00 - 09:00 -> Breakfast
-        // Saturday 12:00 - 14:00 -> Lunch
-        // Saturday 19:00 - 21:00 -> Dinner
-
-        const dayMap = { 'Sexta': 'Friday', 'Sábado': 'Saturday', 'Domingo': 'Sunday' };
-        const currentDay = dayMap[slot.day];
-        const hour = parseInt(slot.time.split(':')[0]);
-
-        let conflictingPeriod = null;
-
-        if (hour >= 7 && hour <= 9) conflictingPeriod = 'Breakfast'; // Rough guess
-        if (hour >= 12 && hour <= 14) conflictingPeriod = 'Lunch';
-        if (hour >= 16 && hour <= 17) conflictingPeriod = 'Afternoon';
-        if (hour >= 19 && hour <= 21) conflictingPeriod = 'Dinner';
-
-        if (conflictingPeriod) {
-            // Check if worker is in workScale for this day/period
-            const assignment = workScale.find(s =>
-                s.worker_id === workerId &&
-                s.day === currentDay &&
-                s.period === conflictingPeriod
-            );
-            if (assignment) return true;
-        }
-        return false;
-    };
 
     if (!workers) return <div>Carregando...</div>;
 
@@ -186,10 +156,8 @@ export default function Prayer() {
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
                                             <select
-                                                className={cn(
-                                                    "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs",
-                                                    conflict1 && "bg-red-50 text-red-900 ring-red-300"
-                                                )}
+                                                className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
+
                                                 value={assignment?.worker_1_id || ""}
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
                                             >
@@ -207,11 +175,7 @@ export default function Prayer() {
                                                     <Info className="h-4 w-4" />
                                                 </button>
                                             )}
-                                            {conflict1 && (
-                                                <div title="Conflito de horário com Escala de Trabalho">
-                                                    <AlertCircle className="h-4 w-4 text-red-500" />
-                                                </div>
-                                            )}
+
                                         </div>
                                         {assignment?.worker_1_id && (
                                             <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full w-fit">
@@ -226,10 +190,8 @@ export default function Prayer() {
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
                                             <select
-                                                className={cn(
-                                                    "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs",
-                                                    conflict2 && "bg-red-50 text-red-900 ring-red-300"
-                                                )}
+                                                className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
+
                                                 value={assignment?.worker_2_id || ""}
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
                                             >
@@ -247,11 +209,7 @@ export default function Prayer() {
                                                     <Info className="h-4 w-4" />
                                                 </button>
                                             )}
-                                            {conflict2 && (
-                                                <div title="Conflito de horário com Escala de Trabalho">
-                                                    <AlertCircle className="h-4 w-4 text-red-500" />
-                                                </div>
-                                            )}
+
                                         </div>
                                         {assignment?.worker_2_id && (
                                             <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full w-fit">
