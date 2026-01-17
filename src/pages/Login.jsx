@@ -23,7 +23,8 @@ export default function Login() {
                 navigate('/');
             } else {
                 console.error('Login failed:', result.error);
-                alert('Erro ao entrar: ' + (result.error || 'Verifique suas credenciais'));
+                const errorMessage = result.error?.message || (typeof result.error === 'object' ? JSON.stringify(result.error) : result.error);
+                alert('Erro ao entrar: ' + (errorMessage || 'Verifique suas credenciais'));
             }
         } catch (err) {
             console.error('Fatal error during login:', err);
