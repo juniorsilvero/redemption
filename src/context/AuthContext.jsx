@@ -10,46 +10,57 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        return () => subscription.unsubscribe();
+        // Check for existing session in localStorage
+        const storedSession = localStorage.getItem('redemption_session');
+        if (storedSession) {
+            try {
+                const parsedSession = JSON.parse(storedSession);
+                setSession(parsedSession);
+                setUser(parsedSession.user);
+            } catch (e) {
+                console.error('Failed to parse session', e);
+            }
+        }
+        setLoading(false);
     }, []);
 
     const login = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        try {
+            // Query users table directly (since we're using custom auth, not Supabase Auth)
+            const { data: users, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password)
+                .single();
 
-        if (error) {
-            toast.error(error.message);
+            if (error || !users) {
+                toast.error('Email ou senha incorretos');
+                return { error: error || new Error('Invalid credentials') };
+            }
+
+            // Create session object
+            const sessionData = {
+                user: users,
+                access_token: 'mock-token-' + Date.now(),
+            };
+
+            setSession(sessionData);
+            setUser(users);
+            localStorage.setItem('redemption_session', JSON.stringify(sessionData));
+
+            toast.success('Login bem-sucedido!');
+            return { data: sessionData };
+        } catch (error) {
+            toast.error('Erro ao fazer login');
             return { error };
         }
-
-        // Manually update state because our mock doesn't emit events
-        setSession(data.session);
-        setUser(data.user);
-
-        toast.success('Login bem-sucedido!');
-        return { data };
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
         setSession(null);
         setUser(null);
+        localStorage.removeItem('redemption_session');
         toast.success('Logout realizado com sucesso.');
     };
 

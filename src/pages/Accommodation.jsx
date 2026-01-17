@@ -419,7 +419,6 @@ export default function Accommodation() {
                         </div>
                     </div>
                 )}
-                )}
             </Modal>
 
             {/* Assignment Modal for Mobile */}

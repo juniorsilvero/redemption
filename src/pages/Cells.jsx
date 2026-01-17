@@ -51,9 +51,19 @@ export default function Cells() {
     const cellMutation = useMutation({
         mutationFn: async (data) => {
             if (data.id) {
-                return supabase.from('cells').update(data).eq('id', data.id);
+                const { data: result, error } = await supabase.from('cells').update(data).eq('id', data.id);
+                if (error) {
+                    console.error('Update error:', error);
+                    throw error;
+                }
+                return result;
             }
-            return supabase.from('cells').insert({ ...data, church_id: 'church-1' });
+            const { data: result, error } = await supabase.from('cells').insert({ ...data, church_id: 'church-1' });
+            if (error) {
+                console.error('Insert error:', error);
+                throw error;
+            }
+            return result;
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['cells']);
@@ -61,16 +71,29 @@ export default function Cells() {
             setEditingCell(null);
             toast.success(editingCell ? 'Célula atualizada!' : 'Célula criada com sucesso!');
         },
-        onError: () => toast.error('Erro ao salvar célula.')
+        onError: (error) => {
+            console.error('Mutation error:', error);
+            toast.error(`Erro ao salvar célula: ${error.message || 'Erro desconhecido'}`);
+        }
     });
 
     const deleteCellMutation = useMutation({
         mutationFn: async (id) => {
+            // Cascade delete: Remove workers and passers associated with this cell first
+            await supabase.from('workers').delete().eq('cell_id', id);
+            await supabase.from('passers').delete().eq('cell_id', id);
+
+            // Then delete the cell
             const { error } = await supabase.from('cells').delete().eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['cells']);
+            queryClient.invalidateQueries(['workers']); // Invalidating workers query
+            queryClient.invalidateQueries(['passers']); // Invalidating passers query
+            // Invalidate dashboard queries if they exist (usually reliant on workers/passers)
+            queryClient.invalidateQueries(['dashboard']);
+
             setIsModalOpen(false);
             setEditingCell(null);
             toast.success('Célula excluída com sucesso!');
@@ -118,7 +141,7 @@ export default function Cells() {
         { name: 'Hadassa', color: '#86efac', leader: 'Kauani' }, // Verde Claro
         { name: 'Ana', color: '#3b82f6', leader: 'Lara' }, // Azul
         { name: 'Ágape', color: '#ffffff', leader: 'Rafa' }, // Branca
-        { name: 'Rute', color: '#000000', leader: 'Jessica' }, // Preta
+        { name: 'Rute', color: '#000000', leader: 'Vania' }, // Preta
     ];
 
     const [selectedTemplate, setSelectedTemplate] = useState('');

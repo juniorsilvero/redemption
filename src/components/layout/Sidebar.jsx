@@ -16,14 +16,19 @@ export function Sidebar({ className, onClose }) {
     const { user, logout, isAdmin } = useAuth();
     const location = useLocation();
 
-    const navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    const allNavigation = [
+        { name: 'Dashboard', href: '/', icon: LayoutDashboard, adminOnly: true },
         { name: 'Gestão de Células', href: '/cells', icon: Users },
-        { name: 'Escalas', href: '/scales', icon: ClipboardList },
-        { name: 'Acomodações', href: '/accommodation', icon: BedDouble },
-        { name: 'Relógio de Oração', href: '/prayer', icon: Clock },
-        ...(isAdmin ? [{ name: 'Configurações', href: '/settings', icon: Settings }] : []),
+        { name: 'Escalas', href: '/scales', icon: ClipboardList, adminOnly: true },
+        { name: 'Acomodações', href: '/accommodation', icon: BedDouble, adminOnly: true },
+        { name: 'Relógio de Oração', href: '/prayer', icon: Clock, adminOnly: true },
+        { name: 'Configurações', href: '/settings', icon: Settings, adminOnly: true },
     ];
+
+    // Filter navigation based on role
+    const navigation = isAdmin
+        ? allNavigation
+        : allNavigation.filter(item => !item.adminOnly);
 
     return (
         <div className={cn("flex h-full flex-col bg-[var(--color-sidebar)] text-white border-r border-[#2d2d2e]", className)}>

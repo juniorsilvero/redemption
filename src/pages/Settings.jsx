@@ -4,7 +4,116 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Key } from 'lucide-react';
+
+// User Management Component
+function UserManagement() {
+    const queryClient = useQueryClient();
+    const [editingUser, setEditingUser] = useState(null);
+    const [newPassword, setNewPassword] = useState('');
+
+    const { data: leaders } = useQuery({
+        queryKey: ['leaders'],
+        queryFn: async () => {
+            const { data } = await supabase.from('users').select('*, cells!cells_leader_id_fkey(name)').eq('role', 'leader');
+            return data || [];
+        }
+    });
+
+    const updatePasswordMutation = useMutation({
+        mutationFn: async ({ userId, password }) => {
+            const { error } = await supabase.from('users').update({ password }).eq('id', userId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['leaders']);
+            setEditingUser(null);
+            setNewPassword('');
+            toast.success('Senha atualizada com sucesso!');
+        },
+        onError: () => toast.error('Erro ao atualizar senha')
+    });
+
+    const handleUpdatePassword = (userId) => {
+        if (!newPassword || newPassword.length < 6) {
+            toast.error('Senha deve ter no mínimo 6 caracteres');
+            return;
+        }
+        updatePasswordMutation.mutate({ userId, password: newPassword });
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Líder</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email/Login</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Célula</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {leaders?.map(leader => (
+                            <tr key={leader.id}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                    {leader.user_metadata?.name || 'Sem nome'}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-500">{leader.email}</td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                    {leader.cells?.[0]?.name || 'Sem célula'}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                    {editingUser === leader.id ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                placeholder="Nova senha"
+                                                className="px-2 py-1 border rounded text-sm"
+                                            />
+                                            <button
+                                                onClick={() => handleUpdatePassword(leader.id)}
+                                                className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-500"
+                                            >
+                                                Salvar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingUser(null);
+                                                    setNewPassword('');
+                                                }}
+                                                className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setEditingUser(leader.id)}
+                                            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-500"
+                                        >
+                                            <Key className="h-4 w-4" />
+                                            Alterar Senha
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+                <p className="font-semibold mb-1">ℹ️ Informações de Login dos Líderes:</p>
+                <p>• Email: <code className="bg-white px-1 rounded">[nome]@redemption.com</code></p>
+                <p>• Senha padrão: <code className="bg-white px-1 rounded">[nome]123</code></p>
+                <p className="mt-2 text-gray-600">Exemplo: Thiago → thiago@redemption.com / thiago123</p>
+            </div>
+        </div>
+    );
+}
 
 export default function Settings() {
     const { isAdmin } = useAuth();
@@ -169,6 +278,79 @@ export default function Settings() {
                                     <Plus className="h-5 w-5" />
                                 </button>
                             </form>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* User Management */}
+                <Card className="md:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Gerenciamento de Usuários (Líderes)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <UserManagement />
+                    </CardContent>
+                </Card>
+
+                {/* Maintenance / Data Cleanup */}
+                <Card className="md:col-span-2 border-red-100 bg-red-50/30">
+                    <CardHeader>
+                        <CardTitle className="text-red-800 flex items-center gap-2">
+                            <Trash2 className="h-5 w-5" />
+                            Manutenção de Dados
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-sm text-red-700">
+                                <p className="font-medium">Limpar dados orfãos</p>
+                                <p className="text-red-500">Isso removerá trabalhadores e passantes que estão vinculados a células que não existem mais. Use isso se você ver dados "fantasmas" no dashboard.</p>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm('Isso apagará permanentemente todos os dados órfãos. Continuar?')) return;
+
+                                    try {
+                                        toast.loading('Limpando dados...', { id: 'cleanup' });
+
+                                        // 1. Get valid Cell IDs
+                                        const { data: cells } = await supabase.from('cells').select('id');
+                                        const validCellIds = new Set(cells?.map(c => c.id) || []);
+
+                                        // 2. Scan Workers
+                                        const { data: workers } = await supabase.from('workers').select('*');
+                                        const orphanedWorkers = workers?.filter(w => !validCellIds.has(w.cell_id)) || [];
+
+                                        // 3. Scan Passers
+                                        const { data: passers } = await supabase.from('passers').select('*');
+                                        const orphanedPassers = passers?.filter(p => !validCellIds.has(p.cell_id)) || [];
+
+                                        // 4. Delete Orphans (Simulating batch delete with Promise.all)
+                                        const deletePromises = [
+                                            ...orphanedWorkers.map(w => supabase.from('workers').delete().eq('id', w.id)),
+                                            ...orphanedPassers.map(p => supabase.from('passers').delete().eq('id', p.id))
+                                        ];
+
+                                        await Promise.all(deletePromises);
+
+                                        // 5. Cleanup Assignments (Scales & Prayer) for deleted workers
+                                        // Ideally we would do this, but getting rid of the users from the Dashboard is the priority.
+                                        // The scale/prayer logic might handle missing workers resiliently (showing empty/null).
+                                        // But let's try to clean scales too if we can find them.
+
+                                        // Refresh Queries
+                                        queryClient.invalidateQueries();
+
+                                        toast.success(`Limpeza concluída! ${orphanedWorkers.length + orphanedPassers.length} registros removidos.`, { id: 'cleanup' });
+                                    } catch (e) {
+                                        console.error(e);
+                                        toast.error('Erro ao limpar dados', { id: 'cleanup' });
+                                    }
+                                }}
+                                className="whitespace-nowrap px-4 py-2 bg-red-100 text-red-700 rounded-md font-medium hover:bg-red-200 transition-colors"
+                            >
+                                Corrigir Integridade
+                            </button>
                         </div>
                     </CardContent>
                 </Card>

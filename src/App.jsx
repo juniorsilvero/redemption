@@ -16,17 +16,26 @@ const queryClient = new QueryClient();
 
 // Protected Route Wrapper
 const ProtectedRoute = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, isAdmin } = useAuth();
 
   if (loading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
 
-  return session ? (
+  if (!session) return <Navigate to="/login" replace />;
+
+  return (
     <Layout>
       <Outlet />
     </Layout>
-  ) : (
-    <Navigate to="/login" replace />
   );
+};
+
+// Admin-only Route Wrapper
+const AdminRoute = ({ children }) => {
+  const { isAdmin, loading } = useAuth();
+
+  if (loading) return <div className="flex h-screen items-center justify-center">Carregando...</div>;
+
+  return isAdmin ? children : <Navigate to="/cells" replace />;
 };
 
 function App() {
@@ -38,13 +47,13 @@ function App() {
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />
               <Route path="/cells" element={<Cells />} />
               <Route path="/cells/:id" element={<CellDetails />} />
-              <Route path="/scales" element={<Scale />} />
-              <Route path="/accommodation" element={<Accommodation />} />
-              <Route path="/prayer" element={<Prayer />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
+              <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
+              <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
+              <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             </Route>
           </Routes>
         </Router>

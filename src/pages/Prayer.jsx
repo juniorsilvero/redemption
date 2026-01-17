@@ -4,12 +4,14 @@ import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { addHours, format, parseISO, isSameHour, isWithinInterval, startOfHour } from 'date-fns'; // Basic usage
 import { ptBR } from 'date-fns/locale';
-import { AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, Clock, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Prayer() {
     const queryClient = useQueryClient();
+    const [viewingWorker, setViewingWorker] = useState(null);
 
     // Define Event Start (Mock Date for "Friday")
     // Let's assume the event is "next Friday". For mock, we'll fix a date or just use Generic "Fri/Sat/Sun".
@@ -196,6 +198,15 @@ export default function Prayer() {
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
                                             </select>
+                                            {assignment?.worker_1_id && workers?.find(w => w.id === assignment.worker_1_id) && (
+                                                <button
+                                                    onClick={() => setViewingWorker(workers.find(w => w.id === assignment.worker_1_id))}
+                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
+                                                    title="Ver informações"
+                                                >
+                                                    <Info className="h-4 w-4" />
+                                                </button>
+                                            )}
                                             {conflict1 && (
                                                 <div title="Conflito de horário com Escala de Trabalho">
                                                     <AlertCircle className="h-4 w-4 text-red-500" />
@@ -227,6 +238,15 @@ export default function Prayer() {
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
                                             </select>
+                                            {assignment?.worker_2_id && workers?.find(w => w.id === assignment.worker_2_id) && (
+                                                <button
+                                                    onClick={() => setViewingWorker(workers.find(w => w.id === assignment.worker_2_id))}
+                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
+                                                    title="Ver informações"
+                                                >
+                                                    <Info className="h-4 w-4" />
+                                                </button>
+                                            )}
                                             {conflict2 && (
                                                 <div title="Conflito de horário com Escala de Trabalho">
                                                     <AlertCircle className="h-4 w-4 text-red-500" />
@@ -245,6 +265,14 @@ export default function Prayer() {
                     })}
                 </div>
             </div>
+
+            {/* Worker Info Modal */}
+            <WorkerInfoModal
+                worker={viewingWorker}
+                cells={cells}
+                isOpen={!!viewingWorker}
+                onClose={() => setViewingWorker(null)}
+            />
         </div>
     );
 }

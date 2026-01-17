@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import { AlertTriangle, Save, Plus, Trash2, Users } from 'lucide-react';
+import { AlertTriangle, Save, Plus, Trash2, Users, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { Modal } from '../components/ui/Modal';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Scale() {
     const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export default function Scale() {
     // Fixed Scales State
     const [isFixedScaleModalOpen, setIsFixedScaleModalOpen] = useState(false);
     const [newFixedScaleName, setNewFixedScaleName] = useState('');
+    const [viewingWorker, setViewingWorker] = useState(null);
 
     const days = ['Friday', 'Saturday', 'Sunday'];
 
@@ -56,6 +58,14 @@ export default function Scale() {
         queryKey: ['fixed_scales'],
         queryFn: async () => {
             const { data } = await supabase.from('fixed_scales').select('*');
+            return data || [];
+        }
+    });
+
+    const { data: cells } = useQuery({
+        queryKey: ['cells'],
+        queryFn: async () => {
+            const { data } = await supabase.from('cells').select('*');
             return data || [];
         }
     });
@@ -241,6 +251,18 @@ export default function Scale() {
                                                             const existing = areaAssignments[index];
                                                             const conflict = existing?.worker_id && isWorkerBusy(existing.worker_id, area.id, activeTab, period);
 
+                                                            // Get already selected workers in this area/period to prevent duplicates
+                                                            const selectedWorkerIds = areaAssignments
+                                                                .filter(a => a?.worker_id)
+                                                                .map(a => a.worker_id);
+
+                                                            // Filter out already selected workers (except current)
+                                                            const availableWorkers = workers?.filter(w =>
+                                                                !selectedWorkerIds.includes(w.id) || w.id === existing?.worker_id
+                                                            ) || [];
+
+                                                            const selectedWorker = workers?.find(w => w.id === existing?.worker_id);
+
                                                             return (
                                                                 <div key={index} className="flex items-center gap-2">
                                                                     <select
@@ -252,12 +274,22 @@ export default function Scale() {
                                                                         onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
                                                                     >
                                                                         <option value="">Selecione...</option>
-                                                                        {workers.map(w => (
+                                                                        {availableWorkers.map(w => (
                                                                             <option key={w.id} value={w.id}>
                                                                                 {w.name} {w.surname}
                                                                             </option>
                                                                         ))}
                                                                     </select>
+                                                                    {selectedWorker && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setViewingWorker(selectedWorker)}
+                                                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
+                                                                            title="Ver informações"
+                                                                        >
+                                                                            <Info className="h-4 w-4" />
+                                                                        </button>
+                                                                    )}
                                                                     {conflict && (
                                                                         <div className="relative group">
                                                                             <AlertTriangle className="h-5 w-5 text-red-500 cursor-help" />
@@ -382,7 +414,14 @@ export default function Scale() {
                     </Modal>
                 </div>
             )}
+
+            {/* Worker Info Modal */}
+            <WorkerInfoModal
+                worker={viewingWorker}
+                cells={cells}
+                isOpen={!!viewingWorker}
+                onClose={() => setViewingWorker(null)}
+            />
         </div>
     );
 }
-
