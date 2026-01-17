@@ -229,9 +229,9 @@ export default function Dashboard() {
                 </div>
             </Modal>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                {/* Quick Actions - Moved to top on mobile */}
-                <Card className="col-span-full lg:col-span-3 order-1 lg:order-2">
+            <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4">
+                {/* Quick Actions - Top on mobile, right on desktop */}
+                <Card className="order-1 lg:order-2 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Ações Rápidas</CardTitle>
                     </CardHeader>
@@ -254,8 +254,8 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Pending Payments Section */}
-                <Card className="col-span-full lg:col-span-4 order-2 lg:order-1">
+                {/* Pending Payments Section - Bottom on mobile, left on desktop */}
+                <Card className="order-2 lg:order-1 lg:col-span-4">
                     <CardHeader>
                         <CardTitle>Pagamentos Pendentes</CardTitle>
                     </CardHeader>
