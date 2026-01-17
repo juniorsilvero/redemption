@@ -16,6 +16,8 @@ export default function Dashboard() {
     // Add Person Flow State
     const [addPersonType, setAddPersonType] = useState(null); // 'worker' | 'passer' | null
     const [selectedCell, setSelectedCell] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+
 
     const { data: stats } = useQuery({
         queryKey: ['dashboardStats'],
@@ -95,36 +97,67 @@ export default function Dashboard() {
             queryClient.invalidateQueries(['dashboardStats']);
             setAddPersonType(null);
             setSelectedCell(null);
+            setIsUploading(false);
             toast.success(`${addPersonType === 'worker' ? 'Trabalhador' : 'Passante'} adicionado com sucesso!`);
         },
+
         onError: () => toast.error('Erro ao adicionar.')
     });
 
-    const handlePersonSubmit = (e) => {
+    const handlePersonSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = {
-            name: formData.get('name'),
-            surname: formData.get('surname'),
-            phone: formData.get('phone'),
-            photo_url: formData.get('photo_url'),
-            payment_status: formData.get('payment_status'),
-            payment_amount: parseFloat(formData.get('payment_amount')),
-            ...(addPersonType === 'worker' ? {
-                is_room_leader: formData.get('is_room_leader') === 'on'
-            } : {
-                birth_date: formData.get('birth_date') || null,
-                age: formData.get('age') ? parseInt(formData.get('age')) : null,
-                address: formData.get('address'),
-                family_contact_1: formData.get('family_contact_1'),
-                family_contact_2: formData.get('family_contact_2'),
-                food_restrictions: formData.get('food_restrictions'),
-                controlled_medication: formData.get('controlled_medication'),
-                physical_restrictions: formData.get('physical_restrictions')
-            })
-        };
-        addPersonMutation.mutate(data);
+        const photoFile = formData.get('photo');
+        let photo_url = '';
+
+        setIsUploading(true);
+        try {
+            if (photoFile && photoFile.size > 0) {
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `${addPersonType}/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('photos')
+                    .upload(filePath, photoFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('photos')
+                    .getPublicUrl(filePath);
+
+                photo_url = publicUrl;
+            }
+
+            const data = {
+                name: formData.get('name'),
+                surname: formData.get('surname'),
+                phone: formData.get('phone'),
+                photo_url: photo_url,
+                payment_status: formData.get('payment_status'),
+                payment_amount: parseFloat(formData.get('payment_amount')),
+                ...(addPersonType === 'worker' ? {
+                    is_room_leader: formData.get('is_room_leader') === 'on'
+                } : {
+                    birth_date: formData.get('birth_date') || null,
+                    age: formData.get('age') ? parseInt(formData.get('age')) : null,
+                    address: formData.get('address'),
+                    family_contact_1: formData.get('family_contact_1'),
+                    family_contact_2: formData.get('family_contact_2'),
+                    food_restrictions: formData.get('food_restrictions'),
+                    controlled_medication: formData.get('controlled_medication'),
+                    physical_restrictions: formData.get('physical_restrictions')
+                })
+            };
+            addPersonMutation.mutate(data);
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Erro ao fazer upload da foto.');
+            setIsUploading(false);
+        }
     };
+
 
     return (
         <div className="space-y-6">
@@ -338,9 +371,10 @@ export default function Dashboard() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Foto URL</label>
-                            <input name="photo_url" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-xs" placeholder="https://..." />
+                            <label className="block text-sm font-medium text-gray-700">Foto de Perfil</label>
+                            <input name="photo" type="file" accept="image/*" className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                         </div>
+
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Telefone</label>
@@ -413,13 +447,14 @@ export default function Dashboard() {
                         )}
 
                         <div className="flex gap-2 pt-2">
-                            <button type="button" onClick={() => setSelectedCell(null)} className="flex-1 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+                            <button type="button" onClick={() => setSelectedCell(null)} className="flex-1 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200" disabled={isUploading}>
                                 Voltar
                             </button>
-                            <button type="submit" className="flex-1 rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-accent-hover)]">
-                                Salvar
+                            <button type="submit" className="flex-1 rounded-md bg-[var(--color-accent)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-50" disabled={isUploading}>
+                                {isUploading ? 'Salvando...' : 'Salvar'}
                             </button>
                         </div>
+
                     </form>
                 )}
             </Modal>

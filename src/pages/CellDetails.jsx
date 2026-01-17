@@ -17,6 +17,8 @@ export default function CellDetails() {
     // Passer State
     const [isPasserModalOpen, setIsPasserModalOpen] = useState(false);
     const [editingPasser, setEditingPasser] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+
 
     // Cell Data
     const { data: cell } = useQuery({
@@ -63,8 +65,10 @@ export default function CellDetails() {
             queryClient.invalidateQueries(['cellWorkers', id]);
             setIsWorkerModalOpen(false);
             setEditingWorker(null);
+            setIsUploading(false);
             toast.success(editingWorker ? 'Trabalhador atualizado' : 'Trabalhador adicionado');
         }
+
     });
 
     const addPasserMutation = useMutation({
@@ -76,8 +80,10 @@ export default function CellDetails() {
             queryClient.invalidateQueries(['cellPassers', id]);
             setIsPasserModalOpen(false);
             setEditingPasser(null);
+            setIsUploading(false);
             toast.success(editingPasser ? 'Passante atualizado' : 'Passante adicionado');
         }
+
     });
 
     const togglePaymentMutation = useMutation({
@@ -95,42 +101,100 @@ export default function CellDetails() {
     });
 
     // Very simplified Form handling
-    const handleWorkerSubmit = (e) => {
+    const handleWorkerSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = {
-            name: formData.get('name'),
-            surname: formData.get('surname'),
-            phone: formData.get('phone'),
-            photo_url: formData.get('photo_url'),
-            payment_status: formData.get('payment_status'),
-            payment_amount: parseFloat(formData.get('payment_amount')),
-            is_room_leader: formData.get('is_room_leader') === 'on'
-        };
-        addWorkerMutation.mutate(data);
+        const photoFile = formData.get('photo');
+        let photo_url = editingWorker?.photo_url || '';
+
+        setIsUploading(true);
+        try {
+            if (photoFile && photoFile.size > 0) {
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `workers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('photos')
+                    .upload(filePath, photoFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('photos')
+                    .getPublicUrl(filePath);
+
+                photo_url = publicUrl;
+            }
+
+            const data = {
+                name: formData.get('name'),
+                surname: formData.get('surname'),
+                phone: formData.get('phone'),
+                photo_url: photo_url,
+                payment_status: formData.get('payment_status'),
+                payment_amount: parseFloat(formData.get('payment_amount')),
+                is_room_leader: formData.get('is_room_leader') === 'on'
+            };
+            addWorkerMutation.mutate(data);
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Erro ao fazer upload da foto.');
+            setIsUploading(false);
+        }
     };
 
-    const handlePasserSubmit = (e) => {
+
+    const handlePasserSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = {
-            name: formData.get('name'),
-            surname: formData.get('surname'),
-            phone: formData.get('phone'),
-            photo_url: formData.get('photo_url'),
-            payment_status: formData.get('payment_status'),
-            payment_amount: parseFloat(formData.get('payment_amount')),
-            birth_date: formData.get('birth_date') || null,
-            age: formData.get('age') ? parseInt(formData.get('age')) : null,
-            address: formData.get('address'),
-            family_contact_1: formData.get('family_contact_1'),
-            family_contact_2: formData.get('family_contact_2'),
-            food_restrictions: formData.get('food_restrictions'),
-            controlled_medication: formData.get('controlled_medication'),
-            physical_restrictions: formData.get('physical_restrictions')
-        };
-        addPasserMutation.mutate(data);
+        const photoFile = formData.get('photo');
+        let photo_url = editingPasser?.photo_url || '';
+
+        setIsUploading(true);
+        try {
+            if (photoFile && photoFile.size > 0) {
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${Math.random()}.${fileExt}`;
+                const filePath = `passers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('photos')
+                    .upload(filePath, photoFile);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('photos')
+                    .getPublicUrl(filePath);
+
+                photo_url = publicUrl;
+            }
+
+            const data = {
+                name: formData.get('name'),
+                surname: formData.get('surname'),
+                phone: formData.get('phone'),
+                photo_url: photo_url,
+                payment_status: formData.get('payment_status'),
+                payment_amount: parseFloat(formData.get('payment_amount')),
+                birth_date: formData.get('birth_date') || null,
+                age: formData.get('age') ? parseInt(formData.get('age')) : null,
+                address: formData.get('address'),
+                family_contact_1: formData.get('family_contact_1'),
+                family_contact_2: formData.get('family_contact_2'),
+                food_restrictions: formData.get('food_restrictions'),
+                controlled_medication: formData.get('controlled_medication'),
+                physical_restrictions: formData.get('physical_restrictions')
+            };
+            addPasserMutation.mutate(data);
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Erro ao fazer upload da foto.');
+            setIsUploading(false);
+        }
     };
+
 
     if (!cell) return <div>Carregando...</div>;
 
@@ -322,10 +386,13 @@ export default function CellDetails() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Foto URL</label>
-                        <input name="photo_url" defaultValue={editingWorker?.photo_url} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-xs" placeholder="https://..." />
-                        <p className="mt-1 text-xs text-gray-500">Cole o link de uma imagem (ex: Unsplash, LinkedIn).</p>
+                        <label className="block text-sm font-medium text-gray-700">Foto de Perfil</label>
+                        <input name="photo" type="file" accept="image/*" className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        {editingWorker?.photo_url && (
+                            <p className="mt-1 text-[10px] text-slate-400">Já possui foto. Selecione nova para trocar.</p>
+                        )}
                     </div>
+
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Telefone</label>
@@ -350,13 +417,14 @@ export default function CellDetails() {
                     </div>
 
                     <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                        <button type="submit" className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2">
-                            Salvar
+                        <button type="submit" disabled={isUploading} className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2 disabled:opacity-50">
+                            {isUploading ? 'Salvando...' : 'Salvar'}
                         </button>
-                        <button type="button" onClick={() => setIsWorkerModalOpen(false)} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+                        <button type="button" onClick={() => setIsWorkerModalOpen(false)} disabled={isUploading} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
                             Cancelar
                         </button>
                     </div>
+
                 </form>
             </Modal>
 
@@ -378,9 +446,13 @@ export default function CellDetails() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Foto URL</label>
-                        <input name="photo_url" defaultValue={editingPasser?.photo_url} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-xs" placeholder="https://..." />
+                        <label className="block text-sm font-medium text-gray-700">Foto de Perfil</label>
+                        <input name="photo" type="file" accept="image/*" className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                        {editingPasser?.photo_url && (
+                            <p className="mt-1 text-[10px] text-slate-400">Já possui foto. Selecione nova para trocar.</p>
+                        )}
                     </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Telefone</label>
                         <input name="phone" defaultValue={editingPasser?.phone} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2" />
@@ -444,13 +516,14 @@ export default function CellDetails() {
                     </div>
 
                     <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                        <button type="submit" className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2">
-                            Salvar
+                        <button type="submit" disabled={isUploading} className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2 disabled:opacity-50">
+                            {isUploading ? 'Salvando...' : 'Salvar'}
                         </button>
-                        <button type="button" onClick={() => setIsPasserModalOpen(false)} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+                        <button type="button" onClick={() => setIsPasserModalOpen(false)} disabled={isUploading} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
                             Cancelar
                         </button>
                     </div>
+
                 </form>
             </Modal>
 
