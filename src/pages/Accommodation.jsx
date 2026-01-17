@@ -9,48 +9,52 @@ import { generateRoomPDF } from '../utils/pdfGenerator';
 
 
 export default function Accommodation() {
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+    // ... rest of state stays same
     const [editingRoom, setEditingRoom] = useState(null);
     const [viewingLeader, setViewingLeader] = useState(null);
-    const [assigningPasser, setAssigningPasser] = useState(null); // New state for mobile assignment
-
-    // Local state for managing leaders in the modal
+    const [assigningPasser, setAssigningPasser] = useState(null);
     const [selectedLeaderIds, setSelectedLeaderIds] = useState([]);
 
     // Data Fetching
     const { data: rooms } = useQuery({
-        queryKey: ['rooms'],
+        queryKey: ['rooms', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('rooms').select('*');
+            const { data } = await supabase.from('rooms').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: passers } = useQuery({
-        queryKey: ['passers'],
+        queryKey: ['passers', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('passers').select('*');
+            const { data } = await supabase.from('passers').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: workers } = useQuery({
-        queryKey: ['workers'],
+        queryKey: ['workers', churchId],
         queryFn: async () => {
-            // Get only room leaders suitable workers
-            const { data } = await supabase.from('workers').select('*'); // .eq('is_room_leader', true) would be better if mocked
+            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: cells } = useQuery({
-        queryKey: ['cells'],
+        queryKey: ['cells', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('cells').select('*');
+            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
+
 
     const cellMap = (cells || []).reduce((acc, cell) => {
         acc[cell.id] = cell;

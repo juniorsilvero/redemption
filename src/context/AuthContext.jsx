@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            // Query users table directly (since we're using custom auth, not Supabase Auth)
+            // Query users table directly
             const { data: users, error } = await supabase
                 .from('users')
                 .select('*')
@@ -39,17 +39,24 @@ export const AuthProvider = ({ children }) => {
                 return { error: error || new Error('Invalid credentials') };
             }
 
-            // Create session object
+            // Fetch church info
+            const { data: church } = await supabase
+                .from('churches')
+                .select('*')
+                .eq('id', users.church_id)
+                .single();
+
+            // Create session object with church info
             const sessionData = {
-                user: users,
+                user: { ...users, church },
                 access_token: 'mock-token-' + Date.now(),
             };
 
             setSession(sessionData);
-            setUser(users);
+            setUser(sessionData.user);
             localStorage.setItem('redemption_session', JSON.stringify(sessionData));
 
-            toast.success('Login bem-sucedido!');
+            toast.success(`Bem-vindo, ${church?.name || 'Igreja'}!`);
             return { data: sessionData };
         } catch (error) {
             toast.error('Erro ao fazer login');
@@ -70,6 +77,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        churchId: user?.church_id,
         isAdmin: user?.role === 'admin',
         isLeader: user?.role === 'leader',
     };

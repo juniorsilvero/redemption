@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Scale() {
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'fixed'
     const [activeTab, setActiveTab] = useState('Friday'); // Friday, Saturday, Sunday
@@ -33,44 +34,50 @@ export default function Scale() {
 
     // Fetch Data
     const { data: scales } = useQuery({
-        queryKey: ['work_scale'],
+        queryKey: ['work_scale', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('work_scale').select('*');
+            const { data } = await supabase.from('work_scale').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: areas } = useQuery({
-        queryKey: ['service_areas'],
+        queryKey: ['service_areas', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('service_areas').select('*');
+            const { data } = await supabase.from('service_areas').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: workers } = useQuery({
-        queryKey: ['workers'],
+        queryKey: ['workers', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('workers').select('*');
+            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: fixedScales } = useQuery({
-        queryKey: ['fixed_scales'],
+        queryKey: ['fixed_scales', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('fixed_scales').select('*');
+            const { data } = await supabase.from('fixed_scales').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: cells } = useQuery({
-        queryKey: ['cells'],
+        queryKey: ['cells', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('cells').select('*');
+            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
+
 
     // Mutation to save/update assignment
     const assignMutation = useMutation({
