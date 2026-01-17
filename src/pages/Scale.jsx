@@ -228,10 +228,10 @@ export default function Scale() {
                             onClick={() => generateScalePDF(activeTab, scales, areas, workers, cells)}
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
                         >
-
                             <FileText className="h-4 w-4" />
-                            Gerar PDF ({activeTab === 'Friday' ? 'Sexta' : activeTab === 'Saturday' ? 'Sábado' : 'Domingo'})
+                            Gerar PDF Completo (Sexta a Domingo)
                         </button>
+
                     </div>
 
 
@@ -327,12 +327,13 @@ export default function Scale() {
                 <div className="space-y-6">
                     <div className="flex justify-end gap-3">
                         <button
-                            onClick={() => generateFixedScalePDF(fixedScales, workers)}
+                            onClick={() => generateFixedScalePDF(fixedScales, workers, cells)}
                             className="flex items-center gap-2 rounded-md bg-white border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
                         >
                             <FileText className="h-4 w-4 text-green-600" />
                             Gerar PDF de Equipes
                         </button>
+
                         <button
                             onClick={() => setIsFixedScaleModalOpen(true)}
                             className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"

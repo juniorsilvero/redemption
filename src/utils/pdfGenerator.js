@@ -4,17 +4,17 @@ import autoTable from 'jspdf-autotable';
 // Global styles for all tables to ensure bold/legible text
 const commonTableStyles = {
     styles: {
-        fontSize: 11, // Increased overall font size slightly
+        fontSize: 11,
         fontStyle: 'bold',
         cellPadding: 3,
         textColor: [0, 0, 0]
     },
     headStyles: {
-        fillColor: [0, 0, 0], // Black background as requested
-        textColor: [255, 255, 255], // White text
+        fillColor: [0, 0, 0],
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 13, // Increased header font size
-        halign: 'center' // Center header text for better look
+        fontSize: 13,
+        halign: 'center'
     },
     theme: 'grid'
 };
@@ -66,75 +66,86 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     doc.save(`Acomodacao_${room.name.replace(/\s+/g, '_')}.pdf`);
 };
 
-export const generateScalePDF = (day, scales, areas, workers, cells) => {
+export const generateScalePDF = (activeDay, scales, areas, workers, cells) => {
     const doc = new jsPDF();
-    const dayLabel = day === 'Friday' ? 'Sexta-feira' : day === 'Saturday' ? 'Sábado' : 'Domingo';
     const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Escala de Trabalho - ${dayLabel}`, 14, 20);
+    const days = ['Friday', 'Saturday', 'Sunday'];
+    const dayLabels = { Friday: 'Sexta-feira', Saturday: 'Sábado', Sunday: 'Domingo' };
 
-    const periods = [
-        { id: 'Breakfast', label: 'CAFÉ DA MANHÃ' },
-        { id: 'Lunch', label: 'ALMOÇO' },
-        { id: 'Afternoon', label: 'LANCHE DA TARDE' },
-        { id: 'Dinner', label: 'JANTAR' }
-    ];
+    let isFirstPage = true;
 
-    let currentY = 30;
+    days.forEach((day, dayIndex) => {
+        if (!isFirstPage) doc.addPage();
+        isFirstPage = false;
 
-    periods.forEach(p => {
-        const dayPeriods = day === 'Friday' ? ['Dinner'] : day === 'Sunday' ? ['Breakfast', 'Lunch'] : ['Breakfast', 'Lunch', 'Afternoon', 'Dinner'];
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Escala de Trabalho - ${dayLabels[day]}`, 14, 20);
 
-        if (!dayPeriods.includes(p.id)) return;
+        const periods = [
+            { id: 'Breakfast', label: 'CAFÉ DA MANHÃ' },
+            { id: 'Lunch', label: 'ALMOÇO' },
+            { id: 'Afternoon', label: 'LANCHE DA TARDE' },
+            { id: 'Dinner', label: 'JANTAR' }
+        ];
 
-        // Add period title
-        if (currentY > 260) { doc.addPage(); currentY = 20; }
-        doc.setFontSize(18);
-        doc.setTextColor(0, 0, 0); // Black for period titles too
-        doc.text(p.label, 14, currentY + 5);
-        currentY += 10;
+        let currentY = 30;
 
-        areas.forEach(area => {
-            const areaAssignments = scales.filter(s => s.day === day && s.period === p.id && s.area_id === area.id);
-            const tableBody = [];
+        periods.forEach(p => {
+            const dayPeriods = day === 'Friday' ? ['Dinner'] : day === 'Sunday' ? ['Breakfast', 'Lunch'] : ['Breakfast', 'Lunch', 'Afternoon', 'Dinner'];
 
-            for (let i = 0; i < area.required_people; i++) {
-                const asg = areaAssignments[i];
-                const worker = workers.find(w => w.id === asg?.worker_id);
-                const cellName = worker ? (cellMap[worker.cell_id] || 'Sem Célula') : null;
+            if (!dayPeriods.includes(p.id)) return;
 
-                tableBody.push([
-                    worker ? `${worker.name} ${worker.surname} [${cellName}]` : '(Vazio)'
-                ]);
-            }
+            // Add period title
+            if (currentY > 260) { doc.addPage(); currentY = 20; }
+            doc.setFontSize(18);
+            doc.setTextColor(0, 0, 0);
+            doc.text(p.label, 14, currentY + 5);
+            currentY += 10;
 
-            autoTable(doc, {
-                ...commonTableStyles,
-                startY: currentY,
-                head: [[area.name]],
-                body: tableBody,
-                headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 },
-                margin: { left: 14, right: 14 },
+            areas.forEach(area => {
+                const areaAssignments = scales.filter(s => s.day === day && s.period === p.id && s.area_id === area.id);
+                const tableBody = [];
+
+                for (let i = 0; i < area.required_people; i++) {
+                    const asg = areaAssignments[i];
+                    const worker = workers.find(w => w.id === asg?.worker_id);
+                    const cellName = worker ? (cellMap[worker.cell_id] || 'Sem Célula') : null;
+
+                    tableBody.push([
+                        worker ? `${worker.name} ${worker.surname} [${cellName}]` : '(Vazio)'
+                    ]);
+                }
+
+                autoTable(doc, {
+                    ...commonTableStyles,
+                    startY: currentY,
+                    head: [[area.name]],
+                    body: tableBody,
+                    headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 },
+                    margin: { left: 14, right: 14 },
+                });
+
+                currentY = doc.lastAutoTable.finalY + 10;
+
+                if (currentY > 250) {
+                    doc.addPage();
+                    currentY = 20;
+                }
             });
 
-            currentY = doc.lastAutoTable.finalY + 10;
-
-            if (currentY > 250) {
-                doc.addPage();
-                currentY = 20;
-            }
+            currentY += 10;
         });
-
-        currentY += 10;
     });
 
-    doc.save(`Escala_${dayLabel}.pdf`);
+    doc.save(`Escala_Completa_Final_de_Semana.pdf`);
 };
 
-export const generateFixedScalePDF = (fixedScales, workers) => {
+export const generateFixedScalePDF = (fixedScales, workers, cells) => {
     const doc = new jsPDF();
+    const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
@@ -151,7 +162,8 @@ export const generateFixedScalePDF = (fixedScales, workers) => {
 
         const memberData = (scale.members || []).map(id => {
             const w = workers.find(work => work.id === id);
-            return [w ? `${w.name} ${w.surname}` : 'Desconhecido'];
+            const cellName = w ? (cellMap[w.cell_id] || 'Sem Célula') : '';
+            return [w ? `${w.name} ${w.surname} [${cellName}]` : 'Desconhecido'];
         });
 
         autoTable(doc, {
