@@ -110,7 +110,19 @@ export default function Dashboard() {
             photo_url: formData.get('photo_url'),
             payment_status: formData.get('payment_status'),
             payment_amount: parseFloat(formData.get('payment_amount')),
-            ...(addPersonType === 'worker' ? { is_room_leader: formData.get('is_room_leader') === 'on' } : {})
+            ...(addPersonType === 'worker' ? {
+                is_room_leader: formData.get('is_room_leader') === 'on'
+            } : {
+                full_name: formData.get('full_name'),
+                birth_date: formData.get('birth_date') || null,
+                age: formData.get('age') ? parseInt(formData.get('age')) : null,
+                address: formData.get('address'),
+                family_contact_1: formData.get('family_contact_1'),
+                family_contact_2: formData.get('family_contact_2'),
+                food_restrictions: formData.get('food_restrictions'),
+                controlled_medication: formData.get('controlled_medication'),
+                physical_restrictions: formData.get('physical_restrictions')
+            })
         };
         addPersonMutation.mutate(data);
     };
@@ -350,10 +362,61 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {addPersonType === 'worker' && (
+                        {addPersonType === 'worker' ? (
                             <div className="flex items-center">
                                 <input name="is_room_leader" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                                 <label className="ml-2 block text-sm text-gray-900">Líder de Quarto?</label>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 pt-2 border-t border-slate-100">
+                                <p className="text-xs font-bold text-slate-400 uppercase">Informações Adicionais (Passante)</p>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                                    <input name="full_name" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Data de Nascimento</label>
+                                        <input name="birth_date" type="date" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Idade</label>
+                                        <input name="age" type="number" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Endereço</label>
+                                    <textarea name="address" rows="2" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"></textarea>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Contato Familiar 1</label>
+                                        <input name="family_contact_1" placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Contato Familiar 2</label>
+                                        <input name="family_contact_2" placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Restrição Alimentar ou Alergia?</label>
+                                        <input name="food_restrictions" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Toma Medicamento Controlado?</label>
+                                        <input name="controlled_medication" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Restrição ou Deficiência Física?</label>
+                                        <input name="physical_restrictions" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                    </div>
+                                </div>
                             </div>
                         )}
 

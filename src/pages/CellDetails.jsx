@@ -116,11 +116,19 @@ export default function CellDetails() {
         const data = {
             name: formData.get('name'),
             surname: formData.get('surname'),
-            surname: formData.get('surname'),
             phone: formData.get('phone'),
             photo_url: formData.get('photo_url'),
             payment_status: formData.get('payment_status'),
-            payment_amount: parseFloat(formData.get('payment_amount'))
+            payment_amount: parseFloat(formData.get('payment_amount')),
+            full_name: formData.get('full_name'),
+            birth_date: formData.get('birth_date') || null,
+            age: formData.get('age') ? parseInt(formData.get('age')) : null,
+            address: formData.get('address'),
+            family_contact_1: formData.get('family_contact_1'),
+            family_contact_2: formData.get('family_contact_2'),
+            food_restrictions: formData.get('food_restrictions'),
+            controlled_medication: formData.get('controlled_medication'),
+            physical_restrictions: formData.get('physical_restrictions')
         };
         addPasserMutation.mutate(data);
     };
@@ -390,7 +398,57 @@ export default function CellDetails() {
                                 <option value="paid">Pago</option>
                             </select>
                         </div>
+                    </div>
 
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                        <p className="text-xs font-bold text-slate-400 uppercase">Informações Adicionais</p>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                            <input name="full_name" defaultValue={editingPasser?.full_name} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Data de Nascimento</label>
+                                <input name="birth_date" type="date" defaultValue={editingPasser?.birth_date} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Idade</label>
+                                <input name="age" type="number" defaultValue={editingPasser?.age} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Endereço</label>
+                            <textarea name="address" rows="2" defaultValue={editingPasser?.address} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"></textarea>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Contato Familiar 1</label>
+                                <input name="family_contact_1" defaultValue={editingPasser?.family_contact_1} placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Contato Familiar 2</label>
+                                <input name="family_contact_2" defaultValue={editingPasser?.family_contact_2} placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Restrição Alimentar ou Alergia?</label>
+                                <input name="food_restrictions" defaultValue={editingPasser?.food_restrictions} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Toma Medicamento Controlado?</label>
+                                <input name="controlled_medication" defaultValue={editingPasser?.controlled_medication} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Restrição ou Deficiência Física?</label>
+                                <input name="physical_restrictions" defaultValue={editingPasser?.physical_restrictions} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
