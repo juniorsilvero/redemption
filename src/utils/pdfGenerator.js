@@ -1,9 +1,8 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
 
     // Title
     doc.setFontSize(18);
@@ -25,7 +24,7 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
         cellMap[l.cell_id]?.name || 'Sem célula'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 45,
         head: [['Nome', 'Telefone', 'Célula']],
         body: leaderData.length > 0 ? leaderData : [['Nenhum líder atribuído', '-', '-']],
@@ -34,7 +33,7 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     });
 
     // Passers Table
-    const finalY = doc.lastAutoTable.finalY || 45;
+    const finalY = doc.lastAutoTable?.finalY || 45;
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('Passantes / Ocupantes', 14, finalY + 15);
@@ -44,7 +43,7 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
         cellMap[p.cell_id]?.name || 'Sem célula'
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: finalY + 20,
         head: [['Nome Completo', 'Célula']],
         body: occupantData.length > 0 ? occupantData : [['Nenhum passante alocado', '-']],
@@ -73,7 +72,6 @@ export const generateScalePDF = (day, scales, areas, workers) => {
     let currentY = 30;
 
     periods.forEach(p => {
-        // Only show periods that have assignments or are valid for the day (Friday only Dinner, Sunday only Breakfast/Lunch)
         const dayPeriods = day === 'Friday' ? ['Dinner'] : day === 'Sunday' ? ['Breakfast', 'Lunch'] : ['Breakfast', 'Lunch', 'Afternoon', 'Dinner'];
 
         if (!dayPeriods.includes(p.id)) return;
@@ -97,7 +95,7 @@ export const generateScalePDF = (day, scales, areas, workers) => {
             }
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: currentY + 5,
             head: [['Área de Serviço', 'Trabalhador Responsável']],
             body: tableBody,
@@ -106,9 +104,8 @@ export const generateScalePDF = (day, scales, areas, workers) => {
             margin: { bottom: 20 }
         });
 
-        currentY = doc.lastAutoTable.finalY + 15;
+        currentY = doc.lastAutoTable?.finalY + 15;
 
-        // Add new page if close to bottom
         if (currentY > 250) {
             doc.addPage();
             currentY = 20;
@@ -125,25 +122,25 @@ export const generateFixedScalePDF = (fixedScales, workers) => {
     doc.setFont('helvetica', 'bold');
     doc.text('Equipes Fixas / Grupos de Trabalho', 14, 20);
 
-    fixedScales.forEach((scale, index) => {
-        const startY = index === 0 ? 35 : doc.lastAutoTable.finalY + 15;
+    fixedScales?.forEach((scale, index) => {
+        const lastY = index === 0 ? 35 : doc.lastAutoTable?.finalY + 15;
 
-        if (startY > 250) {
+        if (lastY > 250) {
             doc.addPage();
             doc.text('Equipes Fixas (Continuação)', 14, 20);
         }
 
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(scale.name, 14, index === 0 ? 30 : startY - 5);
+        doc.text(scale.name, 14, index === 0 ? 30 : lastY - 5);
 
         const memberData = (scale.members || []).map(id => {
             const w = workers.find(work => work.id === id);
             return [w ? `${w.name} ${w.surname}` : 'Desconhecido'];
         });
 
-        doc.autoTable({
-            startY: index === 0 ? 35 : startY,
+        autoTable(doc, {
+            startY: index === 0 ? 35 : lastY,
             head: [['Nome do Membro']],
             body: memberData.length > 0 ? memberData : [['Nenhum membro na equipe']],
             theme: 'striped',
@@ -176,7 +173,7 @@ export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
         ];
     });
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 30,
         head: [['Horário', 'Guerreiro 1', 'Guerreiro 2']],
         body: body,
