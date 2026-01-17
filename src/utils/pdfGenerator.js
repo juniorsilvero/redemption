@@ -4,15 +4,17 @@ import autoTable from 'jspdf-autotable';
 // Global styles for all tables to ensure bold/legible text
 const commonTableStyles = {
     styles: {
-        fontSize: 10,
-        fontStyle: 'bold', // Make all text bold as requested
+        fontSize: 11, // Increased overall font size slightly
+        fontStyle: 'bold',
         cellPadding: 3,
         textColor: [0, 0, 0]
     },
     headStyles: {
-        fillColor: [79, 70, 229],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold'
+        fillColor: [0, 0, 0], // Black background as requested
+        textColor: [255, 255, 255], // White text
+        fontStyle: 'bold',
+        fontSize: 13, // Increased header font size
+        halign: 'center' // Center header text for better look
     },
     theme: 'grid'
 };
@@ -21,15 +23,15 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     const doc = new jsPDF();
 
     // Title
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text(`Acomodação: ${room.name}`, 14, 20);
 
-    doc.setFontSize(12);
+    doc.setFontSize(13);
     doc.text(`Gênero: ${room.gender === 'male' ? 'Masculino' : 'Feminino'} | Ocupação: ${occupants.length} / ${room.capacity}`, 14, 28);
 
-    // Leaders Table (Removed Phone)
-    doc.setFontSize(14);
+    // Leaders Table
+    doc.setFontSize(15);
     doc.text('Líderes do Quarto', 14, 40);
 
     const leaderData = leaders.map(l => [
@@ -46,7 +48,7 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
 
     // Passers Table
     const finalY = doc.lastAutoTable?.finalY || 45;
-    doc.setFontSize(14);
+    doc.setFontSize(15);
     doc.text('Passantes / Ocupantes', 14, finalY + 15);
 
     const occupantData = occupants.map(p => [
@@ -69,7 +71,7 @@ export const generateScalePDF = (day, scales, areas, workers, cells) => {
     const dayLabel = day === 'Friday' ? 'Sexta-feira' : day === 'Saturday' ? 'Sábado' : 'Domingo';
     const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text(`Escala de Trabalho - ${dayLabel}`, 14, 20);
 
@@ -89,8 +91,8 @@ export const generateScalePDF = (day, scales, areas, workers, cells) => {
 
         // Add period title
         if (currentY > 260) { doc.addPage(); currentY = 20; }
-        doc.setFontSize(16);
-        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(18);
+        doc.setTextColor(0, 0, 0); // Black for period titles too
         doc.text(p.label, 14, currentY + 5);
         currentY += 10;
 
@@ -108,13 +110,12 @@ export const generateScalePDF = (day, scales, areas, workers, cells) => {
                 ]);
             }
 
-            // Draw a box/table for each area
             autoTable(doc, {
                 ...commonTableStyles,
                 startY: currentY,
                 head: [[area.name]],
                 body: tableBody,
-                headStyles: { fillColor: [51, 65, 85] }, // slate-700 for area boxes
+                headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 },
                 margin: { left: 14, right: 14 },
             });
 
@@ -126,7 +127,7 @@ export const generateScalePDF = (day, scales, areas, workers, cells) => {
             }
         });
 
-        currentY += 10; // Extra space between periods
+        currentY += 10;
     });
 
     doc.save(`Escala_${dayLabel}.pdf`);
@@ -135,7 +136,7 @@ export const generateScalePDF = (day, scales, areas, workers, cells) => {
 export const generateFixedScalePDF = (fixedScales, workers) => {
     const doc = new jsPDF();
 
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('Equipes Fixas / Grupos de Trabalho', 14, 20);
 
@@ -158,7 +159,7 @@ export const generateFixedScalePDF = (fixedScales, workers) => {
             startY: startY,
             head: [[scale.name]],
             body: memberData.length > 0 ? memberData : [['Nenhum membro na equipe']],
-            headStyles: { fillColor: [51, 65, 85] }
+            headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 }
         });
     });
 
@@ -168,7 +169,7 @@ export const generateFixedScalePDF = (fixedScales, workers) => {
 export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
     const doc = new jsPDF();
 
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.text('Relógio de Oração - 48 Horas', 14, 20);
 
@@ -191,7 +192,8 @@ export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
         startY: 30,
         head: [['Horário', 'Guerreiro 1', 'Guerreiro 2']],
         body: body,
-        styles: { ...commonTableStyles.styles, fontSize: 9 }, // Slightly smaller for dense clock
+        styles: { ...commonTableStyles.styles, fontSize: 10 },
+        headStyles: { ...commonTableStyles.headStyles, fontSize: 13 },
         columnStyles: {
             0: { cellWidth: 35 },
             1: { cellWidth: 70 },
