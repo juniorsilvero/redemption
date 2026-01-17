@@ -265,30 +265,30 @@ export default function Dashboard() {
                                 <p className="text-sm text-slate-500">Nenhum pagamento pendente.</p>
                             ) : (
                                 stats?.pendingPayments?.map((person) => (
-                                    <div key={person.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="p-2 bg-orange-100 rounded-full">
-                                                <AlertCircle className="h-4 w-4 text-orange-600" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm font-medium text-slate-900">{person.name} {person.surname}</p>
-                                                    {person.cell && (
-                                                        <span className="flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
-                                                            {person.cell.name}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-slate-500">{person.type}</p>
-                                            </div>
+                                    <div key={person.id} className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 sm:p-4 border rounded-lg bg-slate-50 items-center">
+                                        <div className="p-2 bg-orange-100 rounded-full shrink-0">
+                                            <AlertCircle className="h-4 w-4 text-orange-600" />
                                         </div>
-                                        <div className="flex items-center space-x-3">
-                                            <span className="text-sm font-medium text-slate-900">R$ {person.payment_amount?.toFixed(2)}</span>
-                                            <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-600/20">Pendente</span>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                <p className="text-sm font-bold text-slate-900">{person.name} {person.surname}</p>
+                                                {person.cell && (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-sm">
+                                                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
+                                                        {person.cell.name}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 font-medium">{person.type === 'worker' ? 'Trabalhador' : 'Passante'}</p>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
+                                            <div className="text-right">
+                                                <p className="text-sm font-bold text-slate-900 leading-none mb-1">R$ {person.payment_amount?.toFixed(2)}</p>
+                                                <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase tracking-tighter">Pendente</span>
+                                            </div>
                                             <button
                                                 onClick={() => setSelectedInfoPerson(person)}
-                                                className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                className="p-1.5 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
                                             >
                                                 <Info className="h-4 w-4" />
                                             </button>
