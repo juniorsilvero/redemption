@@ -3,13 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Users, UserPlus, DollarSign, AlertCircle, ChevronRight, User } from 'lucide-react';
+import { Users, UserPlus, DollarSign, AlertCircle, ChevronRight, User, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Dashboard() {
     const queryClient = useQueryClient();
     const [modalType, setModalType] = useState(null); // 'workers' | 'passers' | 'revenue' | null
+    const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
 
     // Add Person Flow State
     const [addPersonType, setAddPersonType] = useState(null); // 'worker' | 'passer' | null
@@ -146,9 +148,17 @@ export default function Dashboard() {
                         {stats?.allWorkers?.map(w => (
                             <div key={w.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                 <span className="font-medium text-slate-700">{w.name} {w.surname}</span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                    {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs px-2 py-1 rounded-full ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                        {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
+                                    </span>
+                                    <button
+                                        onClick={() => setSelectedInfoPerson(w)}
+                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                                    >
+                                        <Info className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -161,9 +171,17 @@ export default function Dashboard() {
                         {stats?.allPassers?.map(p => (
                             <div key={p.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                 <span className="font-medium text-slate-700">{p.name} {p.surname}</span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${p.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                    {p.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs px-2 py-1 rounded-full ${p.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                        {p.payment_status === 'paid' ? 'Pago' : 'Pendente'}
+                                    </span>
+                                    <button
+                                        onClick={() => setSelectedInfoPerson(p)}
+                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                                    >
+                                        <Info className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -230,9 +248,15 @@ export default function Dashboard() {
                                                 <p className="text-xs text-slate-500">{person.type}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-3">
                                             <span className="text-sm font-medium text-slate-900">R$ {person.payment_amount?.toFixed(2)}</span>
                                             <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-600/20">Pendente</span>
+                                            <button
+                                                onClick={() => setSelectedInfoPerson(person)}
+                                                className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                                            >
+                                                <Info className="h-4 w-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))
@@ -344,6 +368,13 @@ export default function Dashboard() {
                     </form>
                 )}
             </Modal>
+
+            <WorkerInfoModal
+                worker={selectedInfoPerson}
+                cells={stats?.cells}
+                isOpen={!!selectedInfoPerson}
+                onClose={() => setSelectedInfoPerson(null)}
+            />
         </div>
     );
 }

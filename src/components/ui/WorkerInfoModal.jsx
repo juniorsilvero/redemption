@@ -7,7 +7,7 @@ export function WorkerInfoModal({ worker, cells, isOpen, onClose }) {
     const cell = cells?.find(c => c.id === worker.cell_id);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Detalhes do Trabalhador">
+        <Modal isOpen={isOpen} onClose={onClose} title="Detalhes">
             <div className="space-y-4">
                 <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden">
