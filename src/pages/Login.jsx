@@ -11,12 +11,24 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('Login attempt started for:', email);
         setIsLoading(true);
-        const result = await login(email, password);
-        setIsLoading(false);
+        try {
+            const result = await login(email, password);
+            console.log('Login result:', result);
+            setIsLoading(false);
 
-        if (result.data) {
-            navigate('/');
+            if (result.data) {
+                console.log('Login successful, navigating to home');
+                navigate('/');
+            } else {
+                console.error('Login failed:', result.error);
+                alert('Erro ao entrar: ' + (result.error || 'Verifique suas credenciais'));
+            }
+        } catch (err) {
+            console.error('Fatal error during login:', err);
+            alert('Erro crítico ao tentar logar. Verifique a conexão.');
+            setIsLoading(false);
         }
     };
 
