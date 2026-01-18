@@ -12,12 +12,13 @@ import {
     XCircle,
     MinusCircle,
     Circle,
-    Search,
     UserCheck,
     Utensils,
     Trash2,
     Plus,
-    User
+    User,
+    ArrowLeft,
+    ChevronRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -25,6 +26,7 @@ export default function Attendance() {
     const { churchId } = useAuth();
     const { genderFilter, matchesFilter } = useFilter();
     const queryClient = useQueryClient();
+    const [view, setView] = useState('menu'); // 'menu', 'workers', 'passers', 'food'
 
     // -- Modal States --
     const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
@@ -32,7 +34,6 @@ export default function Attendance() {
 
     // -- Queries --
 
-    // 1. Workers (All, linked to cells)
     const { data: workers } = useQuery({
         queryKey: ['workers', churchId],
         queryFn: async () => {
@@ -46,7 +47,6 @@ export default function Attendance() {
         enabled: !!churchId
     });
 
-    // 2. Passers (Only paid)
     const { data: passers } = useQuery({
         queryKey: ['passers', churchId],
         queryFn: async () => {
@@ -54,75 +54,60 @@ export default function Attendance() {
                 .from('passers')
                 .select('*, cells(name, gender)')
                 .eq('church_id', churchId)
-                .eq('payment_status', 'ok') // Only paid
+                .eq('payment_status', 'paid') // Fixed: 'paid' instead of 'ok'
                 .order('name');
             return data;
         },
         enabled: !!churchId
     });
 
-    // 3. Attendance Records
     const { data: attendance } = useQuery({
         queryKey: ['attendance', churchId],
         queryFn: async () => {
-            const { data } = await supabase
-                .from('attendance')
-                .select('*')
-                .eq('church_id', churchId);
+            const { data } = await supabase.from('attendance').select('*').eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
     });
 
-    // 4. Food Assignments
     const { data: foodAssignments } = useQuery({
         queryKey: ['food_assignments', churchId],
         queryFn: async () => {
             const { data } = await supabase
                 .from('food_assignments')
-                .select('*, workers(name, surname)')
+                .select('*, workers(name, surname, gender, cells(gender))') // Fetch more worker info for filtering
                 .eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
     });
 
-    // -- Mutations --
 
+    // -- Mutations --
     const updateAttendanceMutation = useMutation({
         mutationFn: async ({ personId, personType, slot, status }) => {
-            // Delete if status is 'none', else upsert
             if (status === 'none') {
-                return supabase.from('attendance')
-                    .delete()
-                    .match({ person_id: personId, slot_number: slot });
+                return supabase.from('attendance').delete().match({ person_id: personId, slot_number: slot });
             } else {
-                return supabase.from('attendance')
-                    .upsert({
-                        church_id: churchId,
-                        person_id: personId,
-                        person_type: personType,
-                        slot_number: slot,
-                        status: status
-                    }, { onConflict: 'person_id, slot_number' });
+                return supabase.from('attendance').upsert({
+                    church_id: churchId,
+                    person_id: personId,
+                    person_type: personType,
+                    slot_number: slot,
+                    status: status
+                }, { onConflict: 'person_id, slot_number' });
             }
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries(['attendance', churchId]);
-        }
+        onSuccess: () => queryClient.invalidateQueries(['attendance', churchId])
     });
 
     const addFoodAssignmentMutation = useMutation({
         mutationFn: async ({ workerId, itemName }) => {
-            return supabase.from('food_assignments').insert({
-                church_id: churchId,
-                worker_id: workerId,
-                item_name: itemName
-            });
+            return supabase.from('food_assignments').insert({ church_id: churchId, worker_id: workerId, item_name: itemName });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['food_assignments', churchId]);
-            toast.success('Trabalhador adicionado ao item');
+            toast.success('Adicionado com sucesso');
         }
     });
 
@@ -132,13 +117,12 @@ export default function Attendance() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['food_assignments', churchId]);
-            toast.success('Removido com sucesso');
+            toast.success('Removido');
         }
     });
 
 
-    // -- Derived State (Filtering) --
-
+    // -- Derived State --
     const filteredWorkers = useMemo(() => {
         if (!workers) return [];
         return workers.filter(w => matchesFilter(w.gender || w.cells?.gender));
@@ -146,16 +130,11 @@ export default function Attendance() {
 
     const filteredPassers = useMemo(() => {
         if (!passers) return [];
-        return passers.filter(p => matchesFilter(p.gender || p.cells?.gender)); // Assuming passers/cells have gender
-        // Note: Passers table might not have gender directly, relies on joined cell gender if schema matches. 
-        // If passer table doesn't have gender column, we rely on joined cell. 
-        // Safe check: p.cells?.gender. 
-        // If matchesFilter is strict, we ensure we filter correctly.
+        return passers.filter(p => matchesFilter(p.gender || p.cells?.gender));
     }, [passers, matchesFilter]);
 
 
     // -- Handlers --
-
     const getStatus = (personId, slot) => {
         const record = attendance?.find(a => a.person_id === personId && a.slot_number === slot);
         return record?.status || 'none';
@@ -163,14 +142,8 @@ export default function Attendance() {
 
     const handleToggle = (personId, personType, slot) => {
         const current = getStatus(personId, slot);
-        const cycle = {
-            'none': 'present',
-            'present': 'absent',
-            'absent': 'justified',
-            'justified': 'none'
-        };
-        const next = cycle[current];
-        updateAttendanceMutation.mutate({ personId, personType, slot, status: next });
+        const cycle = { 'none': 'present', 'present': 'absent', 'absent': 'justified', 'justified': 'none' };
+        updateAttendanceMutation.mutate({ personId, personType, slot, status: cycle[current] });
     };
 
     const renderIcon = (status) => {
@@ -182,195 +155,171 @@ export default function Attendance() {
         }
     };
 
-    // Food Items List
-    const foodItems = [
-        "Arroz parborizado 5kg",
-        "Feijão preto de 1kg",
-        "Lata de oleo",
-        "Pote de margarina",
-        "Acucar de 5kg",
-        "Cafe",
-        "Leite fardos",
-        "Bandejas de ovos",
-        "Farinha Edna"
-    ];
+    // -- Sub-Components (Views) --
 
-    // -- Statistics for Workers --
-    const workerStats = useMemo(() => {
-        let present = 0, absent = 0, justified = 0;
-        // Count ONLY for the filtered workers to match UI
-        const visibleWorkerIds = new Set(filteredWorkers.map(w => w.id));
+    const WorkersView = () => {
+        const stats = useMemo(() => {
+            let present = 0, absent = 0, justified = 0;
+            const visibleIds = new Set(filteredWorkers.map(w => w.id));
+            attendance?.forEach(a => {
+                if (a.person_type === 'worker' && visibleIds.has(a.person_id)) {
+                    if (a.status === 'present') present++;
+                    if (a.status === 'absent') absent++;
+                    if (a.status === 'justified') justified++;
+                }
+            });
+            return { present, absent, justified };
+        }, [attendance, filteredWorkers]); // Depend on attendance and filteredWorkers
 
-        attendance?.forEach(a => {
-            if (a.person_type === 'worker' && visibleWorkerIds.has(a.person_id)) {
-                if (a.status === 'present') present++;
-                if (a.status === 'absent') absent++;
-                if (a.status === 'justified') justified++;
-            }
-        });
-        return { present, absent, justified };
-    }, [attendance, filteredWorkers]);
-
-
-    return (
-        <div className="space-y-6 pb-20">
-            <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold text-slate-900">Lista de Chamada</h1>
-                <p className="text-slate-500">Gestão de presença e doações de alimentos.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                {/* --- 1. WORKERS ATTENDANCE --- */}
-                <Card className="lg:col-span-2 shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-                        <CardTitle className="flex items-center gap-2">
-                            <Users className="w-5 h-5 text-indigo-600" />
+        return (
+            <div className="space-y-4">
+                <button onClick={() => setView('menu')} className="flex items-center text-sm text-slate-500 hover:text-indigo-600 mb-2">
+                    <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+                </button>
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b gap-4">
+                        <CardTitle className="flex items-center gap-2 text-indigo-700">
+                            <Users className="w-6 h-6" />
                             Trabalhadores
                         </CardTitle>
-                        <div className="flex gap-3 text-xs font-bold">
-                            <span className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> {workerStats.present}</span>
-                            <span className="text-red-600 flex items-center gap-1"><XCircle className="w-3 h-3" /> {workerStats.absent}</span>
-                            <span className="text-yellow-600 flex items-center gap-1"><MinusCircle className="w-3 h-3" /> {workerStats.justified}</span>
+                        <div className="flex gap-4 text-sm font-bold bg-slate-50 p-2 rounded-lg">
+                            <span className="text-green-600 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> {stats.present}</span>
+                            <span className="text-red-600 flex items-center gap-1"><XCircle className="w-4 h-4" /> {stats.absent}</span>
+                            <span className="text-yellow-600 flex items-center gap-1"><MinusCircle className="w-4 h-4" /> {stats.justified}</span>
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
-                            {/* Header */}
-                            <div className="grid grid-cols-12 bg-slate-50 py-2 px-4 text-xs font-semibold text-slate-500">
-                                <div className="col-span-7">Nome / Célula</div>
-                                <div className="col-span-5 flex justify-between px-1">
+                        <div className="divide-y divide-slate-100">
+                            <div className="grid grid-cols-12 bg-slate-50 py-3 px-4 text-xs font-semibold text-slate-500 sticky top-0 md:static">
+                                <div className="col-span-12 md:col-span-7 mb-2 md:mb-0">Nome / Célula</div>
+                                <div className="col-span-12 md:col-span-5 flex justify-between px-1">
                                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                                 </div>
                             </div>
-
-                            {filteredWorkers.map(worker => (
-                                <div key={worker.id} className="grid grid-cols-12 items-center py-3 px-4 hover:bg-slate-50">
-                                    <div className="col-span-7 flex items-center gap-3">
-                                        {worker.photo_url ? (
-                                            <img src={worker.photo_url} className="w-8 h-8 rounded-full object-cover" alt="" />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                                <User className="w-4 h-4 text-slate-400" />
+                            <div className="max-h-[70vh] overflow-y-auto">
+                                {filteredWorkers.map(worker => (
+                                    <div key={worker.id} className="grid grid-cols-12 items-center py-3 px-4 hover:bg-slate-50 border-b border-slate-50">
+                                        <div className="col-span-12 md:col-span-7 flex items-center gap-3 mb-3 md:mb-0">
+                                            {worker.photo_url ? (
+                                                <img src={worker.photo_url} className="w-10 h-10 rounded-full object-cover shadow-sm bg-white" alt="" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                    <User className="w-5 h-5" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">{worker.name} {worker.surname}</p>
+                                                <p className="text-xs text-slate-500">{worker.cells?.name}</p>
                                             </div>
-                                        )}
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-medium text-slate-900 truncate">{worker.name} {worker.surname}</p>
-                                            <p className="text-xs text-slate-500 truncate">{worker.cells?.name}</p>
+                                        </div>
+                                        <div className="col-span-12 md:col-span-5 flex justify-between items-center sm:px-4">
+                                            {[1, 2, 3, 4, 5].map(slot => (
+                                                <button
+                                                    key={slot}
+                                                    onClick={() => handleToggle(worker.id, 'worker', slot)}
+                                                    className="p-1.5 hover:bg-slate-200 rounded-full transition-transform active:scale-95"
+                                                >
+                                                    {renderIcon(getStatus(worker.id, slot))}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                    <div className="col-span-5 flex justify-between items-center">
-                                        {[1, 2, 3, 4, 5].map(slot => (
-                                            <button
-                                                key={slot}
-                                                onClick={() => handleToggle(worker.id, 'worker', slot)}
-                                                className="p-1 hover:bg-slate-100 rounded-full transition-colors"
-                                            >
-                                                {renderIcon(getStatus(worker.id, slot))}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                            {filteredWorkers.length === 0 && (
-                                <div className="p-8 text-center text-slate-500 text-sm">Nenhum trabalhador encontrado.</div>
-                            )}
+                                ))}
+                            </div>
+                            {filteredWorkers.length === 0 && <div className="p-8 text-center text-slate-500">Nenhum trabalhador encontrado.</div>}
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+        )
+    };
 
-                {/* --- 2. PASSERS ATTENDANCE --- */}
-                <Card className="shadow-sm h-fit">
-                    <CardHeader className="border-b pb-3">
-                        <CardTitle className="flex items-center gap-2">
-                            <UserCheck className="w-5 h-5 text-emerald-600" />
-                            Passantes (Pagos)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="bg-slate-50 py-2 px-4 text-xs font-semibold text-slate-500 border-b">
-                            Lista de Presença
-                        </div>
-                        <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
-                            {filteredPassers.map(passer => (
-                                <div key={passer.id} className="flex items-center justify-between py-3 px-4 hover:bg-slate-50">
-                                    <div className="flex items-center gap-3">
-                                        {passer.photo_url ? (
-                                            <img src={passer.photo_url} className="w-8 h-8 rounded-full object-cover" alt="" />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                                <User className="w-4 h-4 text-slate-400" />
-                                            </div>
-                                        )}
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-900">{passer.name} {passer.surname}</p>
-                                            <p className="text-xs text-slate-500">{passer.cells?.name}</p>
+    const PassersView = () => (
+        <div className="space-y-4">
+            <button onClick={() => setView('menu')} className="flex items-center text-sm text-slate-500 hover:text-indigo-600 mb-2">
+                <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+            </button>
+            <Card className="shadow-sm">
+                <CardHeader className="border-b pb-3">
+                    <CardTitle className="flex items-center gap-2 text-emerald-700">
+                        <UserCheck className="w-6 h-6" />
+                        Passantes (Pagos)
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="bg-slate-50 py-2 px-4 text-xs font-semibold text-slate-500 border-b">Lista de Presença</div>
+                    <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto">
+                        {filteredPassers.map(passer => (
+                            <div key={passer.id} className="flex items-center justify-between py-3 px-4 hover:bg-slate-50">
+                                <div className="flex items-center gap-3">
+                                    {passer.photo_url ? (
+                                        <img src={passer.photo_url} className="w-10 h-10 rounded-full object-cover shadow-sm bg-white" alt="" />
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                            <User className="w-5 h-5" />
                                         </div>
+                                    )}
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">{passer.name} {passer.surname}</p>
+                                        <p className="text-xs text-slate-500">{passer.cells?.name}</p>
                                     </div>
-                                    <button
-                                        onClick={() => handleToggle(passer.id, 'passer', 1)}
-                                    >
-                                        {/* Simple check for passers */}
-                                        {getStatus(passer.id, 1) === 'present' ? (
-                                            <CheckCircle2 className="w-6 h-6 text-emerald-600 fill-emerald-50" />
-                                        ) : (
-                                            <Circle className="w-6 h-6 text-slate-300" />
-                                        )}
-                                    </button>
                                 </div>
-                            ))}
-                            {filteredPassers.length === 0 && (
-                                <div className="p-4 text-center text-slate-500 text-xs">Nenhum passante pago encontrado.</div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+                                <button onClick={() => handleToggle(passer.id, 'passer', 1)} className="p-2 hover:bg-slate-100 rounded-full">
+                                    {getStatus(passer.id, 1) === 'present' ? <CheckCircle2 className="w-8 h-8 text-emerald-600 fill-emerald-50" /> : <Circle className="w-8 h-8 text-slate-300" />}
+                                </button>
+                            </div>
+                        ))}
+                        {filteredPassers.length === 0 && <div className="p-8 text-center text-slate-500">Nenhum passante pago encontrado.</div>}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
 
-                {/* --- 3. FOOD LIST --- */}
-                <Card className="lg:col-span-3 shadow-sm mt-4">
+    const FoodView = () => {
+        const items = ["Arroz parborizado 5kg", "Feijão preto de 1kg", "Lata de oleo", "Pote de margarina", "Acucar de 5kg", "Cafe", "Leite fardos", "Bandejas de ovos", "Farinha Edna"];
+        return (
+            <div className="space-y-4">
+                <button onClick={() => setView('menu')} className="flex items-center text-sm text-slate-500 hover:text-indigo-600 mb-2">
+                    <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
+                </button>
+                <Card className="shadow-sm">
                     <CardHeader className="border-b pb-3">
-                        <CardTitle className="flex items-center gap-2">
-                            <Utensils className="w-5 h-5 text-orange-600" />
+                        <CardTitle className="flex items-center gap-2 text-orange-700">
+                            <Utensils className="w-6 h-6" />
                             Lista de Alimentos
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {foodItems.map(item => {
-                                // Filter assignments for this item
-                                const assigned = foodAssignments?.filter(a => a.item_name === item);
+                            {items.map(item => {
+                                // Strictly filter assignments based on the assigned worker's gender AND the global filter
+                                const assigned = foodAssignments?.filter(a => {
+                                    if (a.item_name !== item) return false;
+                                    // Check if worker matches current filter
+                                    // We need worker data in result.
+                                    const workerGender = a.workers?.gender || a.workers?.cells?.gender;
+                                    return matchesFilter(workerGender);
+                                });
 
                                 return (
-                                    <div key={item} className="border rounded-lg p-3 bg-slate-50">
-                                        <div className="flex justify-between items-start mb-2">
+                                    <div key={item} className="border rounded-lg p-3 bg-slate-50 flex flex-col h-full">
+                                        <div className="flex justify-between items-start mb-3">
                                             <h3 className="font-semibold text-sm text-slate-800">{item}</h3>
-                                            <button
-                                                onClick={() => { setSelectedFoodItem(item); setIsFoodModalOpen(true); }}
-                                                className="text-indigo-600 hover:bg-indigo-50 p-1 rounded"
-                                                title="Adicionar pessoa"
-                                            >
+                                            <button onClick={() => { setSelectedFoodItem(item); setIsFoodModalOpen(true); }} className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded bg-white border border-indigo-100 shadow-sm transition-colors">
                                                 <Plus className="w-4 h-4" />
                                             </button>
                                         </div>
-
-                                        {/* List of assigned workers */}
-                                        <div className="space-y-1">
+                                        <div className="space-y-2 flex-1">
                                             {assigned?.map(assign => (
-                                                <div key={assign.id} className="flex justify-between items-center bg-white border border-slate-200 px-2 py-1 rounded text-xs">
-                                                    <span className="font-medium text-slate-700 truncate max-w-[120px]">
-                                                        {assign.workers?.name} {assign.workers?.surname}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => removeFoodAssignmentMutation.mutate(assign.id)}
-                                                        className="text-slate-400 hover:text-red-500"
-                                                    >
+                                                <div key={assign.id} className="flex justify-between items-center bg-white border border-slate-200 px-3 py-2 rounded-md text-xs shadow-sm">
+                                                    <span className="font-medium text-slate-700 truncate max-w-[120px]">{assign.workers?.name} {assign.workers?.surname}</span>
+                                                    <button onClick={() => removeFoodAssignmentMutation.mutate(assign.id)} className="text-slate-400 hover:text-red-500">
                                                         <Trash2 className="w-3 h-3" />
                                                     </button>
                                                 </div>
                                             ))}
-                                            {(!assigned || assigned.length === 0) && (
-                                                <div className="text-[10px] text-slate-400 italic py-1">Ninguém atribuído</div>
-                                            )}
+                                            {(!assigned || assigned.length === 0) && <div className="text-[10px] text-slate-400 italic py-2 text-center bg-slate-100/50 rounded border border-dashed border-slate-200">Vazio</div>}
                                         </div>
                                     </div>
                                 );
@@ -379,19 +328,61 @@ export default function Attendance() {
                     </CardContent>
                 </Card>
             </div>
+        )
+    };
 
-            {/* Helper Modal */}
+    // -- Menu View --
+    const MenuView = () => (
+        <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-bold text-slate-900">Lista de Chamada</h1>
+                <p className="text-slate-500">Selecione uma categoria para gerenciar.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button onClick={() => setView('workers')} className="group flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-indigo-500 hover:shadow-md transition-all">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
+                        <Users className="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Trabalhadores</h3>
+                    <p className="text-sm text-slate-500 mt-2 text-center">Gerenciar presença de {filteredWorkers.length} membros</p>
+                    <div className="mt-4 flex items-center text-indigo-600 text-sm font-medium">Acessar <ChevronRight className="w-4 h-4 ml-1" /></div>
+                </button>
+
+                <button onClick={() => setView('passers')} className="group flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all">
+                    <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
+                        <UserCheck className="w-8 h-8 text-emerald-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Passantes</h3>
+                    <p className="text-sm text-slate-500 mt-2 text-center">Check-in de {filteredPassers.length} pagos</p>
+                    <div className="mt-4 flex items-center text-emerald-600 text-sm font-medium">Acessar <ChevronRight className="w-4 h-4 ml-1" /></div>
+                </button>
+
+                <button onClick={() => setView('food')} className="group flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-orange-500 hover:shadow-md transition-all">
+                    <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-4 group-hover:bg-orange-100 transition-colors">
+                        <Utensils className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">Alimentos</h3>
+                    <p className="text-sm text-slate-500 mt-2 text-center">Gerenciar lista de doações</p>
+                    <div className="mt-4 flex items-center text-orange-600 text-sm font-medium">Acessar <ChevronRight className="w-4 h-4 ml-1" /></div>
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="pb-20">
+            {view === 'menu' && <MenuView />}
+            {view === 'workers' && <WorkersView />}
+            {view === 'passers' && <PassersView />}
+            {view === 'food' && <FoodView />}
+
             <WorkerSelectorModal
                 isOpen={isFoodModalOpen}
                 onClose={() => setIsFoodModalOpen(false)}
-                workers={filteredWorkers} // Selecting from currently visible workers
-                onSelect={(worker) => addFoodAssignmentMutation.mutate({
-                    workerId: worker.id,
-                    itemName: selectedFoodItem
-                })}
+                workers={filteredWorkers} // Already filtered by gender
+                onSelect={(w) => addFoodAssignmentMutation.mutate({ workerId: w.id, itemName: selectedFoodItem })}
                 title={`Quem vai trazer: ${selectedFoodItem}?`}
             />
-
         </div>
     );
 }
