@@ -1,6 +1,6 @@
 import { Users, UserCircle, UserCircle2 } from 'lucide-react';
-import { useFilter } from '../context/FilterContext';
-import { cn } from '../lib/utils';
+import { useFilter } from '../../context/FilterContext';
+import { cn } from '../../lib/utils';
 
 export function GenderFilter() {
     const { genderFilter, setGenderFilter } = useFilter();
