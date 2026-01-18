@@ -5,10 +5,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info } from 'lucide-react';
+import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info, BarChart3 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn, compressImage } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+import { CellFrequencyModal } from '../components/ui/CellFrequencyModal';
 
 
 export default function CellDetails() {
@@ -23,6 +24,7 @@ export default function CellDetails() {
     const [editingPasser, setEditingPasser] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
+    const [isFrequencyModalOpen, setIsFrequencyModalOpen] = useState(false);
 
 
 
@@ -317,6 +319,19 @@ export default function CellDetails() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-orange-600">R$ {totalPending.toFixed(2)}</div>
+                    </CardContent>
+                </Card>
+                <Card
+                    className="cursor-pointer hover:shadow-md transition-shadow border-indigo-100 group"
+                    onClick={() => setIsFrequencyModalOpen(true)}
+                >
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-500 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4" /> Frequência da Célula
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-slate-700 group-hover:text-indigo-700">Acessar</div>
                     </CardContent>
                 </Card>
             </div>
@@ -651,6 +666,8 @@ export default function CellDetails() {
                         <button type="button" onClick={() => setIsPasserModalOpen(false)} disabled={isUploading} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
                             Cancelar
                         </button>
+
+
                     </div>
 
                 </form>
@@ -664,6 +681,13 @@ export default function CellDetails() {
                 allPassers={passers}
                 isOpen={!!selectedInfoPerson}
                 onClose={() => setSelectedInfoPerson(null)}
+            />
+
+            <CellFrequencyModal
+                isOpen={isFrequencyModalOpen}
+                onClose={() => setIsFrequencyModalOpen(false)}
+                cell={cell}
+                churchId={churchId}
             />
 
         </div>
