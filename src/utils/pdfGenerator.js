@@ -122,25 +122,31 @@ export const generateScalePDF = (activeDay, scales, areas, workers, cells, filte
                     // Check if assigned but hidden (filtered out)
                     const isAssignedButHidden = asg?.worker_id && !worker;
 
-                    const cellName = worker ? (cellMap[worker.cell_id] || 'Sem Célula') : null;
+                    const cellName = worker ? (cellMap[worker.cell_id] || 'SEM CÉLULA') : null;
 
                     if (isAssignedButHidden) {
-                        // Hidden by filter - show generic placeholder or empty? 
-                        // User wants NO info. Showing empty slot preserves layout but hides info.
-                        tableBody.push(['-']);
+                        tableBody.push(['-', '-']);
                     } else {
                         tableBody.push([
-                            worker ? `${worker.name} ${worker.surname} [${cellName}]` : '(Vazio)'
+                            worker ? `${worker.name.toUpperCase()} ${worker.surname.toUpperCase()}` : '(VAZIO)',
+                            worker ? cellName.toUpperCase() : '-'
                         ]);
                     }
                 }
 
+                // Add section title above table
+                if (currentY > 255) { doc.addPage(); currentY = 20; }
+                doc.setFontSize(15);
+                doc.setFont('helvetica', 'bold');
+                doc.text(area.name.toUpperCase(), 14, currentY);
+                currentY += 5;
+
                 autoTable(doc, {
                     ...commonTableStyles,
                     startY: currentY,
-                    head: [[area.name]],
+                    head: [['NOME COMPLETO', 'CÉLULA']],
                     body: tableBody,
-                    headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 },
+                    headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 11 },
                     margin: { left: 14, right: 14 },
                 });
 
@@ -180,17 +186,26 @@ export const generateFixedScalePDF = (fixedScales, workers, cells, filterType) =
             .map(id => {
                 const w = workers.find(work => work.id === id);
                 if (!w) return null; // Filter out if not found (wrong gender)
-                const cellName = w ? (cellMap[w.cell_id] || 'Sem Célula') : '';
-                return [`${w.name} ${w.surname} [${cellName}]`];
+                const cellName = w ? (cellMap[w.cell_id] || 'SEM CÉLULA') : '';
+                return [
+                    `${w.name.toUpperCase()} ${w.surname.toUpperCase()}`,
+                    cellName.toUpperCase()
+                ];
             })
             .filter(Boolean); // Remove nulls
+
+        // Add team title above table
+        doc.setFontSize(15);
+        doc.setFont('helvetica', 'bold');
+        doc.text(scale.name.toUpperCase(), 14, startY);
+        startY += 5;
 
         autoTable(doc, {
             ...commonTableStyles,
             startY: startY,
-            head: [[scale.name]],
-            body: memberData.length > 0 ? memberData : [['Nenhum membro (neste filtro)']],
-            headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 }
+            head: [['NOME COMPLETO', 'CÉLULA']],
+            body: memberData.length > 0 ? memberData : [['NENHUM MEMBRO (NESTE FILTRO)', '-']],
+            headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 11 }
         });
     });
 
