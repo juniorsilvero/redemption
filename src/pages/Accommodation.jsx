@@ -26,7 +26,11 @@ export default function Accommodation() {
     const { data: rooms } = useQuery({
         queryKey: ['rooms', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('rooms').select('*').eq('church_id', churchId);
+            let query = supabase.from('rooms').select('*').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                query = query.eq('gender', genderFilter);
+            }
+            const { data } = await query;
             return data || [];
         },
         enabled: !!churchId
