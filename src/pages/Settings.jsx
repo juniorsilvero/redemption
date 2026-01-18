@@ -173,7 +173,7 @@ function UserManagement() {
 }
 
 export default function Settings() {
-    const { isAdmin } = useAuth();
+    const { isAdmin, churchId } = useAuth();
     const queryClient = useQueryClient();
 
     if (!isAdmin) {
@@ -192,7 +192,7 @@ export default function Settings() {
     // Mutations
     const addAreaMutation = useMutation({
         mutationFn: async (newArea) => {
-            return supabase.from('service_areas').insert({ ...newArea, church_id: 'church-1' });
+            return supabase.from('service_areas').insert({ ...newArea, church_id: churchId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['service_areas']);

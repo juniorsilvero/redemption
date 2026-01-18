@@ -98,7 +98,7 @@ export default function Cells() {
                 }
                 return result;
             }
-            const { data: result, error } = await supabase.from('cells').insert({ ...data, church_id: 'church-1' });
+            const { data: result, error } = await supabase.from('cells').insert({ ...data, church_id: churchId });
             if (error) {
                 console.error('Insert error:', error);
                 throw error;

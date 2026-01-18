@@ -122,7 +122,7 @@ export default function Dashboard() {
     const addPersonMutation = useMutation({
         mutationFn: async (data) => {
             const table = addPersonType === 'worker' ? 'workers' : 'passers';
-            return supabase.from(table).insert({ ...data, cell_id: selectedCell.id, church_id: 'church-1' });
+            return supabase.from(table).insert({ ...data, cell_id: selectedCell.id, church_id: churchId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['dashboardStats']);

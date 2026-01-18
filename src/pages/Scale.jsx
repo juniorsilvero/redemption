@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useFilter } from '../context/FilterContext';
@@ -47,6 +47,7 @@ export default function Scale() {
     const { data: scales } = useQuery({
         queryKey: ['work_scale', churchId, genderFilter],
         queryFn: async () => {
+            // Fetch all assignments for the church. Filtering happens on render to show "Occupied"
             const { data } = await supabase.from('work_scale').select('*').eq('church_id', churchId);
             return data || [];
         },
@@ -62,21 +63,11 @@ export default function Scale() {
         enabled: !!churchId
     });
 
+    // Fetch ALL Workers (to handle "Occupied" display correctly)
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId, genderFilter],
+        queryKey: ['workers', churchId], // removed genderFilter dependency
         queryFn: async () => {
-            // Get cells filtered by gender
-            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
-            if (genderFilter !== 'all') {
-                cellsQuery = cellsQuery.eq('gender', genderFilter);
-            }
-            const { data: cells } = await cellsQuery;
-            const cellIds = cells?.map(c => c.id) || [];
-
-            // Filter workers by cell IDs
-            const { data } = cellIds.length > 0
-                ? await supabase.from('workers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
-                : { data: [] };
+            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
@@ -92,17 +83,38 @@ export default function Scale() {
     });
 
     const { data: cells } = useQuery({
-        queryKey: ['cells', churchId, genderFilter],
+        queryKey: ['cells', churchId], // Fetch all cells for mapping
         queryFn: async () => {
-            let query = supabase.from('cells').select('*').eq('church_id', churchId);
-            if (genderFilter !== 'all') {
-                query = query.eq('gender', genderFilter);
-            }
-            const { data } = await query;
+            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
     });
+
+    // Helper: Determine filtered workers for dropdowns
+    const filteredWorkers = useMemo(() => {
+        if (!workers || !cells) return [];
+        if (genderFilter === 'all') return workers;
+
+        const cellGenderMap = cells.reduce((acc, c) => ({ ...acc, [c.id]: c.gender }), {});
+
+        return workers.filter(w => {
+            const g = cellGenderMap[w.cell_id];
+            return g === genderFilter;
+        });
+    }, [workers, cells, genderFilter]);
+
+    // Helper: Check if a worker matches the current filter
+    const matchesFilter = (workerId) => {
+        if (!workerId) return true; // Empty slot matches
+        if (genderFilter === 'all') return true;
+
+        const worker = workers?.find(w => w.id === workerId);
+        if (!worker) return false;
+
+        const cell = cells?.find(c => c.id === worker.cell_id);
+        return cell?.gender === genderFilter;
+    };
 
 
     // Mutation to save/update assignment
@@ -113,7 +125,7 @@ export default function Scale() {
                 return supabase.from('work_scale').update({ worker_id }).eq('id', existingId);
             }
             if (worker_id) {
-                return supabase.from('work_scale').insert({ day, period, area_id, worker_id, church_id: 'church-1' });
+                return supabase.from('work_scale').insert({ day, period, area_id, worker_id, church_id: churchId }); // FIXED: church_id
             }
         },
         onSuccess: () => {
@@ -123,13 +135,22 @@ export default function Scale() {
     });
 
     const handleAssign = (day, period, area_id, worker_id, existingId) => {
+        // Prevent overwriting if slot is occupied by other gender (should be blocked by UI but double check)
+        if (existingId) {
+            const existingAssignment = scales?.find(s => s.id === existingId);
+            if (existingAssignment?.worker_id && !matchesFilter(existingAssignment.worker_id)) {
+                toast.error('Não é possível alterar uma escala ocupada por outro gênero.');
+                return;
+            }
+        }
+
         assignMutation.mutate({ day, period, area_id, worker_id: worker_id === "" ? null : worker_id, existingId });
     };
 
     // Fixed Scale Mutations
     const createFixedScaleMutation = useMutation({
         mutationFn: async (name) => {
-            return supabase.from('fixed_scales').insert({ name, church_id: 'church-1', members: [] });
+            return supabase.from('fixed_scales').insert({ name, church_id: churchId, members: [] }); // FIXED: church_id
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['fixed_scales']);
@@ -174,23 +195,8 @@ export default function Scale() {
     // Helper to check conflicts
     const getConflict = (workerId, currentDay, currentPeriod) => {
         if (!workerId || !scales) return null;
-        // Check if this worker is assigned to ANY other area in the SAME period of the SAME day
-        // Wait, user said "Visual warning if a person is assigned to multiple tasks at the same time."
-        // So checking same Day + Period.
-        const otherAssignments = scales.filter(s =>
-            s.worker_id === workerId &&
-            s.day === currentDay &&
-            s.period === currentPeriod
-        );
-
-        // If found more than 1 (including pending save?) or ...
-        // Actually we are rendering slots. One slot handles one assignment.
-        // If the worker ID appears in `scales` for (Day, Period) in DIIFFERENT area, that's a conflict? 
-        // Yes, if I am assigning to Kitchen, checking if he is already in Cleaning at the same time.
-
-        // Let's count occurrences of workerId in this (Day, Period)
         const count = scales.filter(s => s.worker_id === workerId && s.day === currentDay && s.period === currentPeriod).length;
-        return count > 1; // If more than 1, they are double booked.
+        return count > 1;
     };
 
     // Or check if selected worker is ALREADY assigned to another area in this period
@@ -295,13 +301,17 @@ export default function Scale() {
                                                             const existing = areaAssignments[index];
                                                             const conflict = existing?.worker_id && isWorkerBusy(existing.worker_id, area.id, activeTab, period);
 
+                                                            // Check filter match for existing assignment
+                                                            const isMatch = matchesFilter(existing?.worker_id);
+
+
                                                             // Get already selected workers in this area/period to prevent duplicates
                                                             const selectedWorkerIds = areaAssignments
                                                                 .filter(a => a?.worker_id)
                                                                 .map(a => a.worker_id);
 
                                                             // Filter out already selected workers (except current)
-                                                            const availableWorkers = workers?.filter(w =>
+                                                            const availableWorkers = filteredWorkers?.filter(w =>
                                                                 !selectedWorkerIds.includes(w.id) || w.id === existing?.worker_id
                                                             ) || [];
 
@@ -309,22 +319,29 @@ export default function Scale() {
 
                                                             return (
                                                                 <div key={index} className="flex items-center gap-2">
-                                                                    <select
-                                                                        className={cn(
-                                                                            "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 px-2",
-                                                                            conflict ? "ring-red-300 focus:ring-red-500 bg-red-50" : "ring-slate-300 focus:ring-indigo-600"
-                                                                        )}
-                                                                        value={existing?.worker_id || ""}
-                                                                        onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
-                                                                    >
-                                                                        <option value="">Selecione...</option>
-                                                                        {availableWorkers.map(w => (
-                                                                            <option key={w.id} value={w.id}>
-                                                                                {w.name} {w.surname}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {selectedWorker && (
+                                                                    {existing?.worker_id && !isMatch ? (
+                                                                        <select disabled className="block w-full rounded-md border-0 py-1.5 bg-slate-100 text-slate-500 shadow-sm ring-1 ring-inset ring-slate-200 sm:text-sm sm:leading-6 px-2 cursor-not-allowed">
+                                                                            <option>Ocupado (Outro Gênero)</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <select
+                                                                            className={cn(
+                                                                                "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 px-2",
+                                                                                conflict ? "ring-red-300 focus:ring-red-500 bg-red-50" : "ring-slate-300 focus:ring-indigo-600"
+                                                                            )}
+                                                                            value={existing?.worker_id || ""}
+                                                                            onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
+                                                                        >
+                                                                            <option value="">Selecione...</option>
+                                                                            {availableWorkers.map(w => (
+                                                                                <option key={w.id} value={w.id}>
+                                                                                    {w.name} {w.surname}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+                                                                    )}
+
+                                                                    {selectedWorker && isMatch && ( // Only show info if matching format
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => setViewingWorker(selectedWorker)}
@@ -334,7 +351,7 @@ export default function Scale() {
                                                                             <Info className="h-4 w-4" />
                                                                         </button>
                                                                     )}
-                                                                    {conflict && (
+                                                                    {conflict && isMatch && (
                                                                         <div className="relative group">
                                                                             <AlertTriangle className="h-5 w-5 text-red-500 cursor-help" />
                                                                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-900 text-white text-xs rounded py-1 px-2 text-center z-10">
@@ -404,6 +421,33 @@ export default function Scale() {
                                             ) : (
                                                 scale.members?.map(memberId => {
                                                     const member = workers.find(w => w.id === memberId);
+
+                                                    // STRICT SEPARATION for Fixed Scales
+                                                    // Check if member matches logic.
+                                                    // If filter is active (not 'all'), and member is opposite gender, hide them or show placeholder?
+                                                    // User said "pra homem não aparecer no de mulher".
+                                                    // If I show "Occupied", it's fine.
+                                                    // But fixed scales are teams. If I'm creating a "Kitchen Team", maybe it's mixed?
+                                                    // But user strictly asked for separation here too.
+                                                    // Let's hide opposite gender members from the list completely OR show "Outro Gênero" placeholder.
+                                                    // Given "não aparecer", maybe hiding is better?
+                                                    // BUT if I hide, I can't see team size.
+                                                    // Let's follow "Occupied" pattern for consistency.
+
+                                                    const isMemberMatch = matchesFilter(memberId);
+
+                                                    if (!isMemberMatch) {
+                                                        // If strict separation, user shouldn't even KNOW a woman is in this team if they are in 'Male' view?
+                                                        // Or should they just not edit it?
+                                                        // User said: "pra homem não aparecer no de mulher".
+                                                        // This implies invisibility.
+                                                        // But if I create a team "Band", and it has men and women.
+                                                        // If I am filtered to 'Male', I only see the men in the band.
+                                                        // This seems to be what is requested.
+                                                        return null; // Hide completely in Fixed Scale list?
+                                                    }
+
+
                                                     return (
                                                         <div key={memberId} className="flex items-center justify-between text-sm bg-slate-50 p-2 rounded-md">
                                                             <span className="font-medium text-slate-700">{member?.name || 'Desconhecido'} {member?.surname}</span>
@@ -415,7 +459,7 @@ export default function Scale() {
                                                             </button>
                                                         </div>
                                                     )
-                                                })
+                                                }).filter(Boolean)
                                             )}
                                         </div>
 
@@ -429,7 +473,8 @@ export default function Scale() {
                                                 defaultValue=""
                                             >
                                                 <option value="" disabled>Adicionar membro...</option>
-                                                {workers.filter(w => !scale.members?.includes(w.id)).map(w => (
+                                                {/* Filter dropdown to only show matching gender workers */}
+                                                {filteredWorkers.filter(w => !scale.members?.includes(w.id)).map(w => (
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
                                             </select>
