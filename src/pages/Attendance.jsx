@@ -75,7 +75,7 @@ export default function Attendance() {
         queryFn: async () => {
             const { data } = await supabase
                 .from('food_assignments')
-                .select('*, workers(name, surname, gender, cells(gender))') // Fetch more worker info for filtering
+                .select('*, workers(name, surname, cells(gender))') // Fetch worker info (gender comes from cell)
                 .eq('church_id', churchId);
             return data || [];
         },
