@@ -16,9 +16,17 @@ import { generatePrayerClockPDF } from '../utils/pdfGenerator';
 
 export default function Prayer() {
     const { churchId } = useAuth();
-    const { genderFilter } = useFilter();
+    const { genderFilter, setGenderFilter } = useFilter(); // Need setGenderFilter
     const queryClient = useQueryClient();
     const [viewingWorker, setViewingWorker] = useState(null);
+
+    // Enforce Gender Filter on Mount/Update (No 'All' allowed)
+    useEffect(() => {
+        if (genderFilter === 'all') {
+            setGenderFilter('male');
+        }
+    }, [genderFilter, setGenderFilter]);
+
 
     // ... slots logic stays same
     const slots = useMemo(() => {
@@ -67,9 +75,9 @@ export default function Prayer() {
         enabled: !!churchId
     });
 
-    // Fetch Workers (Fetch ALL to display names correctly even if filtered out)
+    // Fetch Workers (Fetch ALL)
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId], // removed genderFilter dependency
+        queryKey: ['workers', churchId],
         queryFn: async () => {
             const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
@@ -80,9 +88,9 @@ export default function Prayer() {
     // Determine filtered workers for the dropdown options
     const filteredWorkers = useMemo(() => {
         if (!workers || !cells) return [];
+        // if genderFilter is all (shouldn't happen due to enforcement), return all.
         if (genderFilter === 'all') return workers;
 
-        // Map cell gender to determine worker gender effectively
         const cellGenderMap = cells.reduce((acc, c) => ({ ...acc, [c.id]: c.gender }), {});
 
         return workers.filter(w => {
@@ -90,6 +98,19 @@ export default function Prayer() {
             return g === genderFilter;
         });
     }, [workers, cells, genderFilter]);
+
+
+    // Helper: Check if a specific worker matches the current filter
+    const matchesFilter = (workerId) => {
+        if (!workerId) return true; // Empty is neutral
+        if (genderFilter === 'all') return true;
+
+        const worker = workers?.find(w => w.id === workerId);
+        if (!worker) return false; // Unknown worker
+
+        const cell = cells?.find(c => c.id === worker.cell_id);
+        return cell?.gender === genderFilter;
+    };
 
 
     // Helper to get worker display info
@@ -133,10 +154,17 @@ export default function Prayer() {
     });
 
     const handleAssign = (slotId, workerId, position) => {
-        if (workerId) {
-            const assignment = prayerAssignments?.find(p => p.id === slotId);
-            const otherWorkerId = position === 1 ? assignment?.worker_2_id : assignment?.worker_1_id;
+        // If trying to assign to a slot occupied by other gender (should be blocked by UI, but double check)
+        const assignment = prayerAssignments?.find(p => p.id === slotId);
+        const currentId = position === 1 ? assignment?.worker_1_id : assignment?.worker_2_id;
 
+        if (currentId && !matchesFilter(currentId)) {
+            toast.error('Não é possível alterar um horário ocupado por outro gênero neste filtro.');
+            return;
+        }
+
+        if (workerId) {
+            const otherWorkerId = position === 1 ? assignment?.worker_2_id : assignment?.worker_1_id;
             if (workerId === otherWorkerId) {
                 toast.error('Esta pessoa já está escalada nesta mesma posição para este horário!');
                 return;
@@ -185,6 +213,10 @@ export default function Prayer() {
                         const worker1 = workers.find(w => w.id === assignment?.worker_1_id);
                         const worker2 = workers.find(w => w.id === assignment?.worker_2_id);
 
+                        // Check if they match current filter
+                        const w1Match = matchesFilter(assignment?.worker_1_id);
+                        const w2Match = matchesFilter(assignment?.worker_2_id);
+
                         return (
                             <div key={slot.id} className="grid grid-cols-12 items-center hover:bg-slate-50 transition-colors">
                                 <div className="col-span-2 py-3 px-4 flex flex-col items-center justify-center text-sm">
@@ -196,25 +228,26 @@ export default function Prayer() {
                                 <div className="col-span-5 p-2 border-l border-slate-100">
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                            <select
-                                                className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
-                                                value={assignment?.worker_1_id || ""}
-                                                onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
-                                            >
-                                                <option value="">-- Vazio --</option>
-                                                {/* If assigned worker is NOT in the filtered list (e.g. opposite gender), add them as a disabled option so it shows up */}
-                                                {assignment?.worker_1_id && !filteredWorkers.find(w => w.id === assignment.worker_1_id) && worker1 && (
-                                                    <option value={worker1.id} disabled>
-                                                        {worker1.name} {worker1.surname} (Outro Gênero/Filtro)
-                                                    </option>
-                                                )}
+                                            {/* Logic: If assigned & NO match -> Disabled input 'Occupied'. Else -> Normal input */}
+                                            {assignment?.worker_1_id && !w1Match ? (
+                                                <select disabled className="block w-full rounded-md border-0 py-1.5 bg-slate-100 text-slate-500 shadow-sm ring-1 ring-inset ring-slate-200 sm:text-sm sm:leading-6 px-2 text-xs cursor-not-allowed">
+                                                    <option>Ocupado (Outro Gênero)</option>
+                                                </select>
+                                            ) : (
+                                                <select
+                                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
+                                                    value={assignment?.worker_1_id || ""}
+                                                    onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
+                                                >
+                                                    <option value="">-- Vazio --</option>
+                                                    {filteredWorkers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
+                                                        <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                                                {filteredWorkers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
-                                                    <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                                ))}
-
-                                            </select>
-                                            {assignment?.worker_1_id && worker1 && (
+                                            {/* Only show info button if it matches filter or we want to allow seeing other gender info? User said 'separate'. Let's hide info for other gender to be strict. */}
+                                            {assignment?.worker_1_id && w1Match && worker1 && (
                                                 <button
                                                     onClick={() => setViewingWorker(worker1)}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
@@ -225,7 +258,7 @@ export default function Prayer() {
                                             )}
 
                                         </div>
-                                        {assignment?.worker_1_id && (
+                                        {assignment?.worker_1_id && w1Match && (
                                             <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full w-fit">
                                                 {getWorkerDisplay(assignment.worker_1_id)?.cellName || "Sem Célula"}
                                             </span>
@@ -237,26 +270,24 @@ export default function Prayer() {
                                 <div className="col-span-5 p-2 border-l border-slate-100">
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                            <select
-                                                className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
+                                            {assignment?.worker_2_id && !w2Match ? (
+                                                <select disabled className="block w-full rounded-md border-0 py-1.5 bg-slate-100 text-slate-500 shadow-sm ring-1 ring-inset ring-slate-200 sm:text-sm sm:leading-6 px-2 text-xs cursor-not-allowed">
+                                                    <option>Ocupado (Outro Gênero)</option>
+                                                </select>
+                                            ) : (
+                                                <select
+                                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
+                                                    value={assignment?.worker_2_id || ""}
+                                                    onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
+                                                >
+                                                    <option value="">-- Vazio --</option>
+                                                    {filteredWorkers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
+                                                        <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                                                value={assignment?.worker_2_id || ""}
-                                                onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
-                                            >
-                                                <option value="">-- Vazio --</option>
-                                                {/* If assigned worker is NOT in the filtered list (e.g. opposite gender), add them as a disabled option so it shows up */}
-                                                {assignment?.worker_2_id && !filteredWorkers.find(w => w.id === assignment.worker_2_id) && worker2 && (
-                                                    <option value={worker2.id} disabled>
-                                                        {worker2.name} {worker2.surname} (Outro Gênero/Filtro)
-                                                    </option>
-                                                )}
-
-                                                {filteredWorkers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
-                                                    <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                                ))}
-
-                                            </select>
-                                            {assignment?.worker_2_id && worker2 && (
+                                            {assignment?.worker_2_id && w2Match && worker2 && (
                                                 <button
                                                     onClick={() => setViewingWorker(worker2)}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
@@ -267,7 +298,7 @@ export default function Prayer() {
                                             )}
 
                                         </div>
-                                        {assignment?.worker_2_id && (
+                                        {assignment?.worker_2_id && w2Match && (
                                             <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-full w-fit">
                                                 {getWorkerDisplay(assignment.worker_2_id)?.cellName || "Sem Célula"}
                                             </span>
