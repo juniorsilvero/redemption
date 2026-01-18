@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -9,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Dashboard() {
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [modalType, setModalType] = useState(null); // 'workers' | 'passers' | 'revenue' | null
     const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
@@ -20,12 +22,12 @@ export default function Dashboard() {
 
 
     const { data: stats } = useQuery({
-        queryKey: ['dashboardStats'],
+        queryKey: ['dashboardStats', churchId],
         queryFn: async () => {
-            // Mock aggregations
-            const { data: workers } = await supabase.from('workers').select('*');
-            const { data: passers } = await supabase.from('passers').select('*');
-            const { data: cells } = await supabase.from('cells').select('*');
+            // Filter by churchId
+            const { data: workers } = await supabase.from('workers').select('*').eq('church_id', churchId);
+            const { data: passers } = await supabase.from('passers').select('*').eq('church_id', churchId);
+            const { data: cells } = await supabase.from('cells').select('*').eq('church_id', churchId);
 
             const totalWorkers = workers?.length || 0;
             const totalPassers = passers?.length || 0;
@@ -72,8 +74,10 @@ export default function Dashboard() {
                 cells: cells || []
             };
 
-        }
+        },
+        enabled: !!churchId
     });
+
 
     const kpiCards = [
         {

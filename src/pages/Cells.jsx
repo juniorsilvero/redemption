@@ -9,35 +9,33 @@ import { Plus, Users, UserPlus, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function Cells() {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, churchId } = useAuth();
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCell, setEditingCell] = useState(null);
 
     const { data: cells, isLoading } = useQuery({
-        queryKey: ['cells'],
+        queryKey: ['cells', churchId],
         queryFn: async () => {
-            let query = supabase.from('cells').select('*');
+            let query = supabase.from('cells').select('*').eq('church_id', churchId);
 
             // If not admin, only show own cell
             if (!isAdmin) {
-                // Since mock query chain is limited, we filter in JS for safety in this mock env,
-                // but logically we should do .eq('leader_id', user.id)
-                // Mock supabase support for .eq
                 const result = await query.eq('leader_id', user.id);
                 return result.data;
             }
 
             const result = await query;
             return result.data;
-        }
+        },
+        enabled: !!churchId
     });
 
     const { data: cellStats } = useQuery({
-        queryKey: ['cellStats'],
+        queryKey: ['cellStats', churchId],
         queryFn: async () => {
-            const { data: workers } = await supabase.from('workers').select('id, cell_id');
-            const { data: passers } = await supabase.from('passers').select('id, cell_id');
+            const { data: workers } = await supabase.from('workers').select('id, cell_id').eq('church_id', churchId);
+            const { data: passers } = await supabase.from('passers').select('id, cell_id').eq('church_id', churchId);
 
             const stats = {};
             (workers || []).forEach(w => {
@@ -49,8 +47,10 @@ export default function Cells() {
                 stats[p.cell_id].passers++;
             });
             return stats;
-        }
+        },
+        enabled: !!churchId
     });
+
 
     const { data: profiles } = useQuery({
 
