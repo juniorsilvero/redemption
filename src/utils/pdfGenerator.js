@@ -7,14 +7,18 @@ const commonTableStyles = {
         fontSize: 11,
         fontStyle: 'bold',
         cellPadding: 3,
-        textColor: [0, 0, 0]
+        textColor: [0, 0, 0],
+        lineWidth: 0.5, // Thicker borders
+        lineColor: [0, 0, 0] // Black borders
     },
     headStyles: {
         fillColor: [0, 0, 0],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         fontSize: 13,
-        halign: 'center'
+        halign: 'center',
+        lineWidth: 0.5,
+        lineColor: [0, 0, 0]
     },
     theme: 'grid'
 };
