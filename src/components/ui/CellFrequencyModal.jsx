@@ -91,46 +91,46 @@ export function CellFrequencyModal({ isOpen, onClose, cell, churchId }) {
                         <h3 className="text-lg font-bold text-slate-800">{cell?.name}</h3>
                     </div>
 
-                    <form onSubmit={handleAddMain} className="flex gap-2 items-end bg-slate-50 p-3 rounded-lg border border-slate-200">
-                        <div>
+                    <form onSubmit={handleAddMain} className="flex flex-col sm:flex-row sm:items-end gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div className="w-full sm:w-auto">
                             <label className="block text-xs font-medium text-slate-500 mb-1">Data</label>
                             <input
                                 type="date"
                                 value={mainDate}
                                 onChange={(e) => setMainDate(e.target.value)}
-                                className="text-sm rounded-md border-slate-300 py-1.5 focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full text-sm rounded-md border-slate-300 py-1.5 focus:ring-indigo-500 focus:border-indigo-500"
                                 required
                             />
                         </div>
-                        <div>
+                        <div className="w-full sm:w-24">
                             <label className="block text-xs font-medium text-slate-500 mb-1">Qtd. Pessoas</label>
                             <input
                                 type="number"
                                 value={mainCount}
                                 onChange={(e) => setMainCount(e.target.value)}
                                 min="0"
-                                className="w-24 text-sm rounded-md border-slate-300 py-1.5 focus:ring-indigo-500 focus:border-indigo-500"
+                                className="w-full text-sm rounded-md border-slate-300 py-1.5 focus:ring-indigo-500 focus:border-indigo-500"
                                 required
                             />
                         </div>
-                        <button type="submit" className="mb-[1px] bg-indigo-600 text-white p-2 rounded-md hover:bg-indigo-700 shadow-sm transition-colors">
-                            <Plus className="w-4 h-4" />
+                        <button type="submit" className="w-full sm:w-auto bg-indigo-600 text-white p-2 rounded-md hover:bg-indigo-700 shadow-sm transition-colors flex justify-center items-center">
+                            <Plus className="w-4 h-4" /> <span className="sm:hidden ml-2 text-sm font-medium">Adicionar</span>
                         </button>
                     </form>
 
-                    <div className="rounded-md border border-slate-200 overflow-hidden">
+                    <div className="rounded-md border border-slate-200 overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Data</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Pessoas</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">Ações</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Data</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Pessoas</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {mainReports.map(report => (
                                     <tr key={report.id} className="hover:bg-slate-50">
-                                        <td className="px-4 py-2 text-sm text-slate-900">{new Date(report.date).toLocaleDateString('pt-BR')}</td>
+                                        <td className="px-4 py-2 text-sm text-slate-900 whitespace-nowrap">{new Date(report.date).toLocaleDateString('pt-BR')}</td>
                                         <td className="px-4 py-2 text-sm text-slate-900 font-semibold">{report.count}</td>
                                         <td className="px-4 py-2 text-right">
                                             <button onClick={() => deleteReportMutation.mutate(report.id)} className="text-slate-400 hover:text-red-600 transition-colors">
@@ -156,8 +156,8 @@ export function CellFrequencyModal({ isOpen, onClose, cell, churchId }) {
                         <h3 className="text-lg font-bold text-slate-800">Células de Apoio</h3>
                     </div>
 
-                    <form onSubmit={handleAddSupport} className="flex flex-wrap gap-2 items-end bg-orange-50/50 p-3 rounded-lg border border-orange-100">
-                        <div className="flex-1 min-w-[200px]">
+                    <form onSubmit={handleAddSupport} className="flex flex-col sm:flex-row sm:items-end gap-3 bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                        <div className="w-full sm:flex-1">
                             <label className="block text-xs font-medium text-slate-500 mb-1">Nome da Célula de Apoio</label>
                             <input
                                 type="text"
@@ -168,47 +168,49 @@ export function CellFrequencyModal({ isOpen, onClose, cell, churchId }) {
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Data</label>
-                            <input
-                                type="date"
-                                value={supportDate}
-                                onChange={(e) => setSupportDate(e.target.value)}
-                                className="text-sm rounded-md border-slate-300 py-1.5 focus:ring-orange-500 focus:border-orange-500"
-                                required
-                            />
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <div className="flex-1 sm:w-auto">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Data</label>
+                                <input
+                                    type="date"
+                                    value={supportDate}
+                                    onChange={(e) => setSupportDate(e.target.value)}
+                                    className="w-full text-sm rounded-md border-slate-300 py-1.5 focus:ring-orange-500 focus:border-orange-500"
+                                    required
+                                />
+                            </div>
+                            <div className="w-20 sm:w-16">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Qtd.</label>
+                                <input
+                                    type="number"
+                                    value={supportCount}
+                                    onChange={(e) => setSupportCount(e.target.value)}
+                                    min="0"
+                                    className="w-full text-sm rounded-md border-slate-300 py-1.5 focus:ring-orange-500 focus:border-orange-500"
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Qtd.</label>
-                            <input
-                                type="number"
-                                value={supportCount}
-                                onChange={(e) => setSupportCount(e.target.value)}
-                                min="0"
-                                className="w-16 text-sm rounded-md border-slate-300 py-1.5 focus:ring-orange-500 focus:border-orange-500"
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="mb-[1px] bg-orange-600 text-white p-2 rounded-md hover:bg-orange-700 shadow-sm transition-colors">
-                            <Plus className="w-4 h-4" />
+                        <button type="submit" className="w-full sm:w-auto bg-orange-600 text-white p-2 rounded-md hover:bg-orange-700 shadow-sm transition-colors flex justify-center items-center">
+                            <Plus className="w-4 h-4" /> <span className="sm:hidden ml-2 text-sm font-medium">Adicionar</span>
                         </button>
                     </form>
 
-                    <div className="rounded-md border border-slate-200 overflow-hidden">
+                    <div className="rounded-md border border-slate-200 overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Nome</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Data</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Pessoas</th>
-                                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">Ações</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Nome</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Data</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Pessoas</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {supportReports.map(report => (
                                     <tr key={report.id} className="hover:bg-slate-50">
-                                        <td className="px-4 py-2 text-sm text-slate-900 font-medium">{report.target_name}</td>
-                                        <td className="px-4 py-2 text-sm text-slate-600">{new Date(report.date).toLocaleDateString('pt-BR')}</td>
+                                        <td className="px-4 py-2 text-sm text-slate-900 font-medium whitespace-nowrap">{report.target_name}</td>
+                                        <td className="px-4 py-2 text-sm text-slate-600 whitespace-nowrap">{new Date(report.date).toLocaleDateString('pt-BR')}</td>
                                         <td className="px-4 py-2 text-sm text-slate-900 font-semibold">{report.count}</td>
                                         <td className="px-4 py-2 text-right">
                                             <button onClick={() => deleteReportMutation.mutate(report.id)} className="text-slate-400 hover:text-red-600 transition-colors">
