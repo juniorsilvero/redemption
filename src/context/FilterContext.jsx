@@ -14,9 +14,16 @@ export const FilterProvider = ({ children }) => {
         localStorage.setItem('redemption_gender_filter', genderFilter);
     }, [genderFilter]);
 
+    const matchesFilter = (gender) => {
+        if (genderFilter === 'all') return true;
+        if (!gender) return false; // Strict: if no gender, hide when filtering
+        return gender === genderFilter;
+    };
+
     const value = {
         genderFilter,
         setGenderFilter,
+        matchesFilter
     };
 
     return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;

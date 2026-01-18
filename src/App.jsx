@@ -11,6 +11,7 @@ import Scale from './pages/Scale';
 import Accommodation from './pages/Accommodation';
 import Prayer from './pages/Prayer';
 import Settings from './pages/Settings';
+import Attendance from './pages/Attendance';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
                 <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
                 <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
+                <Route path="/attendance" element={<AdminRoute><Attendance /></AdminRoute>} />
                 <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
               </Route>
             </Routes>

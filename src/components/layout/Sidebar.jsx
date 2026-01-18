@@ -8,7 +8,8 @@ import {
     Clock,
     Settings,
     LogOut,
-    Menu
+    Menu,
+    ClipboardCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -22,6 +23,7 @@ export function Sidebar({ className, onClose }) {
         { name: 'Escalas', href: '/scales', icon: ClipboardList, adminOnly: true },
         { name: 'Acomodações', href: '/accommodation', icon: BedDouble, adminOnly: true },
         { name: 'Relógio de Oração', href: '/prayer', icon: Clock, adminOnly: true },
+        { name: 'Lista de Chamada', href: '/attendance', icon: ClipboardCheck, adminOnly: true },
         { name: 'Configurações', href: '/settings', icon: Settings, adminOnly: true },
     ];
 
