@@ -1,3 +1,4 @@
+// Strict Gender Separation Enforced: Male and Female scales are now completely independent.
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -287,7 +288,13 @@ export default function Scale() {
                                 <CardContent className="p-0">
                                     <div className="divide-y divide-gray-200">
                                         {areas.map(area => {
-                                            const areaAssignments = scales?.filter(s => s.day === activeTab && s.period === period && s.area_id === area.id) || [];
+                                            // Filter assignments to ONLY show those matching the current gender filter
+                                            const areaAssignments = scales?.filter(s =>
+                                                s.day === activeTab &&
+                                                s.period === period &&
+                                                s.area_id === area.id &&
+                                                matchesFilter(s.worker_id)
+                                            ) || [];
                                             const slots = Array.from({ length: area.required_people });
 
                                             return (
@@ -300,10 +307,6 @@ export default function Scale() {
                                                         {slots.map((_, index) => {
                                                             const existing = areaAssignments[index];
                                                             const conflict = existing?.worker_id && isWorkerBusy(existing.worker_id, area.id, activeTab, period);
-
-                                                            // Check filter match for existing assignment
-                                                            const isMatch = matchesFilter(existing?.worker_id);
-
 
                                                             // Get already selected workers in this area/period to prevent duplicates
                                                             const selectedWorkerIds = areaAssignments
@@ -319,29 +322,23 @@ export default function Scale() {
 
                                                             return (
                                                                 <div key={index} className="flex items-center gap-2">
-                                                                    {existing?.worker_id && !isMatch ? (
-                                                                        <select disabled className="block w-full rounded-md border-0 py-1.5 bg-slate-100 text-slate-500 shadow-sm ring-1 ring-inset ring-slate-200 sm:text-sm sm:leading-6 px-2 cursor-not-allowed">
-                                                                            <option>Ocupado (Outro Gênero)</option>
-                                                                        </select>
-                                                                    ) : (
-                                                                        <select
-                                                                            className={cn(
-                                                                                "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 px-2",
-                                                                                conflict ? "ring-red-300 focus:ring-red-500 bg-red-50" : "ring-slate-300 focus:ring-indigo-600"
-                                                                            )}
-                                                                            value={existing?.worker_id || ""}
-                                                                            onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
-                                                                        >
-                                                                            <option value="">Selecione...</option>
-                                                                            {availableWorkers.map(w => (
-                                                                                <option key={w.id} value={w.id}>
-                                                                                    {w.name} {w.surname}
-                                                                                </option>
-                                                                            ))}
-                                                                        </select>
-                                                                    )}
+                                                                    <select
+                                                                        className={cn(
+                                                                            "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 px-2",
+                                                                            conflict ? "ring-red-300 focus:ring-red-500 bg-red-50" : "ring-slate-300 focus:ring-indigo-600"
+                                                                        )}
+                                                                        value={existing?.worker_id || ""}
+                                                                        onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
+                                                                    >
+                                                                        <option value="">Selecione...</option>
+                                                                        {availableWorkers.map(w => (
+                                                                            <option key={w.id} value={w.id}>
+                                                                                {w.name} {w.surname}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
 
-                                                                    {selectedWorker && isMatch && ( // Only show info if matching format
+                                                                    {selectedWorker && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => setViewingWorker(selectedWorker)}
@@ -351,7 +348,7 @@ export default function Scale() {
                                                                             <Info className="h-4 w-4" />
                                                                         </button>
                                                                     )}
-                                                                    {conflict && isMatch && (
+                                                                    {conflict && (
                                                                         <div className="relative group">
                                                                             <AlertTriangle className="h-5 w-5 text-red-500 cursor-help" />
                                                                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 bg-gray-900 text-white text-xs rounded py-1 px-2 text-center z-10">
