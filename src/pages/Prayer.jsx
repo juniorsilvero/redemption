@@ -57,39 +57,39 @@ export default function Prayer() {
         enabled: !!churchId
     });
 
-    // Fetch Cells to map names
+    // Fetch Cells (Fetch ALL to map names correctly, regardless of filter)
     const { data: cells } = useQuery({
-        queryKey: ['cells', churchId, genderFilter],
+        queryKey: ['cells', churchId],
         queryFn: async () => {
-            let query = supabase.from('cells').select('*').eq('church_id', churchId);
-            if (genderFilter !== 'all') {
-                query = query.eq('gender', genderFilter);
-            }
-            const { data } = await query;
+            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
     });
 
+    // Fetch Workers (Fetch ALL to display names correctly even if filtered out)
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId, genderFilter],
+        queryKey: ['workers', churchId], // removed genderFilter dependency
         queryFn: async () => {
-            // Get cells filtered by gender
-            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
-            if (genderFilter !== 'all') {
-                cellsQuery = cellsQuery.eq('gender', genderFilter);
-            }
-            const { data: cells } = await cellsQuery;
-            const cellIds = cells?.map(c => c.id) || [];
-
-            // Filter workers by cell IDs
-            const { data } = cellIds.length > 0
-                ? await supabase.from('workers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
-                : { data: [] };
+            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
             return data || [];
         },
         enabled: !!churchId
     });
+
+    // Determine filtered workers for the dropdown options
+    const filteredWorkers = useMemo(() => {
+        if (!workers || !cells) return [];
+        if (genderFilter === 'all') return workers;
+
+        // Map cell gender to determine worker gender effectively
+        const cellGenderMap = cells.reduce((acc, c) => ({ ...acc, [c.id]: c.gender }), {});
+
+        return workers.filter(w => {
+            const g = cellGenderMap[w.cell_id];
+            return g === genderFilter;
+        });
+    }, [workers, cells, genderFilter]);
 
 
     // Helper to get worker display info
@@ -120,7 +120,7 @@ export default function Prayer() {
                 return supabase.from('prayer_clock').insert({
                     id: slotId,
                     ...updates,
-                    church_id: 'church-1',
+                    church_id: churchId,
                     start_time: 'mock', // Should be real date
                     end_time: 'mock'
                 });
@@ -181,6 +181,10 @@ export default function Prayer() {
                         const conflict1 = hasConflict(assignment?.worker_1_id, slot);
                         const conflict2 = hasConflict(assignment?.worker_2_id, slot);
 
+                        // Current worker objects (complete data, even if hidden by filter)
+                        const worker1 = workers.find(w => w.id === assignment?.worker_1_id);
+                        const worker2 = workers.find(w => w.id === assignment?.worker_2_id);
+
                         return (
                             <div key={slot.id} className="grid grid-cols-12 items-center hover:bg-slate-50 transition-colors">
                                 <div className="col-span-2 py-3 px-4 flex flex-col items-center justify-center text-sm">
@@ -194,19 +198,25 @@ export default function Prayer() {
                                         <div className="flex items-center gap-2">
                                             <select
                                                 className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
-
                                                 value={assignment?.worker_1_id || ""}
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
                                             >
                                                 <option value="">-- Vazio --</option>
-                                                {workers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
+                                                {/* If assigned worker is NOT in the filtered list (e.g. opposite gender), add them as a disabled option so it shows up */}
+                                                {assignment?.worker_1_id && !filteredWorkers.find(w => w.id === assignment.worker_1_id) && worker1 && (
+                                                    <option value={worker1.id} disabled>
+                                                        {worker1.name} {worker1.surname} (Outro Gênero/Filtro)
+                                                    </option>
+                                                )}
+
+                                                {filteredWorkers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
 
                                             </select>
-                                            {assignment?.worker_1_id && workers?.find(w => w.id === assignment.worker_1_id) && (
+                                            {assignment?.worker_1_id && worker1 && (
                                                 <button
-                                                    onClick={() => setViewingWorker(workers.find(w => w.id === assignment.worker_1_id))}
+                                                    onClick={() => setViewingWorker(worker1)}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
                                                     title="Ver informações"
                                                 >
@@ -234,14 +244,21 @@ export default function Prayer() {
                                                 onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
                                             >
                                                 <option value="">-- Vazio --</option>
-                                                {workers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
+                                                {/* If assigned worker is NOT in the filtered list (e.g. opposite gender), add them as a disabled option so it shows up */}
+                                                {assignment?.worker_2_id && !filteredWorkers.find(w => w.id === assignment.worker_2_id) && worker2 && (
+                                                    <option value={worker2.id} disabled>
+                                                        {worker2.name} {worker2.surname} (Outro Gênero/Filtro)
+                                                    </option>
+                                                )}
+
+                                                {filteredWorkers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
                                                     <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
                                                 ))}
 
                                             </select>
-                                            {assignment?.worker_2_id && workers?.find(w => w.id === assignment.worker_2_id) && (
+                                            {assignment?.worker_2_id && worker2 && (
                                                 <button
-                                                    onClick={() => setViewingWorker(workers.find(w => w.id === assignment.worker_2_id))}
+                                                    onClick={() => setViewingWorker(worker2)}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
                                                     title="Ver informações"
                                                 >
