@@ -160,7 +160,7 @@ export default function Prayer() {
                     <p className="text-slate-500">Cobre 48 horas ininterruptas de oração.</p>
                 </div>
                 <button
-                    onClick={() => generatePrayerClockPDF(prayerAssignments || [], slots, workers, cells || [])}
+                    onClick={() => generatePrayerClockPDF(prayerAssignments || [], slots, workers, cells || [], genderFilter)}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
                 >
                     <FileText className="h-4 w-4" />

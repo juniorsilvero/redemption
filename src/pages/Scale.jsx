@@ -251,7 +251,7 @@ export default function Scale() {
                             ))}
                         </nav>
                         <button
-                            onClick={() => generateScalePDF(activeTab, scales, areas, workers, cells)}
+                            onClick={() => generateScalePDF(activeTab, scales, areas, workers, cells, genderFilter)}
                             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold hover:bg-green-500 shadow-sm transition-colors"
                         >
                             <FileText className="h-4 w-4" />
@@ -353,7 +353,7 @@ export default function Scale() {
                 <div className="space-y-6">
                     <div className="flex justify-end gap-3">
                         <button
-                            onClick={() => generateFixedScalePDF(fixedScales, workers, cells)}
+                            onClick={() => generateFixedScalePDF(fixedScales, workers, cells, genderFilter)}
                             className="flex items-center gap-2 rounded-md bg-white border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
                         >
                             <FileText className="h-4 w-4 text-green-600" />

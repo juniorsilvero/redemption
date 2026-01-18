@@ -19,6 +19,13 @@ const commonTableStyles = {
     theme: 'grid'
 };
 
+// Helper to get title suffix
+const getFilterTitle = (filter) => {
+    if (filter === 'male') return ' (Homens)';
+    if (filter === 'female') return ' (Mulheres)';
+    return '';
+};
+
 export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     const doc = new jsPDF();
 
@@ -66,7 +73,7 @@ export const generateRoomPDF = (room, leaders, occupants, cellMap) => {
     doc.save(`Acomodacao_${room.name.replace(/\s+/g, '_')}.pdf`);
 };
 
-export const generateScalePDF = (activeDay, scales, areas, workers, cells) => {
+export const generateScalePDF = (activeDay, scales, areas, workers, cells, filterType) => {
     const doc = new jsPDF();
     const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
@@ -82,7 +89,7 @@ export const generateScalePDF = (activeDay, scales, areas, workers, cells) => {
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(0, 0, 0);
-        doc.text(`Escala de Trabalho - ${dayLabels[day]}`, 14, 20);
+        doc.text(`Escala de Trabalho - ${dayLabels[day]}${getFilterTitle(filterType)}`, 14, 20);
 
         const periods = [
             { id: 'Breakfast', label: 'CAFÉ DA MANHÃ' },
@@ -112,11 +119,20 @@ export const generateScalePDF = (activeDay, scales, areas, workers, cells) => {
                 for (let i = 0; i < area.required_people; i++) {
                     const asg = areaAssignments[i];
                     const worker = workers.find(w => w.id === asg?.worker_id);
+                    // Check if assigned but hidden (filtered out)
+                    const isAssignedButHidden = asg?.worker_id && !worker;
+
                     const cellName = worker ? (cellMap[worker.cell_id] || 'Sem Célula') : null;
 
-                    tableBody.push([
-                        worker ? `${worker.name} ${worker.surname} [${cellName}]` : '(Vazio)'
-                    ]);
+                    if (isAssignedButHidden) {
+                        // Hidden by filter - show generic placeholder or empty? 
+                        // User wants NO info. Showing empty slot preserves layout but hides info.
+                        tableBody.push(['-']);
+                    } else {
+                        tableBody.push([
+                            worker ? `${worker.name} ${worker.surname} [${cellName}]` : '(Vazio)'
+                        ]);
+                    }
                 }
 
                 autoTable(doc, {
@@ -140,16 +156,16 @@ export const generateScalePDF = (activeDay, scales, areas, workers, cells) => {
         });
     });
 
-    doc.save(`Escala_Completa_Final_de_Semana.pdf`);
+    doc.save(`Escala_Completa_${filterType || 'Geral'}.pdf`);
 };
 
-export const generateFixedScalePDF = (fixedScales, workers, cells) => {
+export const generateFixedScalePDF = (fixedScales, workers, cells, filterType) => {
     const doc = new jsPDF();
     const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('Equipes Fixas / Grupos de Trabalho', 14, 20);
+    doc.text(`Equipes Fixas${getFilterTitle(filterType)}`, 14, 20);
 
     fixedScales?.forEach((scale, index) => {
         let startY = index === 0 ? 35 : doc.lastAutoTable.finalY + 15;
@@ -160,30 +176,33 @@ export const generateFixedScalePDF = (fixedScales, workers, cells) => {
             doc.text('Equipes Fixas (Continuação)', 14, 20);
         }
 
-        const memberData = (scale.members || []).map(id => {
-            const w = workers.find(work => work.id === id);
-            const cellName = w ? (cellMap[w.cell_id] || 'Sem Célula') : '';
-            return [w ? `${w.name} ${w.surname} [${cellName}]` : 'Desconhecido'];
-        });
+        const memberData = (scale.members || [])
+            .map(id => {
+                const w = workers.find(work => work.id === id);
+                if (!w) return null; // Filter out if not found (wrong gender)
+                const cellName = w ? (cellMap[w.cell_id] || 'Sem Célula') : '';
+                return [`${w.name} ${w.surname} [${cellName}]`];
+            })
+            .filter(Boolean); // Remove nulls
 
         autoTable(doc, {
             ...commonTableStyles,
             startY: startY,
             head: [[scale.name]],
-            body: memberData.length > 0 ? memberData : [['Nenhum membro na equipe']],
+            body: memberData.length > 0 ? memberData : [['Nenhum membro (neste filtro)']],
             headStyles: { ...commonTableStyles.headStyles, fillColor: [0, 0, 0], fontSize: 13 }
         });
     });
 
-    doc.save('Equipes_Fixas.pdf');
+    doc.save(`Equipes_Fixas_${filterType || 'Geral'}.pdf`);
 };
 
-export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
+export const generatePrayerClockPDF = (assignments, slots, workers, cells, filterType) => {
     const doc = new jsPDF();
 
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('Relógio de Oração - 48 Horas', 14, 20);
+    doc.text(`Relógio de Oração${getFilterTitle(filterType)}`, 14, 20);
 
     const cellMap = (cells || []).reduce((acc, c) => ({ ...acc, [c.id]: c.name }), {});
 
@@ -192,10 +211,13 @@ export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
         const w1 = workers.find(w => w.id === asg?.worker_1_id);
         const w2 = workers.find(w => w.id === asg?.worker_2_id);
 
+        const label1 = asg?.worker_1_id && !w1 ? '-' : (w1 ? `${w1.name} ${w1.surname}\n[${cellMap[w1.cell_id] || 'Sem Célula'}]` : '(Vazio)');
+        const label2 = asg?.worker_2_id && !w2 ? '-' : (w2 ? `${w2.name} ${w2.surname}\n[${cellMap[w2.cell_id] || 'Sem Célula'}]` : '(Vazio)');
+
         return [
             `${slot.time} (${slot.day})`,
-            w1 ? `${w1.name} ${w1.surname}\n[${cellMap[w1.cell_id] || 'Sem Célula'}]` : '(Vazio)',
-            w2 ? `${w2.name} ${w2.surname}\n[${cellMap[w2.cell_id] || 'Sem Célula'}]` : '(Vazio)'
+            label1,
+            label2
         ];
     });
 
@@ -213,5 +235,5 @@ export const generatePrayerClockPDF = (assignments, slots, workers, cells) => {
         }
     });
 
-    doc.save('Relogio_de_Oracao.pdf');
+    doc.save(`Relogio_de_Oracao_${filterType || 'Geral'}.pdf`);
 };
