@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useFilter } from '../context/FilterContext';
@@ -15,10 +15,17 @@ import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Scale() {
     const { churchId } = useAuth();
-    const { genderFilter } = useFilter();
+    const { genderFilter, setGenderFilter } = useFilter();
     const queryClient = useQueryClient();
     const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'fixed'
     const [activeTab, setActiveTab] = useState('Friday'); // Friday, Saturday, Sunday
+
+    // Enforce Gender Filter (No 'All' allowed)
+    useEffect(() => {
+        if (genderFilter === 'all') {
+            setGenderFilter('male');
+        }
+    }, [genderFilter, setGenderFilter]);
 
     // Fixed Scales State
     const [isFixedScaleModalOpen, setIsFixedScaleModalOpen] = useState(false);

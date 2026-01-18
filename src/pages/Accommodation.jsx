@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useFilter } from '../context/FilterContext';
@@ -13,8 +13,16 @@ import { generateRoomPDF } from '../utils/pdfGenerator';
 
 export default function Accommodation() {
     const { churchId } = useAuth();
-    const { genderFilter } = useFilter();
+    const { genderFilter, setGenderFilter } = useFilter();
     const queryClient = useQueryClient();
+
+    // Enforce Gender Filter (No 'All' allowed)
+    useEffect(() => {
+        if (genderFilter === 'all') {
+            setGenderFilter('male');
+        }
+    }, [genderFilter, setGenderFilter]);
+
     const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
     // ... rest of state stays same
     const [editingRoom, setEditingRoom] = useState(null);
