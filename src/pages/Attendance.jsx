@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { WorkerSelectorModal } from '../components/ui/WorkerSelectorModal';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 import {
     Users,
     CheckCircle2,
@@ -18,7 +19,9 @@ import {
     Plus,
     User,
     ArrowLeft,
-    ChevronRight
+    ChevronRight,
+    Square,
+    CheckSquare
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -31,6 +34,7 @@ export default function Attendance() {
     // -- Modal States --
     const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
     const [selectedFoodItem, setSelectedFoodItem] = useState(null);
+    const [selectedWorkerInfo, setSelectedWorkerInfo] = useState(null);
 
     // -- Queries --
 
@@ -75,7 +79,7 @@ export default function Attendance() {
         queryFn: async () => {
             const { data } = await supabase
                 .from('food_assignments')
-                .select('*, workers(name, surname, cells(gender))') // Fetch worker info (gender comes from cell)
+                .select('*, workers(*, cells(name, gender))') // Fetch FULL worker info + cell info
                 .eq('church_id', churchId);
             return data || [];
         },
@@ -119,6 +123,13 @@ export default function Attendance() {
             queryClient.invalidateQueries(['food_assignments', churchId]);
             toast.success('Removido');
         }
+    });
+
+    const toggleFoodDeliveryMutation = useMutation({
+        mutationFn: async ({ id, currentStatus }) => {
+            return supabase.from('food_assignments').update({ delivered: !currentStatus }).eq('id', id);
+        },
+        onSuccess: () => queryClient.invalidateQueries(['food_assignments', churchId])
     });
 
 
@@ -313,7 +324,24 @@ export default function Attendance() {
                                         <div className="space-y-2 flex-1">
                                             {assigned?.map(assign => (
                                                 <div key={assign.id} className="flex justify-between items-center bg-white border border-slate-200 px-3 py-2 rounded-md text-xs shadow-sm">
-                                                    <span className="font-medium text-slate-700 truncate max-w-[120px]">{assign.workers?.name} {assign.workers?.surname}</span>
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <button
+                                                            onClick={() => toggleFoodDeliveryMutation.mutate({ id: assign.id, currentStatus: assign.delivered })}
+                                                            className="text-slate-400 hover:text-green-600 transition-colors"
+                                                            title={assign.delivered ? "Marcar como pendente" : "Marcar como entregue"}
+                                                        >
+                                                            {assign.delivered ? <CheckSquare className="w-4 h-4 text-green-600" /> : <Square className="w-4 h-4" />}
+                                                        </button>
+                                                        <span
+                                                            onClick={() => setSelectedWorkerInfo(assign.workers)}
+                                                            className={cn(
+                                                                "font-medium truncate max-w-[120px] cursor-pointer hover:underline decoration-1 underline-offset-2",
+                                                                assign.delivered ? "text-green-600" : "text-slate-700"
+                                                            )}
+                                                        >
+                                                            {assign.workers?.name} {assign.workers?.surname}
+                                                        </span>
+                                                    </div>
                                                     <button onClick={() => removeFoodAssignmentMutation.mutate(assign.id)} className="text-slate-400 hover:text-red-500">
                                                         <Trash2 className="w-3 h-3" />
                                                     </button>
@@ -327,6 +355,15 @@ export default function Attendance() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <WorkerInfoModal
+                    isOpen={!!selectedWorkerInfo}
+                    onClose={() => setSelectedWorkerInfo(null)}
+                    worker={selectedWorkerInfo}
+                    cells={selectedWorkerInfo?.cells ? [{ ...selectedWorkerInfo?.cells, id: selectedWorkerInfo?.cell_id }] : []} // Best effort cell mapping
+                    allWorkers={workers}
+                    allPassers={passers}
+                />
             </div>
         )
     };
