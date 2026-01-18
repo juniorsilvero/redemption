@@ -15,6 +15,8 @@ export const AuthProvider = ({ children }) => {
         if (storedSession) {
             try {
                 const parsedSession = JSON.parse(storedSession);
+                console.log('[DEBUG] Restored session user:', parsedSession.user);
+                console.log('[DEBUG] Restored church_id:', parsedSession.user?.church_id);
                 setSession(parsedSession);
                 setUser(parsedSession.user);
             } catch (e) {
@@ -34,23 +36,33 @@ export const AuthProvider = ({ children }) => {
                 .eq('password', password)
                 .single();
 
+            console.log('[DEBUG] Login query result:', users);
+            console.log('[DEBUG] User church_id from DB:', users?.church_id);
+
             if (error || !users) {
+                console.error('[DEBUG] Login error:', error);
                 toast.error('Email ou senha incorretos');
                 return { error: error || new Error('Invalid credentials') };
             }
 
             // Fetch church info
-            const { data: church } = await supabase
+            const { data: church, error: churchError } = await supabase
                 .from('churches')
                 .select('*')
                 .eq('id', users.church_id)
                 .single();
+
+            console.log('[DEBUG] Church query result:', church);
+            console.log('[DEBUG] Church error:', churchError);
 
             // Create session object with church info
             const sessionData = {
                 user: { ...users, church },
                 access_token: 'mock-token-' + Date.now(),
             };
+
+            console.log('[DEBUG] Final session data:', sessionData);
+            console.log('[DEBUG] Final churchId to store:', sessionData.user.church_id);
 
             setSession(sessionData);
             setUser(sessionData.user);
@@ -59,6 +71,7 @@ export const AuthProvider = ({ children }) => {
             toast.success(`Bem-vindo, ${church?.name || 'Igreja'}!`);
             return { data: sessionData };
         } catch (error) {
+            console.error('[DEBUG] Catch error:', error);
             toast.error('Erro ao fazer login');
             return { error };
         }
@@ -71,13 +84,17 @@ export const AuthProvider = ({ children }) => {
         toast.success('Logout realizado com sucesso.');
     };
 
+    // Debug: log churchId whenever it changes
+    const churchId = user?.church_id;
+    console.log('[DEBUG] useAuth churchId value:', churchId);
+
     const value = {
         session,
         user,
         loading,
         login,
         logout,
-        churchId: user?.church_id,
+        churchId,
         isAdmin: user?.role === 'admin',
         isLeader: user?.role === 'leader',
     };
@@ -88,3 +105,4 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
     return useContext(AuthContext);
 };
+
