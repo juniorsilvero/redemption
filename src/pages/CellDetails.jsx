@@ -270,7 +270,7 @@ export default function CellDetails() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
                         <span className="w-4 h-4 rounded-full" style={{ backgroundColor: cell.card_color }}></span>
@@ -278,17 +278,17 @@ export default function CellDetails() {
                     </h1>
                     <p className="text-slate-500">Gestão de membros e pagamentos.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => { setEditingWorker(null); setIsWorkerModalOpen(true); }}
-                        className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        className="flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 w-full sm:w-auto"
                     >
                         <UserPlus className="h-4 w-4" />
                         Novo Trabalhador
                     </button>
                     <button
                         onClick={() => { setEditingPasser(null); setIsPasserModalOpen(true); }}
-                        className="flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
+                        className="flex items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 w-full sm:w-auto"
                     >
                         <UserPlus className="h-4 w-4" />
                         Novo Passante

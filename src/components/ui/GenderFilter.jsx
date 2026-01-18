@@ -8,7 +8,7 @@ export function GenderFilter() {
     const location = useLocation();
 
     // Hide 'All' option specifically on these pages
-    const hideAll = ['/prayer', '/scales', '/accommodation'].includes(location.pathname);
+    const hideAll = ['/prayer', '/scales', '/accommodation', '/settings'].includes(location.pathname);
 
     const options = [
         { value: 'all', label: 'Todas', icon: Users },
