@@ -301,6 +301,13 @@ export function CellFrequencyModal({ isOpen, onClose, cell, churchId }) {
 
                                                 <div className="rounded-md border border-slate-200 overflow-x-auto max-h-48 overflow-y-auto">
                                                     <table className="min-w-full divide-y divide-slate-200">
+                                                        <thead className="bg-slate-50">
+                                                            <tr>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Data</th>
+                                                                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Pessoas</th>
+                                                                <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase whitespace-nowrap">Ações</th>
+                                                            </tr>
+                                                        </thead>
                                                         <tbody className="bg-white divide-y divide-slate-200">
                                                             {cellReports.map(report => (
                                                                 <tr key={report.id} className="hover:bg-slate-50">
