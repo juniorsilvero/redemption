@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info } from 'lucide-react';
@@ -12,6 +13,7 @@ import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function CellDetails() {
     const { id } = useParams();
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
     const [editingWorker, setEditingWorker] = useState(null);
@@ -63,7 +65,7 @@ export default function CellDetails() {
     const addWorkerMutation = useMutation({
         mutationFn: async (newWorker) => {
             if (!newWorker.id && editingWorker?.id) return supabase.from('workers').update(newWorker).eq('id', editingWorker.id);
-            return supabase.from('workers').insert({ ...newWorker, cell_id: id, church_id: 'church-1' });
+            return supabase.from('workers').insert({ ...newWorker, cell_id: id, church_id: churchId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['cellWorkers', id]);
@@ -78,7 +80,7 @@ export default function CellDetails() {
     const addPasserMutation = useMutation({
         mutationFn: async (newPasser) => {
             if (!newPasser.id && editingPasser?.id) return supabase.from('passers').update(newPasser).eq('id', editingPasser.id);
-            return supabase.from('passers').insert({ ...newPasser, cell_id: id, church_id: 'church-1' });
+            return supabase.from('passers').insert({ ...newPasser, cell_id: id, church_id: churchId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['cellPassers', id]);
