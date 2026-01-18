@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal';
 import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { cn } from '../lib/utils';
+import { cn, compressImage } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 
@@ -155,13 +155,16 @@ export default function CellDetails() {
         setIsUploading(true);
         try {
             if (photoFile && photoFile.size > 0) {
-                const fileExt = photoFile.name.split('.').pop();
+                // Compress image before upload
+                const compressedFile = await compressImage(photoFile);
+
+                const fileExt = compressedFile.name.split('.').pop();
                 const fileName = `${Math.random()}.${fileExt}`;
                 const filePath = `workers/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('photos')
-                    .upload(filePath, photoFile);
+                    .upload(filePath, compressedFile);
 
                 if (uploadError) throw uploadError;
 
@@ -199,13 +202,16 @@ export default function CellDetails() {
         setIsUploading(true);
         try {
             if (photoFile && photoFile.size > 0) {
-                const fileExt = photoFile.name.split('.').pop();
+                // Compress image before upload
+                const compressedFile = await compressImage(photoFile);
+
+                const fileExt = compressedFile.name.split('.').pop();
                 const fileName = `${Math.random()}.${fileExt}`;
                 const filePath = `passers/${fileName}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('photos')
-                    .upload(filePath, photoFile);
+                    .upload(filePath, compressedFile);
 
                 if (uploadError) throw uploadError;
 
