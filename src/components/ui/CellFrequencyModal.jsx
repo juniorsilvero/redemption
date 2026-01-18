@@ -153,8 +153,8 @@ export function CellFrequencyModal({ isOpen, onClose, cell, churchId }) {
     const mainReports = reports?.filter(r => !r.support_cell_id) || [];
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Frequência da Célula">
-            <div className="space-y-8 max-h-[70vh] overflow-y-auto p-1 pr-2">
+        <Modal isOpen={isOpen} onClose={onClose} title="Frequência da Célula" className="sm:max-w-xl">
+            <div className="space-y-8 max-h-[70vh] overflow-y-scroll p-1 pr-2">
 
                 {/* Main Cell Section */}
                 <div className="space-y-4">
