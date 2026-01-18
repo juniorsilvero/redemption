@@ -101,7 +101,7 @@ export default function Accommodation() {
             if (roomData.id) {
                 return supabase.from('rooms').update(roomData).eq('id', roomData.id);
             }
-            return supabase.from('rooms').insert({ ...roomData, church_id: 'church-1' });
+            return supabase.from('rooms').insert({ ...roomData, church_id: churchId });
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['rooms']);
