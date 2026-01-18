@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useFilter } from '../context/FilterContext';
 
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -12,6 +13,7 @@ import { generateRoomPDF } from '../utils/pdfGenerator';
 
 export default function Accommodation() {
     const { churchId } = useAuth();
+    const { genderFilter } = useFilter();
     const queryClient = useQueryClient();
     const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
     // ... rest of state stays same
@@ -22,7 +24,7 @@ export default function Accommodation() {
 
     // Data Fetching
     const { data: rooms } = useQuery({
-        queryKey: ['rooms', churchId],
+        queryKey: ['rooms', churchId, genderFilter],
         queryFn: async () => {
             const { data } = await supabase.from('rooms').select('*').eq('church_id', churchId);
             return data || [];
@@ -31,27 +33,53 @@ export default function Accommodation() {
     });
 
     const { data: passers } = useQuery({
-        queryKey: ['passers', churchId],
+        queryKey: ['passers', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('passers').select('*').eq('church_id', churchId);
+            // Get cells filtered by gender
+            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                cellsQuery = cellsQuery.eq('gender', genderFilter);
+            }
+            const { data: cells } = await cellsQuery;
+            const cellIds = cells?.map(c => c.id) || [];
+
+            // Filter passers by cell IDs
+            const { data } = cellIds.length > 0
+                ? await supabase.from('passers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
             return data || [];
         },
         enabled: !!churchId
     });
 
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId],
+        queryKey: ['workers', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
+            // Get cells filtered by gender
+            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                cellsQuery = cellsQuery.eq('gender', genderFilter);
+            }
+            const { data: cells } = await cellsQuery;
+            const cellIds = cells?.map(c => c.id) || [];
+
+            // Filter workers by cell IDs
+            const { data } = cellIds.length > 0
+                ? await supabase.from('workers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
             return data || [];
         },
         enabled: !!churchId
     });
 
     const { data: cells } = useQuery({
-        queryKey: ['cells', churchId],
+        queryKey: ['cells', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
+            let query = supabase.from('cells').select('*').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                query = query.eq('gender', genderFilter);
+            }
+            const { data } = await query;
             return data || [];
         },
         enabled: !!churchId

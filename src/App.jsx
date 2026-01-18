@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { FilterProvider } from './context/FilterContext';
 import { Layout } from './components/layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -42,21 +43,23 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
+        <FilterProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />
-              <Route path="/cells" element={<Cells />} />
-              <Route path="/cells/:id" element={<CellDetails />} />
-              <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
-              <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
-              <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
-              <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
-            </Route>
-          </Routes>
-        </Router>
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />
+                <Route path="/cells" element={<Cells />} />
+                <Route path="/cells/:id" element={<CellDetails />} />
+                <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
+                <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
+                <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
+                <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+              </Route>
+            </Routes>
+          </Router>
+        </FilterProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

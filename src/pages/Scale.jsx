@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useFilter } from '../context/FilterContext';
 
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -14,6 +15,7 @@ import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Scale() {
     const { churchId } = useAuth();
+    const { genderFilter } = useFilter();
     const queryClient = useQueryClient();
     const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'fixed'
     const [activeTab, setActiveTab] = useState('Friday'); // Friday, Saturday, Sunday
@@ -36,7 +38,7 @@ export default function Scale() {
 
     // Fetch Data
     const { data: scales } = useQuery({
-        queryKey: ['work_scale', churchId],
+        queryKey: ['work_scale', churchId, genderFilter],
         queryFn: async () => {
             const { data } = await supabase.from('work_scale').select('*').eq('church_id', churchId);
             return data || [];
@@ -54,16 +56,27 @@ export default function Scale() {
     });
 
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId],
+        queryKey: ['workers', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('workers').select('*').eq('church_id', churchId);
+            // Get cells filtered by gender
+            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                cellsQuery = cellsQuery.eq('gender', genderFilter);
+            }
+            const { data: cells } = await cellsQuery;
+            const cellIds = cells?.map(c => c.id) || [];
+
+            // Filter workers by cell IDs
+            const { data } = cellIds.length > 0
+                ? await supabase.from('workers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
             return data || [];
         },
         enabled: !!churchId
     });
 
     const { data: fixedScales } = useQuery({
-        queryKey: ['fixed_scales', churchId],
+        queryKey: ['fixed_scales', churchId, genderFilter],
         queryFn: async () => {
             const { data } = await supabase.from('fixed_scales').select('*').eq('church_id', churchId);
             return data || [];
@@ -72,9 +85,13 @@ export default function Scale() {
     });
 
     const { data: cells } = useQuery({
-        queryKey: ['cells', churchId],
+        queryKey: ['cells', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase.from('cells').select('*').eq('church_id', churchId);
+            let query = supabase.from('cells').select('*').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                query = query.eq('gender', genderFilter);
+            }
+            const { data } = await query;
             return data || [];
         },
         enabled: !!churchId

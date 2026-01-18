@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { useFilter } from '../context/FilterContext';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
@@ -11,6 +12,7 @@ import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 export default function Dashboard() {
     const { churchId } = useAuth();
+    const { genderFilter } = useFilter();
     const queryClient = useQueryClient();
     const [modalType, setModalType] = useState(null); // 'workers' | 'passers' | 'revenue' | null
     const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
@@ -22,12 +24,23 @@ export default function Dashboard() {
 
 
     const { data: stats } = useQuery({
-        queryKey: ['dashboardStats', churchId],
+        queryKey: ['dashboardStats', churchId, genderFilter],
         queryFn: async () => {
-            // Filter by churchId
-            const { data: workers } = await supabase.from('workers').select('*').eq('church_id', churchId);
-            const { data: passers } = await supabase.from('passers').select('*').eq('church_id', churchId);
-            const { data: cells } = await supabase.from('cells').select('*').eq('church_id', churchId);
+            // Get cells first, filtered by gender
+            let cellsQuery = supabase.from('cells').select('*').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                cellsQuery = cellsQuery.eq('gender', genderFilter);
+            }
+            const { data: cells } = await cellsQuery;
+            const cellIds = cells?.map(c => c.id) || [];
+
+            // Filter workers and passers by cell IDs
+            const { data: workers } = cellIds.length > 0
+                ? await supabase.from('workers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
+            const { data: passers } = cellIds.length > 0
+                ? await supabase.from('passers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
 
             const totalWorkers = workers?.length || 0;
             const totalPassers = passers?.length || 0;

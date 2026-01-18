@@ -1,5 +1,6 @@
 import { Sidebar } from './Sidebar';
 import { MobileMenu } from './MobileMenu';
+import { GenderFilter } from '../ui/GenderFilter';
 import { Toaster } from 'react-hot-toast';
 
 export function Layout({ children }) {
@@ -17,6 +18,11 @@ export function Layout({ children }) {
 
             {/* Main Content */}
             <div className="flex flex-col lg:pl-64 min-h-screen">
+                {/* Gender Filter Bar */}
+                <div className="sticky top-0 z-10 bg-[var(--color-background)] border-b border-slate-200 px-4 py-3 sm:px-6 lg:px-8">
+                    <GenderFilter />
+                </div>
+
                 <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8 relative pb-20">
                     {children}
 

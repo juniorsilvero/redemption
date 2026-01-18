@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useFilter } from '../context/FilterContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Link } from 'react-router-dom';
@@ -10,14 +11,20 @@ import { toast } from 'react-hot-toast';
 
 export default function Cells() {
     const { user, isAdmin, churchId } = useAuth();
+    const { genderFilter } = useFilter();
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCell, setEditingCell] = useState(null);
 
     const { data: cells, isLoading } = useQuery({
-        queryKey: ['cells', churchId],
+        queryKey: ['cells', churchId, genderFilter],
         queryFn: async () => {
             let query = supabase.from('cells').select('*').eq('church_id', churchId);
+
+            // Apply gender filter
+            if (genderFilter !== 'all') {
+                query = query.eq('gender', genderFilter);
+            }
 
             // If not admin, only show own cell
             if (!isAdmin) {
@@ -32,10 +39,23 @@ export default function Cells() {
     });
 
     const { data: cellStats } = useQuery({
-        queryKey: ['cellStats', churchId],
+        queryKey: ['cellStats', churchId, genderFilter],
         queryFn: async () => {
-            const { data: workers } = await supabase.from('workers').select('id, cell_id').eq('church_id', churchId);
-            const { data: passers } = await supabase.from('passers').select('id, cell_id').eq('church_id', churchId);
+            // Get cells filtered by gender
+            let cellsQuery = supabase.from('cells').select('id').eq('church_id', churchId);
+            if (genderFilter !== 'all') {
+                cellsQuery = cellsQuery.eq('gender', genderFilter);
+            }
+            const { data: cells } = await cellsQuery;
+            const cellIds = cells?.map(c => c.id) || [];
+
+            // Only get workers/passers for filtered cells
+            const { data: workers } = cellIds.length > 0
+                ? await supabase.from('workers').select('id, cell_id').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
+            const { data: passers } = cellIds.length > 0
+                ? await supabase.from('passers').select('id, cell_id').eq('church_id', churchId).in('cell_id', cellIds)
+                : { data: [] };
 
             const stats = {};
             (workers || []).forEach(w => {
