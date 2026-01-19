@@ -47,11 +47,17 @@ export default function Setup() {
             // Generate credentials
             const creds = generateCredentials(churchName);
 
+            // Generate slug from church name
+            const slug = churchName.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]/g, '');
+
             // 1. Create church
             const { data: church, error: churchError } = await supabase
                 .from('churches')
                 .insert({
                     name: churchName,
+                    slug: slug,  // Required field
                     admin_email: creds.email  // Required field
                 })
                 .select()
