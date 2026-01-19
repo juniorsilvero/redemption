@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, X, Phone } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showInactiveModal, setShowInactiveModal] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -21,14 +23,14 @@ export default function Login() {
             if (result.data) {
                 console.log('Login successful, navigating to home');
                 navigate('/');
+            } else if (result.error?.message === 'Church is inactive') {
+                // Show custom modal for inactive church
+                setShowInactiveModal(true);
             } else {
                 console.error('Login failed:', result.error);
-                const errorMessage = result.error?.message || (typeof result.error === 'object' ? JSON.stringify(result.error) : result.error);
-                alert('Erro ao entrar: ' + (errorMessage || 'Verifique suas credenciais'));
             }
         } catch (err) {
             console.error('Fatal error during login:', err);
-            alert('Erro crítico ao tentar logar. Verifique a conexão.');
             setIsLoading(false);
         }
     };
@@ -94,8 +96,56 @@ export default function Login() {
                         </div>
                     </form>
                 </div>
-
             </div>
+
+            {/* Inactive Church Modal */}
+            {showInactiveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-8 text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <AlertTriangle className="w-8 h-8 text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">
+                                Igreja Desativada
+                            </h3>
+                        </div>
+
+                        {/* Content */}
+                        <div className="px-6 py-6">
+                            <p className="text-gray-600 text-center mb-4">
+                                O acesso à sua igreja foi <strong>temporariamente suspenso</strong>.
+                            </p>
+                            <p className="text-gray-500 text-sm text-center mb-6">
+                                Para reativar o acesso, entre em contato com o administrador do sistema.
+                            </p>
+
+                            <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                                <div className="flex items-center gap-3 text-slate-600">
+                                    <Phone className="w-5 h-5 text-indigo-500" />
+                                    <div>
+                                        <p className="text-xs text-slate-400">Contato do Administrador</p>
+                                        <p className="font-medium">suporte@redemption.com</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 pb-6">
+                            <button
+                                onClick={() => setShowInactiveModal(false)}
+                                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                            >
+                                <X className="w-4 h-4" />
+                                Entendi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
