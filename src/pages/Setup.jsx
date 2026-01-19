@@ -50,7 +50,10 @@ export default function Setup() {
             // 1. Create church
             const { data: church, error: churchError } = await supabase
                 .from('churches')
-                .insert({ name: churchName })
+                .insert({
+                    name: churchName,
+                    admin_email: creds.email  // Required field
+                })
                 .select()
                 .single();
 
@@ -192,25 +195,62 @@ Acesse: ${window.location.origin}/login`;
                         <CardHeader>
                             <CardTitle className="text-green-400 flex items-center gap-2">
                                 <Key className="w-5 h-5" />
-                                Credenciais Geradas
+                                ✅ Credenciais Geradas com Sucesso!
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="bg-slate-800 p-4 rounded-lg border border-slate-600 font-mono text-sm">
-                                <p className="text-slate-400">Igreja:</p>
-                                <p className="text-white font-bold">{generatedCredentials.churchName}</p>
-                                <p className="text-slate-400 mt-3">Email:</p>
-                                <p className="text-green-400">{generatedCredentials.email}</p>
-                                <p className="text-slate-400 mt-3">Senha:</p>
-                                <p className="text-green-400">{generatedCredentials.password}</p>
+                            <div className="bg-slate-800 p-4 rounded-lg border border-slate-600 space-y-3">
+                                <div>
+                                    <p className="text-slate-400 text-xs">Igreja:</p>
+                                    <p className="text-white font-bold text-lg">{generatedCredentials.churchName}</p>
+                                </div>
+
+                                <div className="flex items-center justify-between bg-slate-700/50 p-3 rounded-lg">
+                                    <div>
+                                        <p className="text-slate-400 text-xs">📧 Email:</p>
+                                        <p className="text-green-400 font-mono">{generatedCredentials.email}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(generatedCredentials.email);
+                                            toast.success('Email copiado!');
+                                        }}
+                                        className="p-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
+                                        title="Copiar email"
+                                    >
+                                        <Copy className="w-4 h-4 text-white" />
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between bg-slate-700/50 p-3 rounded-lg">
+                                    <div>
+                                        <p className="text-slate-400 text-xs">🔑 Senha:</p>
+                                        <p className="text-green-400 font-mono">{generatedCredentials.password}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(generatedCredentials.password);
+                                            toast.success('Senha copiada!');
+                                        }}
+                                        className="p-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
+                                        title="Copiar senha"
+                                    >
+                                        <Copy className="w-4 h-4 text-white" />
+                                    </button>
+                                </div>
                             </div>
+
                             <button
                                 onClick={handleCopy}
-                                className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 text-lg"
                             >
-                                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                                {copied ? 'Copiado!' : 'Copiar Credenciais'}
+                                {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                                {copied ? '✅ Copiado!' : '📋 Copiar Tudo (Email + Senha)'}
                             </button>
+
+                            <p className="text-xs text-slate-500 text-center">
+                                Acesse {window.location.origin}/login para fazer login
+                            </p>
                         </CardContent>
                     </Card>
                 )}
