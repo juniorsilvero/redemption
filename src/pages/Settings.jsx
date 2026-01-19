@@ -521,9 +521,12 @@ export default function Settings() {
 
     // Fetch Areas
     const { data: areas } = useQuery({
-        queryKey: ['service_areas'],
+        queryKey: ['service_areas', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('service_areas').select('*');
+            const { data } = await supabase
+                .from('service_areas')
+                .select('*')
+                .eq('church_id', churchId);
             return data || [];
         }
     });
@@ -559,11 +562,7 @@ export default function Settings() {
         e.target.reset();
     };
 
-    const handleInvite = (e) => {
-        e.preventDefault();
-        toast.success('Convite enviado (Simulação)');
-        e.target.reset();
-    };
+
 
     const handleSavePrices = (e) => {
         e.preventDefault();
