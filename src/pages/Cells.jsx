@@ -156,6 +156,7 @@ export default function Cells() {
             name: formData.get('name'),
             leader_id: leaderId,
             card_color: formData.get('card_color'),
+            gender: formData.get('gender'),
         };
 
         if (editingCell) {
@@ -362,6 +363,20 @@ export default function Cells() {
                             </p>
                         )}
                         {!isAdmin && <p className="text-xs text-slate-500 mt-1">Apenas administradores podem alterar o líder.</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Gênero da Célula</label>
+                        <select
+                            name="gender"
+                            defaultValue={editingCell?.gender || 'male'}
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2"
+                        >
+                            <option value="male">Masculina (Homens)</option>
+                            <option value="female">Feminina (Mulheres)</option>
+                        </select>
+                        <p className="text-xs text-slate-500 mt-1">Define o gênero dos membros desta célula para filtros.</p>
                     </div>
 
                     <div>
