@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Building2, Key, Copy, Check, Shield } from 'lucide-react';
+import { Building2, Key, Copy, Check, Shield, ChevronDown, ChevronUp, Trash2, List } from 'lucide-react';
 
 // Secret superadmin password - CHANGE THIS TO YOUR OWN SECRET
 const SUPERADMIN_PASSWORD = 'redemption2026';
@@ -14,6 +15,18 @@ export default function Setup() {
     const [isCreating, setIsCreating] = useState(false);
     const [generatedCredentials, setGeneratedCredentials] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [selectedChurch, setSelectedChurch] = useState(null);
+    const queryClient = useQueryClient();
+
+    // Fetch all churches
+    const { data: churches } = useQuery({
+        queryKey: ['all_churches'],
+        queryFn: async () => {
+            const { data } = await supabase.from('churches').select('*').order('created_at', { ascending: false });
+            return data || [];
+        },
+        enabled: isAuthenticated
+    });
 
     const handleAuth = (e) => {
         e.preventDefault();
@@ -86,6 +99,7 @@ export default function Setup() {
 
             toast.success('Igreja criada com sucesso!');
             setChurchName('');
+            queryClient.invalidateQueries(['all_churches']);  // Refresh churches list
 
         } catch (error) {
             console.error(error);
@@ -260,6 +274,116 @@ Acesse: ${window.location.origin}/login`;
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Churches List */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                    <CardHeader>
+                        <CardTitle className="text-white flex items-center gap-2">
+                            <List className="w-5 h-5 text-indigo-400" />
+                            Igrejas Cadastradas ({churches?.length || 0})
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {churches?.length === 0 ? (
+                            <p className="text-slate-400 text-center py-4">Nenhuma igreja cadastrada ainda.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {churches?.map(church => {
+                                    const creds = generateCredentials(church.name);
+                                    const isSelected = selectedChurch === church.id;
+
+                                    return (
+                                        <div key={church.id} className="bg-slate-700/50 rounded-lg overflow-hidden">
+                                            <button
+                                                onClick={() => setSelectedChurch(isSelected ? null : church.id)}
+                                                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-600/50 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <Building2 className="w-5 h-5 text-indigo-400" />
+                                                    <span className="text-white font-medium">{church.name}</span>
+                                                </div>
+                                                {isSelected ? (
+                                                    <ChevronUp className="w-5 h-5 text-slate-400" />
+                                                ) : (
+                                                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                                                )}
+                                            </button>
+
+                                            {isSelected && (
+                                                <div className="px-4 pb-4 space-y-3 border-t border-slate-600">
+                                                    <div className="pt-3">
+                                                        <div className="flex items-center justify-between bg-slate-800 p-3 rounded-lg mb-2">
+                                                            <div>
+                                                                <p className="text-slate-400 text-xs">📧 Email:</p>
+                                                                <p className="text-green-400 font-mono">{creds.email}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(creds.email);
+                                                                    toast.success('Email copiado!');
+                                                                }}
+                                                                className="p-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
+                                                            >
+                                                                <Copy className="w-4 h-4 text-white" />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between bg-slate-800 p-3 rounded-lg mb-3">
+                                                            <div>
+                                                                <p className="text-slate-400 text-xs">🔑 Senha:</p>
+                                                                <p className="text-green-400 font-mono">{creds.password}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(creds.password);
+                                                                    toast.success('Senha copiada!');
+                                                                }}
+                                                                className="p-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
+                                                            >
+                                                                <Copy className="w-4 h-4 text-white" />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const text = `🏛️ ${church.name}\n📧 ${creds.email}\n🔑 ${creds.password}`;
+                                                                    navigator.clipboard.writeText(text);
+                                                                    toast.success('Credenciais copiadas!');
+                                                                }}
+                                                                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                <Copy className="w-4 h-4" />
+                                                                Copiar Tudo
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!window.confirm(`Tem certeza que deseja excluir "${church.name}"? Todos os dados serão perdidos!`)) return;
+
+                                                                    const { error } = await supabase.from('churches').delete().eq('id', church.id);
+                                                                    if (error) {
+                                                                        toast.error('Erro ao excluir: ' + error.message);
+                                                                    } else {
+                                                                        toast.success('Igreja excluída!');
+                                                                        queryClient.invalidateQueries(['all_churches']);
+                                                                        setSelectedChurch(null);
+                                                                    }
+                                                                }}
+                                                                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
