@@ -1,9 +1,9 @@
+import React from 'react';
 import { Modal } from './Modal';
 import { User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-
-export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
+export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
 
     if (!worker) return null;
 
@@ -183,4 +183,4 @@ export function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen,
             </div>
         </Modal>
     );
-}
+});

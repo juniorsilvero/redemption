@@ -102,7 +102,48 @@ export default function Attendance() {
                 }, { onConflict: 'person_id, slot_number' });
             }
         },
-        onSuccess: () => queryClient.invalidateQueries(['attendance', churchId])
+        // Optimistic Update for instant UI response
+        onMutate: async ({ personId, personType, slot, status }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries(['attendance', churchId]);
+
+            // Snapshot previous value
+            const previousAttendance = queryClient.getQueryData(['attendance', churchId]);
+
+            // Optimistically update cache
+            queryClient.setQueryData(['attendance', churchId], (old) => {
+                if (!old) return old;
+
+                // Remove existing record for this person/slot
+                const filtered = old.filter(a => !(a.person_id === personId && a.slot_number === slot));
+
+                // Add new record if not 'none'
+                if (status !== 'none') {
+                    filtered.push({
+                        person_id: personId,
+                        person_type: personType,
+                        slot_number: slot,
+                        status: status,
+                        church_id: churchId
+                    });
+                }
+
+                return filtered;
+            });
+
+            return { previousAttendance };
+        },
+        onError: (err, variables, context) => {
+            // Rollback on error
+            if (context?.previousAttendance) {
+                queryClient.setQueryData(['attendance', churchId], context.previousAttendance);
+            }
+            toast.error('Erro ao salvar presença');
+        },
+        onSettled: () => {
+            // Refetch in background to ensure consistency (but UI already updated)
+            queryClient.invalidateQueries(['attendance', churchId]);
+        }
     });
 
     const addFoodAssignmentMutation = useMutation({
