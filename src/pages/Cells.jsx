@@ -72,13 +72,14 @@ export default function Cells() {
     });
 
 
-    // Fetch only leaders (users with role='leader')
+    // Fetch only leaders (users with role='leader') for this church
     const { data: profiles } = useQuery({
-        queryKey: ['leaders'],
+        queryKey: ['leaders', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('users').select('*').eq('role', 'leader');
+            const { data } = await supabase.from('users').select('*').eq('role', 'leader').eq('church_id', churchId);
             return data;
-        }
+        },
+        enabled: !!churchId
     });
 
     // Helper to get Leader Name
@@ -173,62 +174,6 @@ export default function Cells() {
         setIsModalOpen(true);
     };
 
-    const PREDEFINED_CELLS = [
-        { name: 'Estevão', color: '#f97316', leader: 'Thiago' }, // Laranja
-        { name: 'Elias', color: '#eab308', leader: 'Eliabe' }, // Amarela
-        { name: 'Atalaia', color: '#ef4444', leader: 'Wellinton' }, // Vermelha
-        { name: 'Davi', color: '#8B4513', leader: 'Pablo' }, // Marrom
-        { name: 'Isaque', color: '#3b82f6', leader: 'Rafael' }, // Azul
-        { name: 'Kadosh', color: '#22c55e', leader: 'Eliseu' }, // Verde
-        { name: 'Israel', color: '#ffffff', leader: 'Gean' }, // Branca
-        { name: 'Pedro', color: '#6b7280', leader: 'Levi' }, // Cinza
-        { name: 'Jeremias', color: '#000000', leader: 'Guilherme' }, // Preto
-        { name: 'Débora', color: '#a855f7', leader: 'Ariane' }, // Roxa
-        { name: 'Maria', color: '#f97316', leader: 'Mariana' }, // Laranja
-        { name: 'Isabel', color: '#ec4899', leader: 'Jaque' }, // Rosa
-        { name: 'Átrios', color: '#ef4444', leader: 'Calita' }, // Vermelha
-        { name: 'Hadassa', color: '#86efac', leader: 'Kauani' }, // Verde Claro
-        { name: 'Ana', color: '#3b82f6', leader: 'Lara' }, // Azul
-        { name: 'Ágape', color: '#ffffff', leader: 'Rafa' }, // Branca
-        { name: 'Rute', color: '#000000', leader: 'Vania' }, // Preta
-    ];
-
-    const [selectedTemplate, setSelectedTemplate] = useState('');
-
-    const handleTemplateChange = (e) => {
-        const templateName = e.target.value;
-        setSelectedTemplate(templateName);
-
-        const template = PREDEFINED_CELLS.find(c => c.name === templateName);
-        if (template) {
-            // Find leader if possible (fuzzy match or exact)
-            const leader = profiles?.find(p => {
-                const name = p.user_metadata?.name || p.email;
-                return name.toLowerCase().includes(template.leader.toLowerCase());
-            });
-
-            // We need to set form values manually since we are using uncontrolled inputs with defaultValue
-            // A better approach for this form would be controlled inputs, but to minimize refactor:
-            const form = document.querySelector('form[data-cell-form]');
-            if (form) {
-                const nameInput = form.elements.namedItem('name');
-                const colorInput = form.elements.namedItem('card_color');
-                const leaderInput = form.elements.namedItem('leader_id');
-
-                if (nameInput) nameInput.value = template.name;
-
-                // For radio buttons, we need to check the right one
-                if (colorInput) {
-                    // It's a RadioNodeList
-                    colorInput.value = template.color;
-                }
-
-                if (leaderInput && leader) {
-                    leaderInput.value = leader.id;
-                }
-            }
-        }
-    };
 
     if (isLoading) return <div>Carregando células...</div>;
 
@@ -309,26 +254,7 @@ export default function Cells() {
                 onClose={() => setIsModalOpen(false)}
                 title={editingCell ? "Editar Célula" : "Nova Célula"}
             >
-                <form onSubmit={handleSubmit} className="space-y-4" data-cell-form>
-
-                    {!editingCell && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Modelo de Célula (Pré-definido)</label>
-                            <select
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2"
-                                onChange={handleTemplateChange}
-                                value={selectedTemplate}
-                            >
-                                <option value="">Selecione um modelo...</option>
-                                {PREDEFINED_CELLS.map(cell => (
-                                    <option key={cell.name} value={cell.name}>
-                                        {cell.name} - {cell.leader}
-                                    </option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-gray-500 mt-1">Isso preencherá automaticamente o nome e a cor.</p>
-                        </div>
-                    )}
+                <form onSubmit={handleSubmit} className="space-y-4">
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Nome da Célula</label>

@@ -8,6 +8,7 @@ import { Plus, Trash2, Key, Edit2, ShieldCheck, ShieldOff } from 'lucide-react';
 
 // User Management Component
 function UserManagement() {
+    const { churchId } = useAuth();
     const queryClient = useQueryClient();
     const [editingUser, setEditingUser] = useState(null);
     const [newPassword, setNewPassword] = useState('');
@@ -15,11 +16,12 @@ function UserManagement() {
     const [editingLeaderInfo, setEditingLeaderInfo] = useState(null);
 
     const { data: leaders } = useQuery({
-        queryKey: ['leaders'],
+        queryKey: ['leaders', churchId],
         queryFn: async () => {
-            const { data } = await supabase.from('users').select('*, cells!cells_leader_id_fkey(name)').eq('role', 'leader');
+            const { data } = await supabase.from('users').select('*, cells!cells_leader_id_fkey(name)').eq('role', 'leader').eq('church_id', churchId);
             return data || [];
-        }
+        },
+        enabled: !!churchId
     });
 
     // Add Leader Mutation
@@ -29,12 +31,13 @@ function UserManagement() {
                 email,
                 password,
                 role: 'leader',
+                church_id: churchId,  // Important: assign to current church
                 user_metadata: { name }
             });
             if (error) throw error;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['leaders']);
+            queryClient.invalidateQueries(['leaders', churchId]);
             setIsAddingLeader(false);
             toast.success('Líder adicionado com sucesso!');
         },
