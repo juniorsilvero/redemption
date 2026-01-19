@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Building2, Key, Copy, Check, Shield, ChevronDown, ChevronUp, Trash2, List } from 'lucide-react';
+import { Building2, Key, Copy, Check, Shield, ChevronDown, ChevronUp, Trash2, List, Power } from 'lucide-react';
 
 // Secret superadmin password - CHANGE THIS TO YOUR OWN SECRET
 const SUPERADMIN_PASSWORD = 'redemption2026';
@@ -293,14 +293,17 @@ Acesse: ${window.location.origin}/login`;
                                     const isSelected = selectedChurch === church.id;
 
                                     return (
-                                        <div key={church.id} className="bg-slate-700/50 rounded-lg overflow-hidden">
+                                        <div key={church.id} className={`rounded-lg overflow-hidden ${church.is_active !== false ? 'bg-slate-700/50' : 'bg-slate-700/30 border border-red-900/50'}`}>
                                             <button
                                                 onClick={() => setSelectedChurch(isSelected ? null : church.id)}
                                                 className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-600/50 transition-colors"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <Building2 className="w-5 h-5 text-indigo-400" />
-                                                    <span className="text-white font-medium">{church.name}</span>
+                                                    <Building2 className={`w-5 h-5 ${church.is_active !== false ? 'text-indigo-400' : 'text-red-400'}`} />
+                                                    <span className={`font-medium ${church.is_active !== false ? 'text-white' : 'text-slate-400'}`}>{church.name}</span>
+                                                    {church.is_active === false && (
+                                                        <span className="px-2 py-0.5 text-xs bg-red-900/50 text-red-400 rounded-full">Desativada</span>
+                                                    )}
                                                 </div>
                                                 {isSelected ? (
                                                     <ChevronUp className="w-5 h-5 text-slate-400" />
@@ -355,6 +358,22 @@ Acesse: ${window.location.origin}/login`;
                                                             >
                                                                 <Copy className="w-4 h-4" />
                                                                 Copiar Tudo
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    const newStatus = !church.is_active;
+                                                                    const { error } = await supabase.from('churches').update({ is_active: newStatus }).eq('id', church.id);
+                                                                    if (error) {
+                                                                        toast.error('Erro ao alterar status: ' + error.message);
+                                                                    } else {
+                                                                        toast.success(newStatus ? 'Igreja ativada!' : 'Igreja desativada!');
+                                                                        queryClient.invalidateQueries(['all_churches']);
+                                                                    }
+                                                                }}
+                                                                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${church.is_active !== false ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+                                                                title={church.is_active !== false ? 'Desativar igreja' : 'Ativar igreja'}
+                                                            >
+                                                                <Power className="w-4 h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={async () => {

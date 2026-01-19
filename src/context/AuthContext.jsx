@@ -43,6 +43,12 @@ export const AuthProvider = ({ children }) => {
                 .eq('id', users.church_id)
                 .single();
 
+            // Check if church is active
+            if (church && !church.is_active) {
+                toast.error('Esta igreja está desativada. Entre em contato com o administrador.');
+                return { error: new Error('Church is inactive') };
+            }
+
             const sessionData = {
                 user: { ...users, church },
                 access_token: 'mock-token-' + Date.now(),
