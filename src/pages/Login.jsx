@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, X, Phone } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -117,19 +117,9 @@ export default function Login() {
                             <p className="text-gray-600 text-center mb-4">
                                 O acesso à sua igreja foi <strong>temporariamente suspenso</strong>.
                             </p>
-                            <p className="text-gray-500 text-sm text-center mb-6">
+                            <p className="text-gray-500 text-sm text-center mb-2">
                                 Para reativar o acesso, entre em contato com o administrador do sistema.
                             </p>
-
-                            <div className="bg-slate-50 rounded-lg p-4 mb-6">
-                                <div className="flex items-center gap-3 text-slate-600">
-                                    <Phone className="w-5 h-5 text-indigo-500" />
-                                    <div>
-                                        <p className="text-xs text-slate-400">Contato do Administrador</p>
-                                        <p className="font-medium">suporte@redemption.com</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Footer */}
