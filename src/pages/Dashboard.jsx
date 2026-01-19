@@ -59,6 +59,12 @@ export default function Dashboard() {
             // Pending payments with Cell Data
             const pendingWorkers = workers?.filter(w => w.payment_status === 'pending') || [];
             const pendingPassers = passers?.filter(p => p.payment_status === 'pending') || [];
+
+            // Calculate total pending value
+            const pendingValueWorker = pendingWorkers.reduce((acc, curr) => acc + (curr.payment_amount || 0), 0);
+            const pendingValuePasser = pendingPassers.reduce((acc, curr) => acc + (curr.payment_amount || 0), 0);
+            const totalPendingValue = pendingValueWorker + pendingValuePasser;
+
             const allPending = [
                 ...pendingWorkers.map(w => ({ ...w, type: 'Trabalhador', cell: cellMap[w.cell_id] })),
                 ...pendingPassers.map(p => ({ ...p, type: 'Passante', cell: cellMap[p.cell_id] }))
@@ -81,6 +87,7 @@ export default function Dashboard() {
                 totalWorkers,
                 totalPassers,
                 totalRevenue,
+                totalPendingValue,
                 pendingPayments: allPending,
                 allWorkers: workersWithRanking,
                 allPassers: passers,
@@ -303,6 +310,49 @@ export default function Dashboard() {
                 </div>
             </Modal>
 
+            <Modal isOpen={modalType === 'pending'} onClose={() => setModalType(null)} title="Pagamentos Pendentes">
+                <div className="overflow-y-auto max-h-[60vh]">
+                    <div className="space-y-4">
+                        {stats?.pendingPayments?.length === 0 ? (
+                            <p className="text-sm text-slate-500">Nenhum pagamento pendente.</p>
+                        ) : (
+                            stats?.pendingPayments?.map((person) => (
+                                <div key={person.id} className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 sm:p-4 border rounded-lg bg-slate-50 items-center">
+                                    <div className="p-2 bg-orange-100 rounded-full shrink-0">
+                                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            <p className="text-sm font-bold text-slate-900">{person.name} {person.surname}</p>
+                                            {person.cell && (
+                                                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-sm">
+                                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
+                                                    {person.cell.name}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-medium">{person.type}</p>
+
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-slate-900 leading-none mb-1">R$ {person.payment_amount?.toFixed(2)}</p>
+                                            <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase tracking-tighter">Pendente</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setSelectedInfoPerson(person)}
+                                            className="p-1.5 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                                        >
+                                            <Info className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </Modal>
+
             <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4">
                 {/* Quick Actions - Top on mobile, right on desktop */}
                 <Card className="order-1 lg:order-2 lg:col-span-3">
@@ -328,50 +378,22 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Pending Payments Section - Bottom on mobile, left on desktop */}
-                <Card className="order-2 lg:order-1 lg:col-span-4">
-                    <CardHeader>
-                        <CardTitle>Pagamentos Pendentes</CardTitle>
+                {/* Pending Payments Section - Summary Card */}
+                <Card
+                    className="order-2 lg:order-1 lg:col-span-4 cursor-pointer hover:shadow-md transition-all active:scale-95 group"
+                    onClick={() => setModalType('pending')}
+                >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600 group-hover:text-orange-700 transition-colors">Pagamentos Pendentes</CardTitle>
+                        <div className="p-2 rounded-full bg-orange-100 group-hover:bg-orange-200 transition-colors">
+                            <AlertCircle className="h-4 w-4 text-orange-600" />
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {stats?.pendingPayments?.length === 0 ? (
-                                <p className="text-sm text-slate-500">Nenhum pagamento pendente.</p>
-                            ) : (
-                                stats?.pendingPayments?.map((person) => (
-                                    <div key={person.id} className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 sm:p-4 border rounded-lg bg-slate-50 items-center">
-                                        <div className="p-2 bg-orange-100 rounded-full shrink-0">
-                                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                <p className="text-sm font-bold text-slate-900">{person.name} {person.surname}</p>
-                                                {person.cell && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-sm">
-                                                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
-                                                        {person.cell.name}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-slate-500 font-medium">{person.type}</p>
-
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
-                                            <div className="text-right">
-                                                <p className="text-sm font-bold text-slate-900 leading-none mb-1">R$ {person.payment_amount?.toFixed(2)}</p>
-                                                <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase tracking-tighter">Pendente</span>
-                                            </div>
-                                            <button
-                                                onClick={() => setSelectedInfoPerson(person)}
-                                                className="p-1.5 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
-                                            >
-                                                <Info className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <div className="text-2xl font-bold text-slate-900">R$ {stats?.totalPendingValue?.toFixed(2) || '0.00'}</div>
+                        <p className="text-xs text-slate-500 mt-1">
+                            {stats?.pendingPayments?.length || 0} pessoas pendentes. <span className="text-indigo-600 font-medium">Clique para ver detalhes.</span>
+                        </p>
                     </CardContent>
                 </Card>
             </div>
