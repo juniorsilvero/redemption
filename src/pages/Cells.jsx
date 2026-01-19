@@ -72,11 +72,11 @@ export default function Cells() {
     });
 
 
+    // Fetch only leaders (users with role='leader')
     const { data: profiles } = useQuery({
-
-        queryKey: ['profiles'],
+        queryKey: ['leaders'],
         queryFn: async () => {
-            const { data } = await supabase.from('users').select('*');
+            const { data } = await supabase.from('users').select('*').eq('role', 'leader');
             return data;
         }
     });
@@ -144,9 +144,17 @@ export default function Cells() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        const leaderId = formData.get('leader_id');
+
+        // Validate that the selected leader exists in the leaders list
+        if (!profiles?.some(p => p.id === leaderId)) {
+            toast.error('Líder selecionado não encontrado. Por favor, adicione o líder nas Configurações primeiro.');
+            return;
+        }
+
         const data = {
             name: formData.get('name'),
-            leader_id: formData.get('leader_id'),
+            leader_id: leaderId,
             card_color: formData.get('card_color'),
         };
 
@@ -332,15 +340,27 @@ export default function Cells() {
                             name="leader_id"
                             defaultValue={editingCell?.leader_id || user.id}
                             disabled={!isAdmin}
+                            required
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 disabled:bg-slate-100 disabled:text-slate-500"
                         >
-                            <option value={user.id}>Atribuir a mim mesmo</option>
-                            {profiles?.map(p => (
-                                <option key={p.id} value={p.id}>
-                                    {p.user_metadata?.name || p.email}
-                                </option>
-                            ))}
+                            {profiles?.length === 0 ? (
+                                <option value="">Nenhum líder cadastrado</option>
+                            ) : (
+                                <>
+                                    {!editingCell && <option value="">Selecione um líder...</option>}
+                                    {profiles?.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.user_metadata?.name || p.email}
+                                        </option>
+                                    ))}
+                                </>
+                            )}
                         </select>
+                        {profiles?.length === 0 && (
+                            <p className="text-xs text-red-500 mt-1">
+                                Adicione líderes nas Configurações antes de criar células.
+                            </p>
+                        )}
                         {!isAdmin && <p className="text-xs text-slate-500 mt-1">Apenas administradores podem alterar o líder.</p>}
                     </div>
 

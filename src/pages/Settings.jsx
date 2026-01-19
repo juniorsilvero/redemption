@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Key } from 'lucide-react';
+import { Plus, Trash2, Key, Edit2 } from 'lucide-react';
 
 // User Management Component
 function UserManagement() {
     const queryClient = useQueryClient();
     const [editingUser, setEditingUser] = useState(null);
     const [newPassword, setNewPassword] = useState('');
+    const [isAddingLeader, setIsAddingLeader] = useState(false);
+    const [editingLeaderInfo, setEditingLeaderInfo] = useState(null);
 
     const { data: leaders } = useQuery({
         queryKey: ['leaders'],
@@ -20,6 +22,43 @@ function UserManagement() {
         }
     });
 
+    // Add Leader Mutation
+    const addLeaderMutation = useMutation({
+        mutationFn: async ({ name, email, password }) => {
+            const { error } = await supabase.from('users').insert({
+                email,
+                password,
+                role: 'leader',
+                user_metadata: { name }
+            });
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['leaders']);
+            setIsAddingLeader(false);
+            toast.success('Líder adicionado com sucesso!');
+        },
+        onError: (error) => toast.error(`Erro ao adicionar líder: ${error.message}`)
+    });
+
+    // Update Leader Info Mutation
+    const updateLeaderInfoMutation = useMutation({
+        mutationFn: async ({ userId, name, email }) => {
+            const { error } = await supabase.from('users').update({
+                email,
+                user_metadata: { name }
+            }).eq('id', userId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['leaders']);
+            setEditingLeaderInfo(null);
+            toast.success('Informações atualizadas com sucesso!');
+        },
+        onError: () => toast.error('Erro ao atualizar informações')
+    });
+
+    // Update Password Mutation
     const updatePasswordMutation = useMutation({
         mutationFn: async ({ userId, password }) => {
             const { error } = await supabase.from('users').update({ password }).eq('id', userId);
@@ -34,6 +73,19 @@ function UserManagement() {
         onError: () => toast.error('Erro ao atualizar senha')
     });
 
+    // Delete Leader Mutation
+    const deleteLeaderMutation = useMutation({
+        mutationFn: async (userId) => {
+            const { error } = await supabase.from('users').delete().eq('id', userId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['leaders']);
+            toast.success('Líder excluído com sucesso!');
+        },
+        onError: () => toast.error('Erro ao excluir líder')
+    });
+
     const handleUpdatePassword = (userId) => {
         if (!newPassword || newPassword.length < 6) {
             toast.error('Senha deve ter no mínimo 6 caracteres');
@@ -42,8 +94,94 @@ function UserManagement() {
         updatePasswordMutation.mutate({ userId, password: newPassword });
     };
 
+    const handleAddLeader = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const name = formData.get('name');
+        const email = formData.get('email');
+        const password = formData.get('password');
+
+        if (password.length < 6) {
+            toast.error('Senha deve ter no mínimo 6 caracteres');
+            return;
+        }
+
+        addLeaderMutation.mutate({ name, email, password });
+        e.target.reset();
+    };
+
+    const handleUpdateLeaderInfo = (e, userId) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        updateLeaderInfoMutation.mutate({
+            userId,
+            name: formData.get('name'),
+            email: formData.get('email')
+        });
+    };
+
+    const handleDeleteLeader = (leader) => {
+        if (!confirm(`Tem certeza que deseja excluir o líder "${leader.user_metadata?.name || leader.email}"?`)) {
+            return;
+        }
+        deleteLeaderMutation.mutate(leader.id);
+    };
+
     return (
         <div className="space-y-4">
+            {/* Add Leader Form */}
+            {isAddingLeader ? (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <h4 className="font-bold text-indigo-900 mb-3">Adicionar Novo Líder</h4>
+                    <form onSubmit={handleAddLeader} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <input
+                            name="name"
+                            type="text"
+                            placeholder="Nome completo"
+                            required
+                            className="px-3 py-2 border rounded-md text-sm"
+                        />
+                        <input
+                            name="email"
+                            type="email"
+                            placeholder="email@redemption.com"
+                            required
+                            className="px-3 py-2 border rounded-md text-sm"
+                        />
+                        <input
+                            name="password"
+                            type="password"
+                            placeholder="Senha (mín. 6 caracteres)"
+                            required
+                            className="px-3 py-2 border rounded-md text-sm"
+                        />
+                        <div className="flex gap-2">
+                            <button
+                                type="submit"
+                                className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+                            >
+                                Salvar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsAddingLeader(false)}
+                                className="px-3 py-2 bg-slate-200 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-300"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            ) : (
+                <button
+                    onClick={() => setIsAddingLeader(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                >
+                    <Plus className="h-4 w-4" />
+                    Adicionar Líder
+                </button>
+            )}
+
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto border border-slate-200 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -59,47 +197,94 @@ function UserManagement() {
                         {leaders?.map(leader => (
                             <tr key={leader.id}>
                                 <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                    {leader.user_metadata?.name || 'Sem nome'}
+                                    {editingLeaderInfo === leader.id ? (
+                                        <form onSubmit={(e) => handleUpdateLeaderInfo(e, leader.id)} className="flex gap-2">
+                                            <input
+                                                name="name"
+                                                type="text"
+                                                defaultValue={leader.user_metadata?.name || ''}
+                                                className="px-2 py-1 border rounded text-sm w-32"
+                                                required
+                                            />
+                                            <input
+                                                name="email"
+                                                type="email"
+                                                defaultValue={leader.email}
+                                                className="px-2 py-1 border rounded text-sm w-48"
+                                                required
+                                            />
+                                            <button type="submit" className="px-2 py-1 bg-green-600 text-white rounded text-xs">Salvar</button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingLeaderInfo(null)}
+                                                className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </form>
+                                    ) : (
+                                        leader.user_metadata?.name || 'Sem nome'
+                                    )}
                                 </td>
-                                <td className="px-4 py-3 text-sm text-gray-500">{leader.email}</td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                    {editingLeaderInfo !== leader.id && leader.email}
+                                </td>
                                 <td className="px-4 py-3 text-sm text-gray-500">
                                     {leader.cells?.[0]?.name || 'Sem célula'}
                                 </td>
                                 <td className="px-4 py-3 text-sm">
-                                    {editingUser === leader.id ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="password"
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder="Nova senha"
-                                                className="px-2 py-1 border rounded text-sm w-32"
-                                            />
-                                            <button
-                                                onClick={() => handleUpdatePassword(leader.id)}
-                                                className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-500"
-                                            >
-                                                Salvar
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingUser(null);
-                                                    setNewPassword('');
-                                                }}
-                                                className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
-                                            >
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => setEditingUser(leader.id)}
-                                            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-500"
-                                        >
-                                            <Key className="h-4 w-4" />
-                                            Alterar Senha
-                                        </button>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {editingUser === leader.id ? (
+                                            <>
+                                                <input
+                                                    type="password"
+                                                    value={newPassword}
+                                                    onChange={(e) => setNewPassword(e.target.value)}
+                                                    placeholder="Nova senha"
+                                                    className="px-2 py-1 border rounded text-sm w-32"
+                                                />
+                                                <button
+                                                    onClick={() => handleUpdatePassword(leader.id)}
+                                                    className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-500"
+                                                >
+                                                    Salvar
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingUser(null);
+                                                        setNewPassword('');
+                                                    }}
+                                                    className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </>
+                                        ) : editingLeaderInfo === leader.id ? null : (
+                                            <>
+                                                <button
+                                                    onClick={() => setEditingLeaderInfo(leader.id)}
+                                                    className="flex items-center gap-1 text-blue-600 hover:text-blue-500 text-xs"
+                                                >
+                                                    <Edit2 className="h-3 w-3" />
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingUser(leader.id)}
+                                                    className="flex items-center gap-1 text-indigo-600 hover:text-indigo-500 text-xs"
+                                                >
+                                                    <Key className="h-3 w-3" />
+                                                    Senha
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteLeader(leader)}
+                                                    className="flex items-center gap-1 text-red-600 hover:text-red-500 text-xs"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                    Excluir
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -121,7 +306,7 @@ function UserManagement() {
                             </span>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-100">
+                        <div className="pt-2 border-t border-slate-100 space-y-2">
                             {editingUser === leader.id ? (
                                 <div className="space-y-2">
                                     <input
@@ -150,13 +335,21 @@ function UserManagement() {
                                     </div>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={() => setEditingUser(leader.id)}
-                                    className="flex items-center justify-center gap-2 w-full py-2 text-indigo-600 bg-indigo-50 rounded-md text-sm font-medium"
-                                >
-                                    <Key className="h-4 w-4" />
-                                    Alterar Senha
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setEditingUser(leader.id)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 text-indigo-600 bg-indigo-50 rounded-md text-sm font-medium"
+                                    >
+                                        <Key className="h-4 w-4" />
+                                        Alterar Senha
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteLeader(leader)}
+                                        className="px-4 py-2 text-red-600 bg-red-50 rounded-md text-sm font-medium"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
