@@ -12,6 +12,7 @@ import Accommodation from './pages/Accommodation';
 import Prayer from './pages/Prayer';
 import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
+import Setup from './pages/Setup';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ function App() {
           <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/setup" element={<Setup />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />

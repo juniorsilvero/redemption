@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Key, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Key, Edit2, ShieldCheck, ShieldOff } from 'lucide-react';
 
 // User Management Component
 function UserManagement() {
@@ -365,6 +365,149 @@ function UserManagement() {
     );
 }
 
+// Admin Promotion Component
+function AdminPromotion() {
+    const { churchId, user } = useAuth();
+    const queryClient = useQueryClient();
+
+    // Fetch all users (leaders and admins) from the same church
+    const { data: users, isLoading } = useQuery({
+        queryKey: ['all_users', churchId],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('users')
+                .select('id, email, role, user_metadata, church_id')
+                .eq('church_id', churchId)
+                .in('role', ['leader', 'admin']);
+            if (error) throw error;
+            return data || [];
+        }
+    });
+
+    // Promote/Demote Mutation
+    const toggleRoleMutation = useMutation({
+        mutationFn: async ({ userId, newRole }) => {
+            const { error } = await supabase
+                .from('users')
+                .update({ role: newRole })
+                .eq('id', userId);
+            if (error) throw error;
+        },
+        onSuccess: (_, { newRole }) => {
+            queryClient.invalidateQueries(['all_users', churchId]);
+            queryClient.invalidateQueries(['leaders']);
+            if (newRole === 'admin') {
+                toast.success('Usuário promovido a administrador!');
+            } else {
+                toast.success('Administrador rebaixado para líder!');
+            }
+        },
+        onError: () => toast.error('Erro ao alterar função do usuário')
+    });
+
+    const handleToggleRole = (userItem) => {
+        // Prevent demoting yourself
+        if (userItem.id === user?.id) {
+            toast.error('Você não pode alterar sua própria função!');
+            return;
+        }
+
+        const newRole = userItem.role === 'admin' ? 'leader' : 'admin';
+        const action = newRole === 'admin' ? 'promover' : 'rebaixar';
+        const name = userItem.user_metadata?.name || userItem.email;
+
+        if (window.confirm(`Deseja ${action} ${name} para ${newRole === 'admin' ? 'administrador' : 'líder'}?`)) {
+            toggleRoleMutation.mutate({ userId: userItem.id, newRole });
+        }
+    };
+
+    if (isLoading) {
+        return <div className="text-center py-4 text-gray-500">Carregando usuários...</div>;
+    }
+
+    const leaders = users?.filter(u => u.role === 'leader') || [];
+    const admins = users?.filter(u => u.role === 'admin' && u.id !== user?.id) || [];
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-gray-600 mb-4">
+                Promova líderes a administradores ou rebaixe administradores para líderes.
+            </p>
+
+            {/* Leaders Section */}
+            {leaders.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Líderes</span>
+                        <span className="text-gray-400">→ Promover para Admin</span>
+                    </h4>
+                    <div className="space-y-2">
+                        {leaders.map(leader => (
+                            <div key={leader.id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:border-indigo-200 transition-colors">
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        {leader.user_metadata?.name || 'Sem nome'}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{leader.email}</p>
+                                </div>
+                                <button
+                                    onClick={() => handleToggleRole(leader)}
+                                    disabled={toggleRoleMutation.isPending}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-md text-sm font-medium hover:bg-indigo-200 transition-colors disabled:opacity-50"
+                                >
+                                    <ShieldCheck className="h-4 w-4" />
+                                    Promover
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Admins Section */}
+            {admins.length > 0 && (
+                <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Admins</span>
+                        <span className="text-gray-400">→ Rebaixar para Líder</span>
+                    </h4>
+                    <div className="space-y-2">
+                        {admins.map(admin => (
+                            <div key={admin.id} className="flex items-center justify-between p-3 bg-white border border-purple-100 rounded-lg hover:border-red-200 transition-colors">
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        {admin.user_metadata?.name || 'Sem nome'}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{admin.email}</p>
+                                </div>
+                                <button
+                                    onClick={() => handleToggleRole(admin)}
+                                    disabled={toggleRoleMutation.isPending}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-md text-sm font-medium hover:bg-red-200 transition-colors disabled:opacity-50"
+                                >
+                                    <ShieldOff className="h-4 w-4" />
+                                    Rebaixar
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {leaders.length === 0 && admins.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                    <ShieldCheck className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                    <p>Nenhum usuário disponível para gerenciar.</p>
+                </div>
+            )}
+
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded mt-4">
+                <p><strong>Nota:</strong> Administradores têm acesso completo ao sistema, incluindo Dashboard, Escalas, Acomodação, Oração, Presença e Configurações.</p>
+            </div>
+        </div>
+    );
+}
+
 export default function Settings() {
     const { isAdmin, churchId } = useAuth();
     const queryClient = useQueryClient();
@@ -556,6 +699,19 @@ export default function Settings() {
                     </CardHeader>
                     <CardContent>
                         <UserManagement />
+                    </CardContent>
+                </Card>
+
+                {/* Admin Promotion */}
+                <Card className="md:col-span-2 border-indigo-100 bg-indigo-50/30">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                            Gerenciamento de Administradores
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AdminPromotion />
                     </CardContent>
                 </Card>
 
