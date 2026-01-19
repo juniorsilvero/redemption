@@ -12,8 +12,10 @@ export function Layout({ children }) {
     // Show filter only if:
     // 1. User is Admin
     // 2. Not on a specific cell details page (e.g. /cells/123)
+    // 3. Not on settings page
     const isCellDetailsPage = /^\/cells\/[^/]+$/.test(location.pathname);
-    const showFilter = isAdmin && !isCellDetailsPage;
+    const isSettingsPage = location.pathname === '/settings';
+    const showFilter = isAdmin && !isCellDetailsPage && !isSettingsPage;
 
     return (
         <div className="min-h-screen bg-[var(--color-background)]">
