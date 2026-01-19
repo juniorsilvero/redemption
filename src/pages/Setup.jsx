@@ -30,7 +30,7 @@ export default function Setup() {
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
             .replace(/[^a-z0-9]/g, '');
         return {
-            email: `admin@${slug}.church`,
+            email: `${slug}@redemption.com`,
             password: `${slug}Admin2026!`
         };
     };
