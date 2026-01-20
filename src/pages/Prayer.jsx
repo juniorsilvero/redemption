@@ -28,19 +28,20 @@ export default function Prayer() {
     }, [genderFilter, setGenderFilter]);
 
 
-    // ... slots logic stays same
+    // ... slots logic now includes gender
     const slots = useMemo(() => {
         const slotsArr = [];
         const days = ['Sexta', 'Sábado', 'Domingo'];
         let dayIndex = 0;
         let hour = 19;
+        const genderPrefix = genderFilter === 'female' ? 'female' : 'male';
 
         for (let i = 0; i < 49; i++) {
             const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
             const dayLabel = days[dayIndex];
 
             slotsArr.push({
-                id: `slot-${i}`,
+                id: `slot-${genderPrefix}-${i}`,
                 day: dayLabel,
                 time: timeLabel,
                 absoluteHour: i
@@ -53,7 +54,7 @@ export default function Prayer() {
             }
         }
         return slotsArr;
-    }, []);
+    }, [genderFilter]);
 
     // Fetch Data
     const { data: prayerAssignments } = useQuery({
