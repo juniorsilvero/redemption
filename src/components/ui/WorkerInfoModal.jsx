@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Modal } from './Modal';
-import { User, X, ZoomIn, Calendar, Clock, Home, Briefcase, Crown } from 'lucide-react';
+import { User, Users, X, ZoomIn, Calendar, Clock, Home, Briefcase, Crown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { format, differenceInYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
