@@ -46,12 +46,11 @@ export function InstallPrompt() {
 
     const handleDismiss = () => {
         setShowPrompt(false);
-        // Don't show again for this session
-        sessionStorage.setItem('pwa_prompt_dismissed', 'true');
+        // Prompt will show again on next page load/login
     };
 
-    // Don't show if already installed, dismissed, or no prompt available
-    if (isInstalled || !showPrompt || sessionStorage.getItem('pwa_prompt_dismissed')) {
+    // Don't show if already installed or no prompt available
+    if (isInstalled || !showPrompt) {
         return null;
     }
 
