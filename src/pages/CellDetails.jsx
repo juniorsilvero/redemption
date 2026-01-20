@@ -681,6 +681,7 @@ export default function CellDetails() {
                 allPassers={passers}
                 isOpen={!!selectedInfoPerson}
                 onClose={() => setSelectedInfoPerson(null)}
+                onSwitchWorker={setSelectedInfoPerson}
             />
 
             <CellFrequencyModal

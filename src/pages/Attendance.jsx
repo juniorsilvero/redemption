@@ -175,14 +175,20 @@ export default function Attendance() {
 
 
     // -- Derived State --
+    // -- Derived State --
+    const getPersonGender = (person) => {
+        const gender = person.gender || (Array.isArray(person.cells) ? person.cells[0]?.gender : person.cells?.gender);
+        return gender?.toLowerCase();
+    };
+
     const filteredWorkers = useMemo(() => {
         if (!workers) return [];
-        return workers.filter(w => matchesFilter(w.gender || w.cells?.gender));
+        return workers.filter(w => matchesFilter(getPersonGender(w)));
     }, [workers, matchesFilter]);
 
     const filteredPassers = useMemo(() => {
         if (!passers) return [];
-        return passers.filter(p => matchesFilter(p.gender || p.cells?.gender));
+        return passers.filter(p => matchesFilter(getPersonGender(p)));
     }, [passers, matchesFilter]);
 
 
