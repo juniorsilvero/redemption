@@ -13,6 +13,7 @@ import Prayer from './pages/Prayer';
 import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
 import Setup from './pages/Setup';
+import { InstallPrompt } from './components/ui/InstallPrompt';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient({
@@ -52,29 +53,32 @@ const AdminRoute = ({ children }) => {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <FilterProvider>
-          <Router>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/setup" element={<Setup />} />
+    <>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <FilterProvider>
+            <Router>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/setup" element={<Setup />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />
-                <Route path="/cells" element={<Cells />} />
-                <Route path="/cells/:id" element={<CellDetails />} />
-                <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
-                <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
-                <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
-                <Route path="/attendance" element={<AdminRoute><Attendance /></AdminRoute>} />
-                <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
-              </Route>
-            </Routes>
-          </Router>
-        </FilterProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />
+                  <Route path="/cells" element={<Cells />} />
+                  <Route path="/cells/:id" element={<CellDetails />} />
+                  <Route path="/scales" element={<AdminRoute><Scale /></AdminRoute>} />
+                  <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
+                  <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
+                  <Route path="/attendance" element={<AdminRoute><Attendance /></AdminRoute>} />
+                  <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
+                </Route>
+              </Routes>
+            </Router>
+            <InstallPrompt />
+          </FilterProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </>
   );
 }
 
