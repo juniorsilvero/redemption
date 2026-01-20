@@ -115,277 +115,206 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
         : null;
 
-
-    // Status Badge Component
-    const StatusBadge = ({ label, active, colorClass }) => (
-        <span className={cn(
-            "px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border",
-            active ? colorClass : "bg-slate-50 text-slate-400 border-slate-200 opacity-50"
-        )}>
-            {label}
-        </span>
-    );
-
     return (
-        <>
-            <Modal isOpen={isOpen} onClose={onClose} title="Detalhes do Guerreiro" maxWidth="max-w-4xl">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8 lg:max-h-[70vh]">
+        <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="max-w-md" hideHeader={true}>
+            {/* Custom Header with Blue Gradient */}
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 pt-10 text-center relative rounded-t-lg">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                >
+                    <X className="w-6 h-6" />
+                </button>
 
-                    {/* LEFT COLUMN: PROFILE & PERSONAL INFO */}
-                    <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-slate-100 pb-6 lg:pb-0 lg:pr-6 space-y-5 lg:overflow-y-auto custom-scrollbar">
-                        <div className="flex flex-col items-center text-center">
-                            <div
-                                className={cn(
-                                    "h-28 w-28 rounded-full border-4 border-slate-50 shadow-sm flex items-center justify-center bg-slate-100 text-slate-400 overflow-hidden mb-3",
-                                    worker.photo_url && "cursor-pointer hover:ring-2 hover:ring-indigo-500 hover:ring-offset-2 transition-all"
-                                )}
-                                onClick={() => worker.photo_url && setShowExpandedPhoto(true)}
-                            >
-                                {worker.photo_url ? (
-                                    <img src={worker.photo_url} alt="" className="h-full w-full object-cover" />
-                                ) : (
-                                    <User className="h-10 w-10" />
-                                )}
-                            </div>
-
-                            <h3 className="text-xl font-bold text-slate-900 leading-tight">{worker.name}</h3>
-                            <p className="text-lg font-medium text-slate-600 mb-2">{worker.surname}</p>
-
-                            <div className="flex flex-wrap justify-center gap-2 mb-4">
-                                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                                    {isWorkerType ? 'Trabalhador' : 'Passante'}
-                                </span>
-                                {cell && (
-                                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-sm" style={{ backgroundColor: cell.card_color }}>
-                                        {cell.name}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Payment Badge - Compact */}
-                            {!isWorkerType && (
-                                <div className={cn(
-                                    "w-full rounded-lg px-3 py-2 flex items-center justify-between border mb-4",
-                                    worker.payment_status === 'paid'
-                                        ? "bg-emerald-50 border-emerald-100 text-emerald-700"
-                                        : "bg-amber-50 border-amber-100 text-amber-700"
-                                )}>
-                                    <span className="text-xs font-bold uppercase tracking-wide">Inscrição</span>
-                                    <div className="text-right">
-                                        <span className="block text-xs font-extrabold uppercase">
-                                            {worker.payment_status === 'paid' ? 'PAGO' : 'PENDENTE'}
-                                        </span>
-                                        {worker.payment_amount && <span className="text-sm font-bold">R$ {worker.payment_amount}</span>}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Personal Details List - Compact */}
-                            <div className="w-full text-sm space-y-3">
-                                <div className="flex justify-between py-1 border-b border-slate-50">
-                                    <span className="text-slate-500">Telefone</span>
-                                    <span className="font-medium text-slate-800">{worker.phone || '-'}</span>
-                                </div>
-                                <div className="flex justify-between py-1 border-b border-slate-50">
-                                    <span className="text-slate-500">Idade</span>
-                                    <span className="font-medium text-slate-800">
-                                        {worker.birth_date ? `${differenceInYears(new Date(), new Date(worker.birth_date))} anos` : '-'}
-                                    </span>
-                                </div>
-
-                                {/* Responsible / Family Contacts */}
-                                {responsibleWorker && (
-                                    <div className="flex justify-between py-1 border-b border-slate-50">
-                                        <span className="text-slate-500">Responsável</span>
-                                        <span className="font-medium text-indigo-700 truncate max-w-[150px]" title={`${responsibleWorker.name} ${responsibleWorker.surname}`}>
-                                            {responsibleWorker.name} {responsibleWorker.surname}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Restrictions Mini-Badges */}
-                            {(worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
-                                <div className="w-full flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
-                                    {worker.food_restrictions && (
-                                        <div className="flex-1 bg-red-50 text-red-700 px-2 py-1.5 rounded text-[10px] font-medium border border-red-100 leading-tight">
-                                            <span className="block font-bold mb-0.5">Alimentar</span>
-                                            {worker.food_restrictions}
-                                        </div>
-                                    )}
-                                    {worker.controlled_medication && (
-                                        <div className="flex-1 bg-amber-50 text-amber-700 px-2 py-1.5 rounded text-[10px] font-medium border border-amber-100 leading-tight">
-                                            <span className="block font-bold mb-0.5">Remédio</span>
-                                            {worker.controlled_medication}
-                                        </div>
-                                    )}
-                                    {worker.physical_restrictions && (
-                                        <div className="flex-1 bg-slate-50 text-slate-700 px-2 py-1.5 rounded text-[10px] font-medium border border-slate-200 leading-tight">
-                                            <span className="block font-bold mb-0.5">Física</span>
-                                            {worker.physical_restrictions}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                        </div>
-                    </div>
-
-
-                    {/* RIGHT COLUMN: ASSIGNMENTS (COMPACT LIST VIEW) */}
-                    <div className="lg:col-span-8 flex flex-col h-full overflow-hidden">
-
-                        <div className="flex-1 space-y-6 lg:overflow-y-auto pr-1 custom-scrollbar">
-
-                            {/* WORK SCALES */}
-                            <div>
-                                <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                    <Briefcase className="w-3.5 h-3.5" /> Escalas de Trabalho
-                                </h4>
-                                {workScales?.length > 0 ? (
-                                    <div className="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-100">
-                                        {workScales.map(scale => (
-                                            <div key={scale.id} className="flex items-center justify-between px-3 py-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-extrabold text-slate-600 uppercase">
-                                                            {scale.day === 'Friday' ? 'Sex' : scale.day === 'Saturday' ? 'Sáb' : 'Dom'}
-                                                        </span>
-                                                        <span className="text-[10px] text-slate-400 font-medium">Dia</span>
-                                                    </div>
-                                                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-slate-900">
-                                                            {scale.period === 'Breakfast' ? 'Café da Manhã' :
-                                                                scale.period === 'Lunch' ? 'Almoço' :
-                                                                    scale.period === 'Afternoon' ? 'Lanche' : 'Jantar'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
-                                                    {scale.areas?.name}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-slate-400 italic bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                        Nenhuma escala de trabalho atribuída.
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* PRAYER CLOCK & FIXED TEAMS (SIDE BY SIDE ON DESKTOP if space allows, else stacked compact) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                                {/* Prayer Clock */}
-                                <div>
-                                    <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                        <Clock className="w-3.5 h-3.5" /> Relógio de Oração
-                                    </h4>
-                                    {prayerSlots?.length > 0 ? (
-                                        <div className="bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-100">
-                                            {prayerSlots.map(slot => {
-                                                const details = getPrayerSlotDetails(slot.id);
-                                                return (
-                                                    <div key={slot.id} className="flex items-center gap-3 px-3 py-2">
-                                                        <Clock className="w-4 h-4 text-amber-500" />
-                                                        <span className="text-sm font-semibold text-slate-700">
-                                                            <span className="capitalize">{details?.day}</span> às {details?.time}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-slate-400 italic bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                            Sem horário de oração.
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Fixed Scales/Teams */}
-                                <div>
-                                    <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                        <Users className="w-3.5 h-3.5" /> Equipes / Liderança
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {/* Room Leadership */}
-                                        {roomLeadership?.length > 0 && roomLeadership.map(room => (
-                                            <div key={room.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100">
-                                                <Home className="w-4 h-4 text-emerald-600" />
-                                                <div className="flex flex-col leading-none">
-                                                    <span className="text-xs font-bold text-emerald-800 uppercase">Líder de Quarto</span>
-                                                    <span className="text-xs text-emerald-700">{room.number} - {room.name}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {/* Fixed Teams */}
-                                        {fixedScales?.length > 0 ? (
-                                            fixedScales.map(scale => {
-                                                const isLeader = scale.leader_ids?.includes(worker.id);
-                                                return (
-                                                    <div key={scale.id} className={cn(
-                                                        "flex items-center justify-between px-3 py-2 rounded-lg border",
-                                                        isLeader ? "bg-purple-50 border-purple-200" : "bg-white border-slate-200"
-                                                    )}>
-                                                        <span className="text-sm font-medium text-slate-700">{scale.name}</span>
-                                                        {isLeader && <Crown className="w-3.5 h-3.5 text-purple-600" />}
-                                                    </div>
-                                                );
-                                            })
-                                        ) : (
-                                            (!roomLeadership || roomLeadership.length === 0) && (
-                                                <p className="text-sm text-slate-400 italic bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                                    Nenhuma equipe fixa.
-                                                </p>
-                                            )
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Passers Responsibility (Only visible if applicable) */}
-                            {isWorkerType && (allPassers?.filter(p => p.responsible_worker_id === worker.id).length > 0) && (
-                                <div className="pt-2">
-                                    <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                        Passantes sob Cuidados ({allPassers.filter(p => p.responsible_worker_id === worker.id).length})
-                                    </h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {allPassers
-                                            ?.filter(p => p.responsible_worker_id === worker.id)
-                                            .map(passer => (
-                                                <div key={passer.id} className="flex items-center gap-2 p-2 rounded bg-white border border-slate-200">
-                                                    <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
-                                                        {passer.photo_url ? <img src={passer.photo_url} className="w-full h-full object-cover" /> : <User className="w-3 h-3 text-slate-400" />}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-xs font-semibold text-slate-800 truncate">{passer.name}</p>
-                                                        <p className={cn("text-[9px] font-bold uppercase", passer.payment_status === 'paid' ? "text-emerald-600" : "text-amber-600")}>
-                                                            {passer.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-                                </div>
-                            )}
-
-                        </div>
-
-                        <div className="border-t border-slate-100 pt-4 mt-auto">
-                            <button
-                                onClick={onClose}
-                                className="w-full rounded-lg bg-slate-900 text-white px-4 py-3 text-sm font-bold shadow hover:bg-slate-800 transition-colors"
-                            >
-                                Fechar Detalhes
-                            </button>
-                        </div>
-                    </div>
+                <div
+                    className={cn(
+                        "mx-auto h-24 w-24 rounded-full border-4 border-white/30 shadow-lg flex items-center justify-center bg-slate-100 text-slate-400 overflow-hidden mb-3",
+                        worker.photo_url && "cursor-pointer hover:ring-2 hover:ring-white hover:ring-offset-2 hover:ring-offset-blue-500 transition-all"
+                    )}
+                    onClick={() => worker.photo_url && setShowExpandedPhoto(true)}
+                >
+                    {worker.photo_url ? (
+                        <img src={worker.photo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                        <User className="h-10 w-10" />
+                    )}
                 </div>
-            </Modal>
+
+                <h3 className="text-xl font-bold text-white mb-1">{worker.name} {worker.surname}</h3>
+
+                <div className="flex items-center justify-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+                        {isWorkerType ? 'Trabalhador' : 'Passante'}
+                    </span>
+                    {cell && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm" style={{ backgroundColor: cell.card_color }}>
+                            {cell.name}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+
+                {/* Info Row: Phone & Payment */}
+                <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+                    <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Telefone</p>
+                        <p className="text-sm font-semibold text-slate-800">{worker.phone || '-'}</p>
+                    </div>
+
+                    {!isWorkerType && (
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pagamento</p>
+                            <div className={cn(
+                                "px-3 py-1 rounded text-xs font-bold border inline-flex items-center gap-1",
+                                worker.payment_status === 'paid'
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                    : "bg-orange-50 text-orange-700 border-orange-100"
+                            )}>
+                                <span>{worker.payment_status === 'paid' ? 'Pago' : 'Pendente'}</span>
+                                {worker.payment_amount && <span>- R$ {worker.payment_amount}</span>}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Assignments List */}
+                <div className="space-y-5">
+
+                    {/* Work Scales */}
+                    <div>
+                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                            <Briefcase className="w-4 h-4 text-indigo-500" /> Escalas de Trabalho
+                        </h4>
+                        {workScales?.length > 0 ? (
+                            <div className="space-y-2">
+                                {workScales.map(scale => (
+                                    <div key={scale.id} className="bg-indigo-50/50 rounded-lg p-3 flex items-center gap-3 border border-indigo-100/50">
+                                        <div className="flex items-center gap-2 text-indigo-900 font-semibold text-sm">
+                                            <span className="capitalize">{scale.day === 'Friday' ? 'Sexta' : scale.day === 'Saturday' ? 'Sábado' : 'Domingo'}</span>
+                                            <span className="w-1 h-1 rounded-full bg-indigo-300"></span>
+                                            <span>
+                                                {scale.period === 'Breakfast' ? 'Café' :
+                                                    scale.period === 'Lunch' ? 'Almoço' :
+                                                        scale.period === 'Afternoon' ? 'Lanche' : 'Jantar'}
+                                            </span>
+                                        </div>
+                                        <span className="h-px flex-1 bg-indigo-200/50"></span>
+                                        <span className="text-sm font-bold text-indigo-700">{scale.areas?.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic pl-1">Não escala de trabalho atribuída.</p>
+                        )}
+                    </div>
+
+                    {/* Fixed Scales */}
+                    <div>
+                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                            <Users className="w-4 h-4 text-purple-500" /> Escalas Fixas
+                        </h4>
+                        {fixedScales?.length > 0 ? (
+                            <div className="space-y-2">
+                                {fixedScales.map(scale => (
+                                    <div key={scale.id} className="bg-purple-50/50 rounded-lg p-3 border border-purple-100/50 flex justify-between items-center">
+                                        <span className="text-sm font-semibold text-purple-900">{scale.name}</span>
+                                        <div className="flex gap-2">
+                                            {scale.leader_ids?.includes(worker.id) && (
+                                                <span className="text-[10px] font-bold uppercase bg-white text-purple-700 px-2 py-0.5 rounded border border-purple-100">Líder</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic pl-1">Não está em escalas fixas.</p>
+                        )}
+                    </div>
+
+                    {/* Prayer Clock */}
+                    <div>
+                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                            <Clock className="w-4 h-4 text-amber-500" /> Relógio de Oração
+                        </h4>
+                        {prayerSlots?.length > 0 ? (
+                            <div className="space-y-2">
+                                {prayerSlots.map(slot => {
+                                    const details = getPrayerSlotDetails(slot.id);
+                                    return (
+                                        <div key={slot.id} className="flex items-center gap-3 p-2 text-sm bg-amber-50/50 rounded-lg border border-amber-100/50">
+                                            <Clock className="w-4 h-4 text-amber-600" />
+                                            <span className="font-semibold text-slate-700">
+                                                {details?.day} às {details?.time}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic pl-1">Não escalado para oração.</p>
+                        )}
+                    </div>
+
+                    {/* Room Leadership */}
+                    <div>
+                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                            <Home className="w-4 h-4 text-emerald-500" /> Líder de Quarto
+                        </h4>
+                        {roomLeadership?.length > 0 ? (
+                            <div className="space-y-2">
+                                {roomLeadership.map(room => (
+                                    <div key={room.id} className="bg-emerald-50/50 rounded-lg p-3 border border-emerald-100/50">
+                                        <p className="text-xs font-bold text-emerald-800 uppercase mb-1">Quarto {room.number}</p>
+                                        <p className="text-sm font-bold text-emerald-900">{room.name}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 italic pl-1">Não é líder de quarto.</p>
+                        )}
+                    </div>
+
+                    {/* Restrictions (if any) */}
+                    {(worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
+                        <div className="pt-4 border-t border-slate-100">
+                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                                <AlertCircle className="w-4 h-4 text-red-500" /> Observações
+                            </h4>
+                            <div className="space-y-2">
+                                {worker.food_restrictions && (
+                                    <div className="text-xs">
+                                        <span className="font-bold text-red-700">Restrição Alimentar:</span> <span className="text-slate-700">{worker.food_restrictions}</span>
+                                    </div>
+                                )}
+                                {worker.controlled_medication && (
+                                    <div className="text-xs">
+                                        <span className="font-bold text-amber-700">Medicamento:</span> <span className="text-slate-700">{worker.controlled_medication}</span>
+                                    </div>
+                                )}
+                                {worker.physical_restrictions && (
+                                    <div className="text-xs">
+                                        <span className="font-bold text-slate-700">Restrição Física:</span> <span className="text-slate-600">{worker.physical_restrictions}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+
+                <div className="sticky bottom-0 bg-white pt-4">
+                    <button
+                        onClick={onClose}
+                        className="w-full rounded-lg bg-slate-900 text-white px-4 py-3.5 text-sm font-bold shadow hover:bg-slate-800 transition-colors"
+                    >
+                        Fechar
+                    </button>
+                </div>
+
+
+            </div>
 
             {/* Expanded Photo Modal */}
             {showExpandedPhoto && worker.photo_url && (
@@ -405,13 +334,9 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                             alt={`${worker.name} ${worker.surname}`}
                             className="w-full h-full max-h-[85vh] object-contain rounded-lg shadow-2xl ring-1 ring-white/10"
                         />
-                        <div className="text-center mt-4">
-                            <p className="text-white text-xl font-bold">{worker.name} {worker.surname}</p>
-                            {cell && <p className="text-white/60 text-sm">{cell.name}</p>}
-                        </div>
                     </div>
                 </div>
             )}
-        </>
+        </Modal>
     );
 });
