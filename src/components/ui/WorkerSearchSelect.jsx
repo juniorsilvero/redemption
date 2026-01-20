@@ -30,7 +30,7 @@ export function WorkerSearchSelect({ workers, onSelect, placeholder = "Buscar tr
     return (
         <div className={`relative ${className}`}>
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                 <input
                     type="text"
                     value={searchTerm}
@@ -40,7 +40,7 @@ export function WorkerSearchSelect({ workers, onSelect, placeholder = "Buscar tr
                     }}
                     onFocus={() => setIsOpen(true)}
                     placeholder={placeholder}
-                    className="block w-full pl-10 pr-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="block w-full pl-10 pr-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-slate-900 placeholder:text-slate-500"
                 />
                 {searchTerm && (
                     <button
