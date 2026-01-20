@@ -6,7 +6,7 @@ import { useFilter } from '../context/FilterContext';
 
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import { AlertTriangle, Save, Plus, Trash2, Users, Info, FileText } from 'lucide-react';
+import { AlertTriangle, Save, Plus, Trash2, Users, Info, FileText, User, Crown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { generateScalePDF, generateFixedScalePDF } from '../utils/pdfGenerator';
@@ -32,6 +32,7 @@ export default function Scale() {
     const [isFixedScaleModalOpen, setIsFixedScaleModalOpen] = useState(false);
     const [newFixedScaleName, setNewFixedScaleName] = useState('');
     const [viewingWorker, setViewingWorker] = useState(null);
+    const [viewingFixedScale, setViewingFixedScale] = useState(null);
 
     const days = ['Friday', 'Saturday', 'Sunday'];
 
@@ -171,12 +172,23 @@ export default function Scale() {
         }
     });
 
+    const updateFixedScaleLeadersMutation = useMutation({
+        mutationFn: async ({ id, leader_ids }) => {
+            return supabase.from('fixed_scales').update({ leader_ids }).eq('id', id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['fixed_scales']);
+            toast.success('Líderes atualizados');
+        }
+    });
+
     const deleteFixedScaleMutation = useMutation({
         mutationFn: async (id) => {
             return supabase.from('fixed_scales').delete().eq('id', id);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['fixed_scales']);
+            setViewingFixedScale(null);
             toast.success('Equipe removida');
         }
     });
@@ -191,6 +203,23 @@ export default function Scale() {
     const handleRemoveMemberFromFixedScale = (scale, workerId) => {
         const currentMembers = scale.members || [];
         updateFixedScaleMembersMutation.mutate({ id: scale.id, members: currentMembers.filter(id => id !== workerId) });
+    };
+
+    const handleAddLeaderToFixedScale = (scale, workerId) => {
+        if (!workerId) return;
+        const currentLeaders = scale.leader_ids || [];
+        if (currentLeaders.includes(workerId)) return;
+        // Also add to members if not already there
+        const currentMembers = scale.members || [];
+        if (!currentMembers.includes(workerId)) {
+            updateFixedScaleMembersMutation.mutate({ id: scale.id, members: [...currentMembers, workerId] });
+        }
+        updateFixedScaleLeadersMutation.mutate({ id: scale.id, leader_ids: [...currentLeaders, workerId] });
+    };
+
+    const handleRemoveLeaderFromFixedScale = (scale, workerId) => {
+        const currentLeaders = scale.leader_ids || [];
+        updateFixedScaleLeadersMutation.mutate({ id: scale.id, leader_ids: currentLeaders.filter(id => id !== workerId) });
     };
 
     // Helper to check conflicts
@@ -392,94 +421,64 @@ export default function Scale() {
 
 
                     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        {fixedScales?.map(scale => (
-                            <Card key={scale.id}>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-base font-semibold">{scale.name}</CardTitle>
-                                        <CardDescription>{scale.members?.length || 0} membros</CardDescription>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            if (confirm('Tem certeza que deseja excluir esta equipe?')) {
-                                                deleteFixedScaleMutation.mutate(scale.id);
-                                            }
-                                        }}
-                                        className="text-slate-400 hover:text-red-500"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        <div className="min-h-[100px] space-y-2">
-                                            {scale.members?.length === 0 ? (
-                                                <p className="text-sm text-slate-400 italic">Nenhum membro adicionado.</p>
-                                            ) : (
-                                                scale.members?.map(memberId => {
-                                                    const member = workers.find(w => w.id === memberId);
+                        {fixedScales?.map(scale => {
+                            const visibleMembers = (scale.members || []).filter(memberId => matchesFilter(memberId));
+                            const leaders = (scale.leader_ids || []).map(id => workers.find(w => w.id === id)).filter(Boolean);
 
-                                                    // STRICT SEPARATION for Fixed Scales
-                                                    // Check if member matches logic.
-                                                    // If filter is active (not 'all'), and member is opposite gender, hide them or show placeholder?
-                                                    // User said "pra homem não aparecer no de mulher".
-                                                    // If I show "Occupied", it's fine.
-                                                    // But fixed scales are teams. If I'm creating a "Kitchen Team", maybe it's mixed?
-                                                    // But user strictly asked for separation here too.
-                                                    // Let's hide opposite gender members from the list completely OR show "Outro Gênero" placeholder.
-                                                    // Given "não aparecer", maybe hiding is better?
-                                                    // BUT if I hide, I can't see team size.
-                                                    // Let's follow "Occupied" pattern for consistency.
-
-                                                    const isMemberMatch = matchesFilter(memberId);
-
-                                                    if (!isMemberMatch) {
-                                                        // If strict separation, user shouldn't even KNOW a woman is in this team if they are in 'Male' view?
-                                                        // Or should they just not edit it?
-                                                        // User said: "pra homem não aparecer no de mulher".
-                                                        // This implies invisibility.
-                                                        // But if I create a team "Band", and it has men and women.
-                                                        // If I am filtered to 'Male', I only see the men in the band.
-                                                        // This seems to be what is requested.
-                                                        return null; // Hide completely in Fixed Scale list?
-                                                    }
-
-
-                                                    return (
-                                                        <div key={memberId} className="flex items-center justify-between text-sm bg-slate-50 p-2 rounded-md">
-                                                            <span className="font-medium text-slate-700">{member?.name || 'Desconhecido'} {member?.surname}</span>
-                                                            <button
-                                                                onClick={() => handleRemoveMemberFromFixedScale(scale, memberId)}
-                                                                className="text-slate-400 hover:text-red-500"
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </button>
-                                                        </div>
-                                                    )
-                                                }).filter(Boolean)
+                            return (
+                                <Card
+                                    key={scale.id}
+                                    className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-indigo-200 transition-all"
+                                    onClick={() => setViewingFixedScale(scale)}
+                                >
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <div className="space-y-1">
+                                            <CardTitle className="text-base font-semibold">{scale.name}</CardTitle>
+                                            <CardDescription>{visibleMembers.length} membros</CardDescription>
+                                        </div>
+                                        <div className="p-2 rounded-full bg-indigo-100">
+                                            <Users className="h-4 w-4 text-indigo-600" />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-3">
+                                            {/* Leaders preview */}
+                                            {leaders.length > 0 && (
+                                                <div className="flex items-center gap-2">
+                                                    <Crown className="h-3 w-3 text-amber-500" />
+                                                    <span className="text-xs text-slate-500">
+                                                        {leaders.map(l => l.name).join(', ')}
+                                                    </span>
+                                                </div>
                                             )}
-                                        </div>
 
-                                        <div className="pt-2 border-t border-slate-100">
-                                            <select
-                                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                onChange={(e) => {
-                                                    handleAddMemberToFixedScale(scale, e.target.value);
-                                                    e.target.value = "";
-                                                }}
-                                                defaultValue=""
-                                            >
-                                                <option value="" disabled>Adicionar membro...</option>
-                                                {/* Filter dropdown to only show matching gender workers */}
-                                                {filteredWorkers.filter(w => !scale.members?.includes(w.id)).map(w => (
-                                                    <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                                ))}
-                                            </select>
+                                            {/* Members preview */}
+                                            <div className="flex flex-wrap gap-1">
+                                                {visibleMembers.slice(0, 5).map(memberId => {
+                                                    const member = workers.find(w => w.id === memberId);
+                                                    return (
+                                                        <span key={memberId} className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
+                                                            {member?.name || '?'}
+                                                        </span>
+                                                    );
+                                                })}
+                                                {visibleMembers.length > 5 && (
+                                                    <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-medium">
+                                                        +{visibleMembers.length - 5}
+                                                    </span>
+                                                )}
+                                                {visibleMembers.length === 0 && (
+                                                    <span className="text-xs text-slate-400 italic">Nenhum membro</span>
+                                                )}
+                                            </div>
+
+                                            {/* Click hint */}
+                                            <p className="text-xs text-center text-indigo-500 font-medium pt-2">Clique para gerenciar</p>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
 
                     <Modal
@@ -509,6 +508,180 @@ export default function Scale() {
                     </Modal>
                 </div>
             )}
+
+            {/* Fixed Scale Detail Modal */}
+            <Modal
+                isOpen={!!viewingFixedScale}
+                onClose={() => setViewingFixedScale(null)}
+                title={viewingFixedScale?.name || 'Detalhes da Equipe'}
+            >
+                {viewingFixedScale && (() => {
+                    const scaleMembers = (viewingFixedScale.members || [])
+                        .map(id => workers.find(w => w.id === id))
+                        .filter(Boolean)
+                        .filter(w => matchesFilter(w.id));
+
+                    const scaleLeaders = (viewingFixedScale.leader_ids || [])
+                        .map(id => workers.find(w => w.id === id))
+                        .filter(Boolean)
+                        .filter(w => matchesFilter(w.id));
+
+                    return (
+                        <div className="space-y-6">
+                            {/* Header Info */}
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-full bg-indigo-100">
+                                        <Users className="h-5 w-5 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900">{scaleMembers.length} membros</p>
+                                        <p className="text-xs text-slate-500">{scaleLeaders.length} líder(es)</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (confirm('Tem certeza que deseja excluir esta equipe?')) {
+                                            deleteFixedScaleMutation.mutate(viewingFixedScale.id);
+                                        }
+                                    }}
+                                    className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            {/* Leaders Section */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                        <Crown className="h-4 w-4 text-amber-500" />
+                                        Líderes da Equipe
+                                    </h3>
+                                </div>
+
+                                {scaleLeaders.length === 0 ? (
+                                    <p className="text-sm text-slate-400 italic text-center py-3">Nenhum líder definido</p>
+                                ) : (
+                                    <div className="space-y-2 mb-3">
+                                        {scaleLeaders.map(leader => (
+                                            <div key={leader.id} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {leader.photo_url ? (
+                                                        <img src={leader.photo_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User className="w-5 h-5 text-amber-700" />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-slate-900 truncate">{leader.name} {leader.surname}</p>
+                                                    <p className="text-xs text-slate-500">{cells?.find(c => c.id === leader.cell_id)?.name}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveLeaderFromFixedScale(viewingFixedScale, leader.id)}
+                                                    className="p-2 rounded-full bg-white border border-amber-300 text-slate-400 hover:text-red-500 hover:border-red-300 transition-all"
+                                                    title="Remover líder"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <select
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
+                                    onChange={(e) => {
+                                        handleAddLeaderToFixedScale(viewingFixedScale, e.target.value);
+                                        e.target.value = "";
+                                    }}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Adicionar líder...</option>
+                                    {filteredWorkers
+                                        .filter(w => !viewingFixedScale.leader_ids?.includes(w.id))
+                                        .map(w => (
+                                            <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+
+                            {/* Members Section */}
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-700 mb-3">Membros da Equipe</h3>
+
+                                {scaleMembers.length === 0 ? (
+                                    <p className="text-sm text-slate-400 italic text-center py-4">Nenhum membro adicionado</p>
+                                ) : (
+                                    <div className="space-y-2 max-h-[40vh] overflow-y-auto mb-3">
+                                        {scaleMembers.map(member => {
+                                            const isLeader = viewingFixedScale.leader_ids?.includes(member.id);
+                                            return (
+                                                <div key={member.id} className={cn(
+                                                    "flex items-center gap-3 p-3 rounded-lg",
+                                                    isLeader ? "bg-amber-50 border border-amber-200" : "bg-slate-50"
+                                                )}>
+                                                    <div className={cn(
+                                                        "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0",
+                                                        isLeader ? "bg-amber-200" : "bg-slate-200"
+                                                    )}>
+                                                        {member.photo_url ? (
+                                                            <img src={member.photo_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className={cn("w-5 h-5", isLeader ? "text-amber-700" : "text-slate-400")} />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-medium text-slate-900 truncate">{member.name} {member.surname}</p>
+                                                            {isLeader && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
+                                                        </div>
+                                                        <p className="text-xs text-slate-500">{cells?.find(c => c.id === member.cell_id)?.name}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => setViewingWorker(member)}
+                                                            className="p-2 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                                                            title="Ver informações"
+                                                        >
+                                                            <Info className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRemoveMemberFromFixedScale(viewingFixedScale, member.id)}
+                                                            className="p-2 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-all"
+                                                            title="Remover da equipe"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                <select
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    onChange={(e) => {
+                                        handleAddMemberToFixedScale(viewingFixedScale, e.target.value);
+                                        e.target.value = "";
+                                    }}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Adicionar membro...</option>
+                                    {filteredWorkers
+                                        .filter(w => !viewingFixedScale.members?.includes(w.id))
+                                        .map(w => (
+                                            <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    );
+                })()}
+            </Modal>
 
             {/* Worker Info Modal */}
             <WorkerInfoModal
