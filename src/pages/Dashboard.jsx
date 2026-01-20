@@ -9,6 +9,7 @@ import { Users, UserPlus, DollarSign, AlertCircle, ChevronRight, User, Info } fr
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+import { GlobalSearch } from '../components/ui/GlobalSearch';
 
 export default function Dashboard() {
     const { churchId } = useAuth();
@@ -201,9 +202,12 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
-                <p className="text-slate-500">Visão geral do evento.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+                    <p className="text-slate-500">Visão geral do evento.</p>
+                </div>
+                <GlobalSearch />
             </div>
 
             {/* KPI Cards */}
