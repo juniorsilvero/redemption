@@ -116,19 +116,19 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         : null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="max-w-md" hideHeader={true}>
+        <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="max-w-md" hideHeader={true} hideCloseButton={true} noPadding={true}>
             {/* Custom Header with Blue Gradient */}
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 pt-10 text-center relative rounded-t-lg">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-5 pt-6 pb-6 text-center relative rounded-t-lg">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                    className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors p-1"
                 >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                 </button>
 
                 <div
                     className={cn(
-                        "mx-auto h-24 w-24 rounded-full border-4 border-white/30 shadow-lg flex items-center justify-center bg-slate-100 text-slate-400 overflow-hidden mb-3",
+                        "mx-auto h-20 w-20 rounded-full border-4 border-white/30 shadow-lg flex items-center justify-center bg-slate-100 text-slate-400 overflow-hidden mb-2",
                         worker.photo_url && "cursor-pointer hover:ring-2 hover:ring-white hover:ring-offset-2 hover:ring-offset-blue-500 transition-all"
                     )}
                     onClick={() => worker.photo_url && setShowExpandedPhoto(true)}
@@ -136,38 +136,38 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                     {worker.photo_url ? (
                         <img src={worker.photo_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                        <User className="h-10 w-10" />
+                        <User className="h-8 w-8" />
                     )}
                 </div>
 
-                <h3 className="text-xl font-bold text-white mb-1">{worker.name} {worker.surname}</h3>
+                <h3 className="text-lg font-bold text-white mb-0.5">{worker.name} {worker.surname}</h3>
 
                 <div className="flex items-center justify-center gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/20 text-white backdrop-blur-sm">
                         {isWorkerType ? 'Trabalhador' : 'Passante'}
                     </span>
                     {cell && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold text-white shadow-sm" style={{ backgroundColor: cell.card_color }}>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm" style={{ backgroundColor: cell.card_color }}>
                             {cell.name}
                         </span>
                     )}
                 </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-4">
 
                 {/* Info Row: Phone & Payment */}
-                <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Telefone</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Telefone</p>
                         <p className="text-sm font-semibold text-slate-800">{worker.phone || '-'}</p>
                     </div>
 
                     {!isWorkerType && (
                         <div className="text-right">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pagamento</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Pagamento</p>
                             <div className={cn(
-                                "px-3 py-1 rounded text-xs font-bold border inline-flex items-center gap-1",
+                                "px-2 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1",
                                 worker.payment_status === 'paid'
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                                     : "bg-orange-50 text-orange-700 border-orange-100"
@@ -180,20 +180,20 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                 </div>
 
                 {/* Assignments List */}
-                <div className="space-y-5">
+                <div className="space-y-3">
 
                     {/* Work Scales */}
                     <div>
-                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                            <Briefcase className="w-4 h-4 text-indigo-500" /> Escalas de Trabalho
+                        <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                            <Briefcase className="w-3 h-3 text-indigo-500" /> Escalas de Trabalho
                         </h4>
                         {workScales?.length > 0 ? (
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                                 {workScales.map(scale => (
-                                    <div key={scale.id} className="bg-indigo-50/50 rounded-lg p-3 flex items-center gap-3 border border-indigo-100/50">
-                                        <div className="flex items-center gap-2 text-indigo-900 font-semibold text-sm">
+                                    <div key={scale.id} className="bg-indigo-50/50 rounded-md p-2 flex items-center gap-2 border border-indigo-100/50">
+                                        <div className="flex items-center gap-1.5 text-indigo-900 font-semibold text-xs">
                                             <span className="capitalize">{scale.day === 'Friday' ? 'Sexta' : scale.day === 'Saturday' ? 'Sábado' : 'Domingo'}</span>
-                                            <span className="w-1 h-1 rounded-full bg-indigo-300"></span>
+                                            <span className="w-0.5 h-0.5 rounded-full bg-indigo-300"></span>
                                             <span>
                                                 {scale.period === 'Breakfast' ? 'Café' :
                                                     scale.period === 'Lunch' ? 'Almoço' :
@@ -201,50 +201,46 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                             </span>
                                         </div>
                                         <span className="h-px flex-1 bg-indigo-200/50"></span>
-                                        <span className="text-sm font-bold text-indigo-700">{scale.areas?.name}</span>
+                                        <span className="text-xs font-bold text-indigo-700">{scale.areas?.name}</span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-slate-400 italic pl-1">Não escala de trabalho atribuída.</p>
+                            <p className="text-xs text-slate-400 italic pl-1">Não escala de trabalho atribuída.</p>
                         )}
                     </div>
 
                     {/* Fixed Scales */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                            <Users className="w-4 h-4 text-purple-500" /> Escalas Fixas
-                        </h4>
-                        {fixedScales?.length > 0 ? (
-                            <div className="space-y-2">
+                    {fixedScales?.length > 0 && (
+                        <div>
+                            <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                <Users className="w-3 h-3 text-purple-500" /> Escalas Fixas
+                            </h4>
+                            <div className="space-y-1.5">
                                 {fixedScales.map(scale => (
-                                    <div key={scale.id} className="bg-purple-50/50 rounded-lg p-3 border border-purple-100/50 flex justify-between items-center">
-                                        <span className="text-sm font-semibold text-purple-900">{scale.name}</span>
-                                        <div className="flex gap-2">
-                                            {scale.leader_ids?.includes(worker.id) && (
-                                                <span className="text-[10px] font-bold uppercase bg-white text-purple-700 px-2 py-0.5 rounded border border-purple-100">Líder</span>
-                                            )}
-                                        </div>
+                                    <div key={scale.id} className="bg-purple-50/50 rounded-md p-2 border border-purple-100/50 flex justify-between items-center">
+                                        <span className="text-xs font-semibold text-purple-900">{scale.name}</span>
+                                        {scale.leader_ids?.includes(worker.id) && (
+                                            <span className="text-[9px] font-bold uppercase bg-white text-purple-700 px-1.5 py-0.5 rounded border border-purple-100">Líder</span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <p className="text-sm text-slate-400 italic pl-1">Não está em escalas fixas.</p>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Prayer Clock */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                            <Clock className="w-4 h-4 text-amber-500" /> Relógio de Oração
-                        </h4>
-                        {prayerSlots?.length > 0 ? (
-                            <div className="space-y-2">
+                    {prayerSlots?.length > 0 && (
+                        <div>
+                            <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                <Clock className="w-3 h-3 text-amber-500" /> Relógio de Oração
+                            </h4>
+                            <div className="space-y-1.5">
                                 {prayerSlots.map(slot => {
                                     const details = getPrayerSlotDetails(slot.id);
                                     return (
-                                        <div key={slot.id} className="flex items-center gap-3 p-2 text-sm bg-amber-50/50 rounded-lg border border-amber-100/50">
-                                            <Clock className="w-4 h-4 text-amber-600" />
+                                        <div key={slot.id} className="flex items-center gap-2 p-2 text-xs bg-amber-50/50 rounded-md border border-amber-100/50">
+                                            <Clock className="w-3 h-3 text-amber-600" />
                                             <span className="font-semibold text-slate-700">
                                                 {details?.day} às {details?.time}
                                             </span>
@@ -252,50 +248,43 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                     );
                                 })}
                             </div>
-                        ) : (
-                            <p className="text-sm text-slate-400 italic pl-1">Não escalado para oração.</p>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Room Leadership */}
-                    <div>
-                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                            <Home className="w-4 h-4 text-emerald-500" /> Líder de Quarto
-                        </h4>
-                        {roomLeadership?.length > 0 ? (
-                            <div className="space-y-2">
+                    {roomLeadership?.length > 0 && (
+                        <div>
+                            <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                <Home className="w-3 h-3 text-emerald-500" /> Líder de Quarto
+                            </h4>
+                            <div className="space-y-1.5">
                                 {roomLeadership.map(room => (
-                                    <div key={room.id} className="bg-emerald-50/50 rounded-lg p-3 border border-emerald-100/50">
-                                        <p className="text-xs font-bold text-emerald-800 uppercase mb-1">Quarto {room.number}</p>
-                                        <p className="text-sm font-bold text-emerald-900">{room.name}</p>
+                                    <div key={room.id} className="bg-emerald-50/50 rounded-md p-2 border border-emerald-100/50 flex justify-between items-center">
+                                        <span className="text-xs font-bold text-emerald-900">{room.name}</span>
+                                        <span className="text-[10px] font-medium text-emerald-700 uppercase bg-white/50 px-1 rounded">Quarto {room.number}</span>
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <p className="text-sm text-slate-400 italic pl-1">Não é líder de quarto.</p>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Restrictions (if any) */}
                     {(worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
-                        <div className="pt-4 border-t border-slate-100">
-                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                                <AlertCircle className="w-4 h-4 text-red-500" /> Observações
+                        <div className="pt-2 border-t border-slate-100">
+                            <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">
+                                <AlertCircle className="w-3 h-3 text-red-500" /> Observações
                             </h4>
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                 {worker.food_restrictions && (
-                                    <div className="text-xs">
-                                        <span className="font-bold text-red-700">Restrição Alimentar:</span> <span className="text-slate-700">{worker.food_restrictions}</span>
+                                    <div className="text-xs bg-red-50 p-2 rounded border border-red-100">
+                                        <span className="font-bold text-red-700 block text-[10px] uppercase">Restrição Alimentar</span>
+                                        <span className="text-slate-700">{worker.food_restrictions}</span>
                                     </div>
                                 )}
                                 {worker.controlled_medication && (
-                                    <div className="text-xs">
-                                        <span className="font-bold text-amber-700">Medicamento:</span> <span className="text-slate-700">{worker.controlled_medication}</span>
-                                    </div>
-                                )}
-                                {worker.physical_restrictions && (
-                                    <div className="text-xs">
-                                        <span className="font-bold text-slate-700">Restrição Física:</span> <span className="text-slate-600">{worker.physical_restrictions}</span>
+                                    <div className="text-xs bg-amber-50 p-2 rounded border border-amber-100">
+                                        <span className="font-bold text-amber-700 block text-[10px] uppercase">Medicamento</span>
+                                        <span className="text-slate-700">{worker.controlled_medication}</span>
                                     </div>
                                 )}
                             </div>
@@ -304,10 +293,10 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
 
                 </div>
 
-                <div className="sticky bottom-0 bg-white pt-4">
+                <div className="sticky bottom-0 bg-white pt-2">
                     <button
                         onClick={onClose}
-                        className="w-full rounded-lg bg-slate-900 text-white px-4 py-3.5 text-sm font-bold shadow hover:bg-slate-800 transition-colors"
+                        className="w-full rounded-lg bg-slate-900 text-white px-4 py-3 text-sm font-bold shadow hover:bg-slate-800 transition-colors"
                     >
                         Fechar
                     </button>
