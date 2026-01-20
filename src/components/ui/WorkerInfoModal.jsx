@@ -16,7 +16,7 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         queryFn: async () => {
             if (!worker?.id) return [];
             const { data } = await supabase
-                .from('scales')
+                .from('work_scale')
                 .select(`
                     *,
                     areas (name)
