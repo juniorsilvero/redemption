@@ -11,6 +11,7 @@ import { AlertCircle, Clock, Info, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+import { WorkerSearchSelect } from '../components/ui/WorkerSearchSelect';
 import { generatePrayerClockPDF } from '../utils/pdfGenerator';
 
 
@@ -235,16 +236,13 @@ export default function Prayer() {
                                                     <option>Ocupado (Outro Gênero)</option>
                                                 </select>
                                             ) : (
-                                                <select
-                                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
-                                                    value={assignment?.worker_1_id || ""}
-                                                    onChange={(e) => handleAssign(slot.id, e.target.value, 1)}
-                                                >
-                                                    <option value="">-- Vazio --</option>
-                                                    {filteredWorkers?.filter(w => w.id !== assignment?.worker_2_id).map(w => (
-                                                        <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                                    ))}
-                                                </select>
+                                                <WorkerSearchSelect
+                                                    workers={filteredWorkers?.filter(w => w.id !== assignment?.worker_2_id) || []}
+                                                    onSelect={(workerId) => handleAssign(slot.id, workerId, 1)}
+                                                    placeholder={worker1 ? `${worker1.name} ${worker1.surname}` : "Buscar guerreiro 1..."}
+                                                    excludeIds={[]}
+                                                    className="text-xs"
+                                                />
                                             )}
 
                                             {/* Only show info button if it matches filter or we want to allow seeing other gender info? User said 'separate'. Let's hide info for other gender to be strict. */}
@@ -276,16 +274,13 @@ export default function Prayer() {
                                                     <option>Ocupado (Outro Gênero)</option>
                                                 </select>
                                             ) : (
-                                                <select
-                                                    className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-2 text-xs"
-                                                    value={assignment?.worker_2_id || ""}
-                                                    onChange={(e) => handleAssign(slot.id, e.target.value, 2)}
-                                                >
-                                                    <option value="">-- Vazio --</option>
-                                                    {filteredWorkers?.filter(w => w.id !== assignment?.worker_1_id).map(w => (
-                                                        <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                                    ))}
-                                                </select>
+                                                <WorkerSearchSelect
+                                                    workers={filteredWorkers?.filter(w => w.id !== assignment?.worker_1_id) || []}
+                                                    onSelect={(workerId) => handleAssign(slot.id, workerId, 2)}
+                                                    placeholder={worker2 ? `${worker2.name} ${worker2.surname}` : "Buscar guerreiro 2..."}
+                                                    excludeIds={[]}
+                                                    className="text-xs"
+                                                />
                                             )}
 
                                             {assignment?.worker_2_id && w2Match && worker2 && (

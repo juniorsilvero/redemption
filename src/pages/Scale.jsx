@@ -360,21 +360,15 @@ export default function Scale() {
 
                                                             return (
                                                                 <div key={index} className="flex items-center gap-2">
-                                                                    <select
-                                                                        className={cn(
-                                                                            "block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 px-2",
-                                                                            conflict ? "ring-red-300 focus:ring-red-500 bg-red-50" : "ring-slate-300 focus:ring-indigo-600"
-                                                                        )}
-                                                                        value={existing?.worker_id || ""}
-                                                                        onChange={(e) => handleAssign(activeTab, period, area.id, e.target.value, existing?.id)}
-                                                                    >
-                                                                        <option value="">Selecione...</option>
-                                                                        {availableWorkers.map(w => (
-                                                                            <option key={w.id} value={w.id}>
-                                                                                {w.name} {w.surname}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
+                                                                    <div className="flex-1">
+                                                                        <WorkerSearchSelect
+                                                                            workers={availableWorkers}
+                                                                            onSelect={(workerId) => handleAssign(activeTab, period, area.id, workerId, existing?.id)}
+                                                                            placeholder={selectedWorker ? `${selectedWorker.name} ${selectedWorker.surname}` : "Buscar trabalhador..."}
+                                                                            excludeIds={[]}
+                                                                            className={conflict ? "ring-2 ring-red-300" : ""}
+                                                                        />
+                                                                    </div>
 
                                                                     {selectedWorker && (
                                                                         <button
