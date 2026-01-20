@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Modal } from './Modal';
 import { User, X, ZoomIn, Calendar, Clock, Home, Briefcase, Crown } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { format } from 'date-fns';
+import { format, differenceInYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
@@ -148,16 +148,33 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                         {(worker.birth_date) && (
                             <div>
                                 <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Nascimento</p>
-                                <p className="text-sm text-slate-900">{new Date(worker.birth_date).toLocaleDateString('pt-BR')}</p>
-                            </div>
-                        )}
-                        {(worker.age) && (
-                            <div>
-                                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Idade</p>
-                                <p className="text-sm text-slate-900">{worker.age} anos</p>
+                                <p className="text-sm text-slate-900">
+                                    {format(new Date(worker.birth_date), 'dd/MM/yyyy')}
+                                    <span className="text-slate-500 ml-1">
+                                        ({differenceInYears(new Date(), new Date(worker.birth_date))} anos)
+                                    </span>
+                                </p>
                             </div>
                         )}
                     </div>
+
+                    {/* Family Contacts (Passers) */}
+                    {!isWorkerType && (worker.family_contact_1 || worker.family_contact_2) && (
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            {worker.family_contact_1 && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Contato Familiar 1</p>
+                                    <p className="text-sm font-medium text-slate-900">{worker.family_contact_1}</p>
+                                </div>
+                            )}
+                            {worker.family_contact_2 && (
+                                <div>
+                                    <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Contato Familiar 2</p>
+                                    <p className="text-sm font-medium text-slate-900">{worker.family_contact_2}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* SCALES & RESPONSIBILITIES SECTION */}
                     <div className="space-y-4">
