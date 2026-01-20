@@ -6,9 +6,10 @@ import { useFilter } from '../context/FilterContext';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Plus, User, Trash2, Edit, FileText } from 'lucide-react';
+import { Plus, User, Trash2, Edit, FileText, Info } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateRoomPDF } from '../utils/pdfGenerator';
+import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 
 
 export default function Accommodation() {
@@ -29,6 +30,8 @@ export default function Accommodation() {
     const [viewingLeader, setViewingLeader] = useState(null);
     const [assigningPasser, setAssigningPasser] = useState(null);
     const [selectedLeaderIds, setSelectedLeaderIds] = useState([]);
+    const [viewingRoom, setViewingRoom] = useState(null);
+    const [viewingPasserInfo, setViewingPasserInfo] = useState(null);
 
     // Data Fetching
     const { data: rooms } = useQuery({
@@ -236,18 +239,19 @@ export default function Accommodation() {
                         return (
                             <Card
                                 key={room.id}
-                                className={`transition-colors ${isFull ? 'bg-slate-50' : 'bg-white'}`}
+                                className={`transition-all cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-indigo-200 ${isFull ? 'bg-slate-50' : 'bg-white'}`}
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, room.id)}
+                                onClick={() => setViewingRoom(room)}
                             >
                                 <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                                     <div className="flex items-center gap-2">
                                         <CardTitle className="text-base">{room.name}</CardTitle>
-                                        <button onClick={() => openModal(room)} className="text-slate-400 hover:text-indigo-600" title="Editar Quarto">
+                                        <button onClick={(e) => { e.stopPropagation(); openModal(room); }} className="text-slate-400 hover:text-indigo-600" title="Editar Quarto">
                                             <Edit className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={() => generateRoomPDF(room, room.room_leader_ids.map(id => workers.find(w => w.id === id)).filter(Boolean), passers.filter(p => p.room_id === room.id), cellMap)}
+                                            onClick={(e) => { e.stopPropagation(); generateRoomPDF(room, room.room_leader_ids.map(id => workers.find(w => w.id === id)).filter(Boolean), passers.filter(p => p.room_id === room.id), cellMap); }}
                                             className="text-slate-400 hover:text-green-600"
                                             title="Gerar PDF"
                                         >
@@ -277,22 +281,23 @@ export default function Accommodation() {
                                             </div>
                                         </div>
 
-                                        {/* Occupants List */}
-                                        <div className="min-h-[100px] border rounded-md p-2 bg-slate-50 space-y-2">
+                                        {/* Compact Occupants Preview */}
+                                        <div className="min-h-[60px] border rounded-md p-2 bg-slate-50">
                                             {occupants.length === 0 ? (
                                                 <p className="text-xs text-slate-400 text-center py-4">Arraste passantes para cá</p>
                                             ) : (
-                                                occupants.map(p => (
-                                                    <div key={p.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm text-sm">
-                                                        <span className="truncate">{p.name} {p.surname}</span>
-                                                        <button
-                                                            onClick={() => unassignPasserMutation.mutate({ passerId: p.id })}
-                                                            className="text-slate-400 hover:text-red-500"
-                                                        >
-                                                            <Trash2 className="h-3 w-3" />
-                                                        </button>
-                                                    </div>
-                                                ))
+                                                <div className="flex flex-wrap gap-1">
+                                                    {occupants.slice(0, 5).map(p => (
+                                                        <span key={p.id} className="text-xs bg-white px-2 py-1 rounded shadow-sm text-slate-700 truncate max-w-[100px]">
+                                                            {p.name}
+                                                        </span>
+                                                    ))}
+                                                    {occupants.length > 5 && (
+                                                        <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded font-medium">
+                                                            +{occupants.length - 5} mais
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
 
@@ -306,7 +311,7 @@ export default function Accommodation() {
                                                         return (
                                                             <button
                                                                 key={lid}
-                                                                onClick={() => setViewingLeader(leader)}
+                                                                onClick={(e) => { e.stopPropagation(); setViewingLeader(leader); }}
                                                                 className="text-xs bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
                                                             >
                                                                 {leader?.name || 'Desconhecido'}
@@ -316,6 +321,9 @@ export default function Accommodation() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Click hint */}
+                                        <p className="text-xs text-center text-indigo-500 font-medium">Clique para ver detalhes</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -511,6 +519,125 @@ export default function Accommodation() {
                     </div>
                 </div>
             </Modal>
+
+            {/* Room Details Modal */}
+            <Modal
+                isOpen={!!viewingRoom}
+                onClose={() => setViewingRoom(null)}
+                title={viewingRoom?.name || 'Detalhes do Quarto'}
+            >
+                {viewingRoom && (() => {
+                    const roomOccupants = passers?.filter(p => p.room_id === viewingRoom.id) || [];
+                    const roomLeaders = (viewingRoom.room_leader_ids || []).map(id => workers?.find(w => w.id === id)).filter(Boolean);
+
+                    return (
+                        <div className="space-y-4">
+                            {/* Room Info Header */}
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                                <div>
+                                    <span className={`text-xs px-2 py-1 rounded-full ${viewingRoom.gender === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
+                                        {viewingRoom.gender === 'male' ? 'Masculino' : 'Feminino'}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-semibold text-slate-900">{roomOccupants.length} / {viewingRoom.capacity}</p>
+                                    <p className="text-xs text-slate-500">ocupantes</p>
+                                </div>
+                            </div>
+
+                            {/* Leaders */}
+                            {roomLeaders.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Líderes do Quarto</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {roomLeaders.map(leader => (
+                                            <button
+                                                key={leader.id}
+                                                onClick={() => { setViewingRoom(null); setViewingPasserInfo({ ...leader, type: 'worker' }); }}
+                                                className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center overflow-hidden">
+                                                    {leader.photo_url ? (
+                                                        <img src={leader.photo_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User className="w-4 h-4 text-indigo-600" />
+                                                    )}
+                                                </div>
+                                                <span className="text-sm font-medium text-indigo-900">{leader.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Passers List */}
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Passantes ({roomOccupants.length})</p>
+                                {roomOccupants.length === 0 ? (
+                                    <p className="text-sm text-slate-400 italic text-center py-4">Nenhum passante alocado neste quarto.</p>
+                                ) : (
+                                    <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+                                        {roomOccupants.map(passer => {
+                                            const cell = cellMap[passer.cell_id];
+                                            return (
+                                                <div key={passer.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                                                        {passer.photo_url ? (
+                                                            <img src={passer.photo_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-5 h-5 text-slate-400" />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium text-slate-900 truncate">{passer.name} {passer.surname}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            {passer.age && (
+                                                                <span className="text-xs text-slate-500">{passer.age} anos</span>
+                                                            )}
+                                                            {cell && (
+                                                                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cell.card_color }}></span>
+                                                                    {cell.name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => { setViewingRoom(null); setViewingPasserInfo({ ...passer, type: 'passer', cell }); }}
+                                                            className="p-2 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                                                            title="Ver informações"
+                                                        >
+                                                            <Info className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => unassignPasserMutation.mutate({ passerId: passer.id })}
+                                                            className="p-2 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-all"
+                                                            title="Remover do quarto"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
+            </Modal>
+
+            {/* Passer/Worker Info Modal */}
+            <WorkerInfoModal
+                worker={viewingPasserInfo || viewingLeader}
+                cells={cells}
+                allWorkers={workers}
+                allPassers={passers}
+                isOpen={!!viewingPasserInfo || !!viewingLeader}
+                onClose={() => { setViewingPasserInfo(null); setViewingLeader(null); }}
+            />
 
 
         </div>
