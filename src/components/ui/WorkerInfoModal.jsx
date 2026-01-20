@@ -256,27 +256,50 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                 )}
 
                 {/* Detailed Info (Passers Only) */}
+                {/* Detailed Info (Passers Only) */}
                 {!isWorkerType && (
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
-                            <p className="text-xs font-medium text-slate-700 break-words">{worker.address || '-'}</p>
+                    <div className="space-y-3 pt-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Address */}
+                            <div className="bg-slate-50 p-2 rounded border border-slate-100 col-span-2">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
+                                <p className="text-xs font-medium text-slate-700 break-words">{worker.address || '-'}</p>
+                            </div>
+
+                            {/* Age / Birth Date */}
+                            <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Idade / Nascimento</p>
+                                <div className="text-xs font-medium text-slate-700">
+                                    {worker.age ? <span>{worker.age} anos</span> : <span>-</span>}
+                                    {worker.birth_date && (
+                                        <div className="text-slate-400 text-[10px] mt-0.5">
+                                            {format(new Date(worker.birth_date), 'dd/MM/yyyy', { locale: ptBR })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Bairro/Cidade</p>
-                            <p className="text-xs font-medium text-slate-700 break-words">
-                                {worker.neighborhood ? `${worker.neighborhood}` : '-'}
-                                {worker.city ? `, ${worker.city}` : ''}
-                            </p>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Estado Civil</p>
-                            <p className="text-xs font-medium text-slate-700">{worker.marital_status || '-'}</p>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Como conheceu</p>
-                            <p className="text-xs font-medium text-slate-700">{worker.how_met_church || '-'}</p>
-                        </div>
+
+                        {/* Family Contacts */}
+                        {(worker.family_contact_1 || worker.family_contact_2) && (
+                            <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Contatos Familiares</p>
+                                <div className="space-y-1">
+                                    {worker.family_contact_1 && (
+                                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                            {worker.family_contact_1}
+                                        </div>
+                                    )}
+                                    {worker.family_contact_2 && (
+                                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                            {worker.family_contact_2}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -388,6 +411,12 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                     <div className="text-xs bg-amber-50 p-2 rounded border border-amber-100">
                                         <span className="font-bold text-amber-700 block text-[10px] uppercase">Medicamento</span>
                                         <span className="text-slate-700">{worker.controlled_medication}</span>
+                                    </div>
+                                )}
+                                {worker.physical_restrictions && (
+                                    <div className="text-xs bg-blue-50 p-2 rounded border border-blue-100">
+                                        <span className="font-bold text-blue-700 block text-[10px] uppercase">Restrição Física</span>
+                                        <span className="text-slate-700">{worker.physical_restrictions}</span>
                                     </div>
                                 )}
                             </div>
