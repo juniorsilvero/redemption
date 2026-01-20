@@ -689,6 +689,7 @@ export default function Scale() {
                 cells={cells}
                 isOpen={!!viewingWorker}
                 onClose={() => setViewingWorker(null)}
+                onSwitchWorker={setViewingWorker}
             />
         </div>
     );

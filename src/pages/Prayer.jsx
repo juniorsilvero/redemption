@@ -338,6 +338,7 @@ export default function Prayer() {
                 cells={cells}
                 isOpen={!!viewingWorker}
                 onClose={() => setViewingWorker(null)}
+                onSwitchWorker={setViewingWorker}
             />
         </div>
     );

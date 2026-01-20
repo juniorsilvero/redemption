@@ -404,6 +404,7 @@ export default function Attendance() {
                     cells={selectedWorkerInfo?.cells ? [{ ...selectedWorkerInfo?.cells, id: selectedWorkerInfo?.cell_id }] : []} // Best effort cell mapping
                     allWorkers={workers}
                     allPassers={passers}
+                    onSwitchWorker={setSelectedWorkerInfo}
                 />
             </div>
         )

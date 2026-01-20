@@ -7,7 +7,7 @@ import { cn } from '../../lib/utils';
 import { format, differenceInYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose }) {
+export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cells, allWorkers, allPassers, isOpen, onClose, onSwitchWorker }) {
     const [showExpandedPhoto, setShowExpandedPhoto] = useState(false);
 
     // Helpers for Prayer Clock (matching logic from Prayer.jsx)
@@ -115,6 +115,27 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
         : null;
 
+    // Fetch Responsible Passers (for Workers)
+    const { data: responsiblePassers } = useQuery({
+        queryKey: ['responsible_passers', worker?.id],
+        queryFn: async () => {
+            if (!worker?.id) return [];
+            const { data } = await supabase
+                .from('workers')
+                .select('*')
+                .eq('responsible_worker_id', worker.id)
+                .or('type.eq.Passante,type.eq.passante'); // Ensure valid passer types
+            return data || [];
+        },
+        enabled: !!worker?.id && isWorkerType && isOpen
+    });
+
+    const handleSwitchWorker = (targetWorker) => {
+        if (targetWorker && onSwitchWorker) {
+            onSwitchWorker(targetWorker);
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="max-w-md" hideHeader={true} hideCloseButton={true} noPadding={true}>
             {/* Custom Header with Blue Gradient */}
@@ -179,36 +200,118 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                     )}
                 </div>
 
+                {/* Responsible Link & Extra Info */}
+                {!isWorkerType && responsibleWorker && (
+                    <div
+                        className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
+                        onClick={() => handleSwitchWorker(responsibleWorker)}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden">
+                                {responsibleWorker.photo_url ? (
+                                    <img src={responsibleWorker.photo_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-5 h-5 text-blue-700" />
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">Responsável por este passante</p>
+                                <p className="text-sm font-semibold text-blue-900">{responsibleWorker.name} {responsibleWorker.surname}</p>
+                            </div>
+                        </div>
+                        <ZoomIn className="w-4 h-4 text-blue-400" />
+                    </div>
+                )}
+
+                {isWorkerType && responsiblePassers?.length > 0 && (
+                    <div className="mt-2">
+                        <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                            <Users className="w-3 h-3 text-slate-500" /> Passantes sob responsabilidade
+                        </h4>
+                        <div className="space-y-2">
+                            {responsiblePassers.map(passer => (
+                                <div
+                                    key={passer.id}
+                                    className="bg-slate-50 border border-slate-100 p-2 rounded-lg flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors"
+                                    onClick={() => handleSwitchWorker(passer)}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
+                                            {passer.photo_url ? (
+                                                <img src={passer.photo_url} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-4 h-4 text-slate-500" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-800">{passer.name} {passer.surname}</p>
+                                            <p className="text-[10px] text-slate-500">{passer.status || 'Ativo'}</p>
+                                        </div>
+                                    </div>
+                                    <ZoomIn className="w-3 h-3 text-slate-400" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Detailed Info (Passers Only) */}
+                {!isWorkerType && (
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
+                            <p className="text-xs font-medium text-slate-700 break-words">{worker.address || '-'}</p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Bairro/Cidade</p>
+                            <p className="text-xs font-medium text-slate-700 break-words">
+                                {worker.neighborhood ? `${worker.neighborhood}` : '-'}
+                                {worker.city ? `, ${worker.city}` : ''}
+                            </p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Estado Civil</p>
+                            <p className="text-xs font-medium text-slate-700">{worker.marital_status || '-'}</p>
+                        </div>
+                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Como conheceu</p>
+                            <p className="text-xs font-medium text-slate-700">{worker.how_met_church || '-'}</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Assignments List */}
                 <div className="space-y-3">
 
-                    {/* Work Scales */}
-                    <div>
-                        <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                            <Briefcase className="w-3 h-3 text-indigo-500" /> Escalas de Trabalho
-                        </h4>
-                        {workScales?.length > 0 ? (
-                            <div className="space-y-1.5">
-                                {workScales.map(scale => (
-                                    <div key={scale.id} className="bg-indigo-50/50 rounded-md p-2 flex items-center gap-2 border border-indigo-100/50">
-                                        <div className="flex items-center gap-1.5 text-indigo-900 font-semibold text-xs">
-                                            <span className="capitalize">{scale.day === 'Friday' ? 'Sexta' : scale.day === 'Saturday' ? 'Sábado' : 'Domingo'}</span>
-                                            <span className="w-0.5 h-0.5 rounded-full bg-indigo-300"></span>
-                                            <span>
-                                                {scale.period === 'Breakfast' ? 'Café' :
-                                                    scale.period === 'Lunch' ? 'Almoço' :
-                                                        scale.period === 'Afternoon' ? 'Lanche' : 'Jantar'}
-                                            </span>
+                    {/* Work Scales (Workers Only) */}
+                    {isWorkerType && (
+                        <div>
+                            <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                <Briefcase className="w-3 h-3 text-indigo-500" /> Escalas de Trabalho
+                            </h4>
+                            {workScales?.length > 0 ? (
+                                <div className="space-y-1.5">
+                                    {workScales.map(scale => (
+                                        <div key={scale.id} className="bg-indigo-50/50 rounded-md p-2 flex items-center gap-2 border border-indigo-100/50">
+                                            <div className="flex items-center gap-1.5 text-indigo-900 font-semibold text-xs">
+                                                <span className="capitalize">{scale.day === 'Friday' ? 'Sexta' : scale.day === 'Saturday' ? 'Sábado' : 'Domingo'}</span>
+                                                <span className="w-0.5 h-0.5 rounded-full bg-indigo-300"></span>
+                                                <span>
+                                                    {scale.period === 'Breakfast' ? 'Café' :
+                                                        scale.period === 'Lunch' ? 'Almoço' :
+                                                            scale.period === 'Afternoon' ? 'Lanche' : 'Jantar'}
+                                                </span>
+                                            </div>
+                                            <span className="h-px flex-1 bg-indigo-200/50"></span>
+                                            <span className="text-xs font-bold text-indigo-700">{scale.service_areas?.name}</span>
                                         </div>
-                                        <span className="h-px flex-1 bg-indigo-200/50"></span>
-                                        <span className="text-xs font-bold text-indigo-700">{scale.service_areas?.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-slate-400 italic pl-1">Não escala de trabalho atribuída.</p>
-                        )}
-                    </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 italic pl-1">Não escala de trabalho atribuída.</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Fixed Scales */}
                     {fixedScales?.length > 0 && (
