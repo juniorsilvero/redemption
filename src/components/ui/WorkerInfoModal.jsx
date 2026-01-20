@@ -104,31 +104,31 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         enabled: !!worker?.id && isOpen
     });
 
-    if (!worker) return null;
+    // Determine worker type safely for hooks
+    const isWorkerType = worker ? ('is_room_leader' in worker || worker.type === 'worker' || worker.type === 'Trabalhador') : false;
 
-    const cell = cells?.find(c => c.id === worker.cell_id);
-    const isWorkerType = 'is_room_leader' in worker || worker.type === 'worker' || worker.type === 'Trabalhador';
-
-
-    // Find the responsible worker if this is a passer
-    const responsibleWorker = !isWorkerType && worker.responsible_worker_id
-        ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
-        : null;
-
-    // Fetch Responsible Passers (for Workers)
+    // Fetch Responsible Passers (for Workers) - Querying 'passers' table correctly
     const { data: responsiblePassers } = useQuery({
         queryKey: ['responsible_passers', worker?.id],
         queryFn: async () => {
             if (!worker?.id) return [];
             const { data } = await supabase
-                .from('workers')
+                .from('passers')
                 .select('*')
-                .eq('responsible_worker_id', worker.id)
-                .or('type.eq.Passante,type.eq.passante'); // Ensure valid passer types
+                .eq('responsible_worker_id', worker.id);
             return data || [];
         },
         enabled: !!worker?.id && isWorkerType && isOpen
     });
+
+    if (!worker) return null;
+
+    const cell = cells?.find(c => c.id === worker.cell_id);
+
+    // Find the responsible worker if this is a passer
+    const responsibleWorker = !isWorkerType && worker.responsible_worker_id
+        ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
+        : null;
 
     const handleSwitchWorker = (targetWorker) => {
         if (targetWorker && onSwitchWorker) {
