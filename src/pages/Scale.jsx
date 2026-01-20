@@ -426,7 +426,10 @@ export default function Scale() {
                     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                         {fixedScales?.map(scale => {
                             const visibleMembers = (scale.members || []).filter(memberId => matchesFilter(memberId));
-                            const leaders = (scale.leader_ids || []).map(id => workers.find(w => w.id === id)).filter(Boolean);
+                            const leaders = (scale.leader_ids || [])
+                                .map(id => workers.find(w => w.id === id))
+                                .filter(Boolean)
+                                .filter(leader => matchesFilter(leader.id));
 
                             return (
                                 <Card
