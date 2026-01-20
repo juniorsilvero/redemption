@@ -13,6 +13,7 @@ import { generateScalePDF, generateFixedScalePDF } from '../utils/pdfGenerator';
 
 import { Modal } from '../components/ui/Modal';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
+import { WorkerSearchSelect } from '../components/ui/WorkerSearchSelect';
 
 export default function Scale() {
     const { churchId } = useAuth();
@@ -166,8 +167,12 @@ export default function Scale() {
         mutationFn: async ({ id, members }) => {
             return supabase.from('fixed_scales').update({ members }).eq('id', id);
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries(['fixed_scales']);
+            // Update local state if viewing this scale
+            if (viewingFixedScale?.id === variables.id) {
+                setViewingFixedScale(prev => ({ ...prev, members: variables.members }));
+            }
             toast.success('Membros atualizados');
         }
     });
@@ -176,8 +181,12 @@ export default function Scale() {
         mutationFn: async ({ id, leader_ids }) => {
             return supabase.from('fixed_scales').update({ leader_ids }).eq('id', id);
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             queryClient.invalidateQueries(['fixed_scales']);
+            // Update local state if viewing this scale
+            if (viewingFixedScale?.id === variables.id) {
+                setViewingFixedScale(prev => ({ ...prev, leader_ids: variables.leader_ids }));
+            }
             toast.success('Líderes atualizados');
         }
     });
@@ -589,22 +598,12 @@ export default function Scale() {
                                     </div>
                                 )}
 
-                                <select
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
-                                    onChange={(e) => {
-                                        handleAddLeaderToFixedScale(viewingFixedScale, e.target.value);
-                                        e.target.value = "";
-                                    }}
-                                    defaultValue=""
-                                >
-                                    <option value="" disabled>Adicionar líder...</option>
-                                    {filteredWorkers
-                                        .filter(w => !viewingFixedScale.leader_ids?.includes(w.id))
-                                        .map(w => (
-                                            <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                        ))
-                                    }
-                                </select>
+                                <WorkerSearchSelect
+                                    workers={filteredWorkers}
+                                    onSelect={(workerId) => handleAddLeaderToFixedScale(viewingFixedScale, workerId)}
+                                    placeholder="Buscar líder..."
+                                    excludeIds={viewingFixedScale.leader_ids || []}
+                                />
                             </div>
 
                             {/* Members Section */}
@@ -661,22 +660,12 @@ export default function Scale() {
                                     </div>
                                 )}
 
-                                <select
-                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    onChange={(e) => {
-                                        handleAddMemberToFixedScale(viewingFixedScale, e.target.value);
-                                        e.target.value = "";
-                                    }}
-                                    defaultValue=""
-                                >
-                                    <option value="" disabled>Adicionar membro...</option>
-                                    {filteredWorkers
-                                        .filter(w => !viewingFixedScale.members?.includes(w.id))
-                                        .map(w => (
-                                            <option key={w.id} value={w.id}>{w.name} {w.surname}</option>
-                                        ))
-                                    }
-                                </select>
+                                <WorkerSearchSelect
+                                    workers={filteredWorkers}
+                                    onSelect={(workerId) => handleAddMemberToFixedScale(viewingFixedScale, workerId)}
+                                    placeholder="Buscar membro..."
+                                    excludeIds={viewingFixedScale.members || []}
+                                />
                             </div>
                         </div>
                     );
