@@ -50,7 +50,7 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                 .from('work_scale')
                 .select(`
                     *,
-                    areas (name)
+                    service_areas (name)
                 `)
                 .eq('worker_id', worker.id);
             return data || [];
@@ -201,7 +201,7 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                             </span>
                                         </div>
                                         <span className="h-px flex-1 bg-indigo-200/50"></span>
-                                        <span className="text-xs font-bold text-indigo-700">{scale.areas?.name}</span>
+                                        <span className="text-xs font-bold text-indigo-700">{scale.service_areas?.name}</span>
                                     </div>
                                 ))}
                             </div>
