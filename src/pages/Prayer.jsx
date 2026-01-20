@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { addHours, format, parseISO, isSameHour, isWithinInterval, startOfHour } from 'date-fns'; // Basic usage
 import { ptBR } from 'date-fns/locale';
-import { AlertCircle, Clock, Info, FileText } from 'lucide-react';
+import { AlertCircle, Clock, Info, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
@@ -245,15 +245,27 @@ export default function Prayer() {
                                                 />
                                             )}
 
-                                            {/* Only show info button if it matches filter or we want to allow seeing other gender info? User said 'separate'. Let's hide info for other gender to be strict. */}
                                             {assignment?.worker_1_id && w1Match && worker1 && (
-                                                <button
-                                                    onClick={() => setViewingWorker(worker1)}
-                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
-                                                    title="Ver informações"
-                                                >
-                                                    <Info className="h-4 w-4" />
-                                                </button>
+                                                <div className="flex bg-white rounded border border-slate-200 divide-x divide-slate-200 ml-1">
+                                                    <button
+                                                        onClick={() => setViewingWorker(worker1)}
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0"
+                                                        title="Ver informações"
+                                                    >
+                                                        <Info className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`Remover ${worker1.name} deste horário?`)) {
+                                                                handleAssign(slot.id, null, 1);
+                                                            }
+                                                        }}
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                                                        title="Remover do horário"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             )}
 
                                         </div>
@@ -284,13 +296,26 @@ export default function Prayer() {
                                             )}
 
                                             {assignment?.worker_2_id && w2Match && worker2 && (
-                                                <button
-                                                    onClick={() => setViewingWorker(worker2)}
-                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
-                                                    title="Ver informações"
-                                                >
-                                                    <Info className="h-4 w-4" />
-                                                </button>
+                                                <div className="flex bg-white rounded border border-slate-200 divide-x divide-slate-200 ml-1">
+                                                    <button
+                                                        onClick={() => setViewingWorker(worker2)}
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0"
+                                                        title="Ver informações"
+                                                    >
+                                                        <Info className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`Remover ${worker2.name} deste horário?`)) {
+                                                                handleAssign(slot.id, null, 2);
+                                                            }
+                                                        }}
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                                                        title="Remover do horário"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             )}
 
                                         </div>

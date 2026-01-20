@@ -371,14 +371,28 @@ export default function Scale() {
                                                                     </div>
 
                                                                     {selectedWorker && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setViewingWorker(selectedWorker)}
-                                                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-all flex-shrink-0"
-                                                                            title="Ver informações"
-                                                                        >
-                                                                            <Info className="h-4 w-4" />
-                                                                        </button>
+                                                                        <div className="flex bg-white rounded border border-slate-200 divide-x divide-slate-200">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setViewingWorker(selectedWorker)}
+                                                                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex-shrink-0"
+                                                                                title="Ver informações"
+                                                                            >
+                                                                                <Info className="h-4 w-4" />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    if (confirm(`Remover ${selectedWorker.name} desta escala?`)) {
+                                                                                        handleAssign(activeTab, period, area.id, null, existing?.id);
+                                                                                    }
+                                                                                }}
+                                                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0"
+                                                                                title="Remover da escala"
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </button>
+                                                                        </div>
                                                                     )}
                                                                     {conflict && (
                                                                         <div className="relative group">

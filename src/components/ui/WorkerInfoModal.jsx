@@ -163,7 +163,7 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                         <p className="text-sm font-semibold text-slate-800">{worker.phone || '-'}</p>
                     </div>
 
-                    {!isWorkerType && (
+                    {(worker.payment_status || worker.payment_amount) && (
                         <div className="text-right">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Pagamento</p>
                             <div className={cn(
