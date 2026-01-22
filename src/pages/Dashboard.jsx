@@ -227,31 +227,17 @@ export default function Dashboard() {
         e.preventDefault();
         const formData = new FormData(e.target);
 
-        const gender = formData.get('report_gender'); // 'male' or 'female'
-        const totalWorkers = parseInt(formData.get('total_workers')) || 0;
-        const totalPassers = parseInt(formData.get('total_passers')) || 0;
-        const totalReceived = parseFloat(formData.get('total_received')) || 0;
-        const totalPending = parseFloat(formData.get('total_pending')) || 0;
+        const genderValue = formData.get('report_gender') === 'male' ? 'Homens' : 'Mulheres';
 
         const data = {
             name: formData.get('name'),
             event_date: formData.get('event_date'),
+            gender: genderValue,
 
-            // Worker Stats
-            total_workers: totalWorkers,
-            male_workers: gender === 'male' ? totalWorkers : 0,
-            female_workers: gender === 'female' ? totalWorkers : 0,
-
-            // Passer Stats
-            total_passers: totalPassers,
-            male_passers: gender === 'male' ? totalPassers : 0,
-            female_passers: gender === 'female' ? totalPassers : 0,
-
-            // Financials (Mapping totals to 'workers' columns as general storage for this row)
-            workers_paid_amount: totalReceived,
-            passers_paid_amount: 0,
-            workers_pending_amount: totalPending,
-            passers_pending_amount: 0
+            total_workers: parseInt(formData.get('total_workers')) || 0,
+            total_passers: parseInt(formData.get('total_passers')) || 0,
+            total_received: parseFloat(formData.get('total_received')) || 0,
+            total_pending: parseFloat(formData.get('total_pending')) || 0,
         };
         addReportMutation.mutate(data);
     };
@@ -275,20 +261,37 @@ export default function Dashboard() {
         enabled: !!churchId
     });
 
-    // Process data for charts based on filters
-    const chartData = (historicalStats || []).map(event => ({
-        name: event.name || format(new Date(event.event_date), 'MMM/yy', { locale: ptBR }),
-        date: event.event_date,
-        // Workers
-        workers_total: event.total_workers,
-        workers_male: event.male_workers,
-        workers_female: event.female_workers,
-        // Passers
-        passers_total: event.total_passers,
-        passers_male: event.male_passers,
-        passers_female: event.female_passers,
-        // Financials (Optional for now)
-    }));
+    // Process data for charts
+    // We consolidate potential multiple entries per day/event name to render on chart
+    const processedChartData = (historicalStats || []).reduce((acc, event) => {
+        const key = `${event.event_date}-${event.name}`;
+        if (!acc[key]) {
+            acc[key] = {
+                name: event.name || format(new Date(event.event_date), 'MMM/yy', { locale: ptBR }),
+                date: event.event_date,
+                workers_male: 0,
+                workers_female: 0,
+                passers_male: 0,
+                passers_female: 0,
+                total: 0
+            };
+        }
+
+        if (event.gender === 'Homens') {
+            acc[key].workers_male += event.total_workers;
+            acc[key].passers_male += event.total_passers;
+        } else {
+            acc[key].workers_female += event.total_workers;
+            acc[key].passers_female += event.total_passers;
+        }
+
+        acc[key].total += (event.total_workers + event.total_passers);
+
+        return acc;
+    }, {});
+
+    const chartData = Object.values(processedChartData).sort((a, b) => new Date(a.date) - new Date(b.date));
+
 
     return (
         <div className="space-y-6">
@@ -384,7 +387,7 @@ export default function Dashboard() {
                             {/* Gender Filter */}
                             <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 ml-auto sm:ml-0">
                                 <Filter className="h-4 w-4" />
-                                <span>Mask: {genderFilter === 'all' ? 'Geral' : genderFilter === 'male' ? 'Homens' : 'Mulheres'}</span>
+                                <span>Filtro: {genderFilter === 'all' ? 'Geral' : genderFilter === 'male' ? 'Homens' : 'Mulheres'}</span>
                             </div>
 
                             {/* Add Report Button */}
@@ -477,52 +480,35 @@ export default function Dashboard() {
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
                                 <tr>
+                                    {/* Columns updated as requested */}
                                     <th className="px-4 py-3 font-semibold">Evento</th>
                                     <th className="px-4 py-3 font-semibold text-center">Data</th>
-                                    <th className="px-4 py-3 font-semibold text-center text-blue-600">Trabalhadores</th>
-                                    <th className="px-4 py-3 font-semibold text-center text-pink-600">Passantes</th>
-                                    <th className="px-4 py-3 font-semibold text-right">Total</th>
+                                    <th className="px-4 py-3 font-semibold text-center">Gênero</th>
+                                    <th className="px-4 py-3 font-semibold text-center text-blue-600">Trab.</th>
+                                    <th className="px-4 py-3 font-semibold text-center text-pink-600">Pass.</th>
+                                    <th className="px-4 py-3 font-semibold text-right text-emerald-600">Recebido</th>
+                                    <th className="px-4 py-3 font-semibold text-right text-orange-600">Pendente</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {chartData.map((event, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                {historicalStats?.map((event, idx) => (
+                                    <tr key={event.id || idx} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 py-3 font-medium text-slate-900">{event.name}</td>
-                                        <td className="px-4 py-3 text-center text-slate-500">{format(new Date(event.date), 'dd/MM/yyyy')}</td>
+                                        <td className="px-4 py-3 text-center text-slate-500">{format(new Date(event.event_date), 'dd/MM/yyyy')}</td>
                                         <td className="px-4 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <span className="font-semibold text-slate-700">
-                                                    {genderFilter === 'all' ? event.workers_total : genderFilter === 'male' ? event.workers_male : event.workers_female}
-                                                </span>
-                                                {genderFilter === 'all' && (
-                                                    <span className="text-[10px] text-slate-400">
-                                                        ({event.workers_male}H / {event.workers_female}M)
-                                                    </span>
-                                                )}
-                                            </div>
+                                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${event.gender === 'Homens' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'}`}>
+                                                {event.gender || '-'}
+                                            </span>
                                         </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <span className="font-semibold text-slate-700">
-                                                    {genderFilter === 'all' ? event.passers_total : genderFilter === 'male' ? event.passers_male : event.passers_female}
-                                                </span>
-                                                {genderFilter === 'all' && (
-                                                    <span className="text-[10px] text-slate-400">
-                                                        ({event.passers_male}H / {event.passers_female}M)
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-bold text-slate-900">
-                                            {(genderFilter === 'all' ? event.workers_total + event.passers_total :
-                                                genderFilter === 'male' ? event.workers_male + event.passers_male :
-                                                    event.workers_female + event.passers_female)}
-                                        </td>
+                                        <td className="px-4 py-3 text-center font-medium text-slate-700">{event.total_workers}</td>
+                                        <td className="px-4 py-3 text-center font-medium text-slate-700">{event.total_passers}</td>
+                                        <td className="px-4 py-3 text-right font-medium text-emerald-600">R$ {event.total_received?.toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-right font-medium text-orange-600">R$ {event.total_pending?.toFixed(2)}</td>
                                     </tr>
                                 ))}
-                                {chartData.length === 0 && (
+                                {(!historicalStats || historicalStats.length === 0) && (
                                     <tr>
-                                        <td colSpan="5" className="px-4 py-8 text-center text-slate-500 italic">
+                                        <td colSpan="7" className="px-4 py-8 text-center text-slate-500 italic">
                                             Nenhum histórico de evento encontrado.
                                         </td>
                                     </tr>
