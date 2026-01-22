@@ -10,7 +10,7 @@ export function Modal({ isOpen, onClose, title, children, className, hideCloseBu
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
 
             <div className={cn(
-                "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar",
+                "relative transform rounded-lg bg-white text-left shadow-xl transition-all w-full sm:my-8 sm:w-full sm:max-w-lg max-h-[calc(100vh-5rem)] overflow-y-auto custom-scrollbar",
                 !noPadding && "px-4 pb-4 pt-5 sm:p-6",
                 className
             )}>

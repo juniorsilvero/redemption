@@ -896,14 +896,14 @@ export default function Dashboard() {
             >
                 {selectedReportEvent && (
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
                                 <span className="text-xs font-medium text-slate-500 uppercase block mb-1">Total Recebido</span>
-                                <span className="text-lg font-bold text-emerald-600">R$ {selectedReportEvent.total_received?.toFixed(2)}</span>
+                                <span className="text-lg font-bold text-emerald-600 break-words">R$ {selectedReportEvent.total_received?.toFixed(2)}</span>
                             </div>
                             <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
                                 <span className="text-xs font-medium text-slate-500 uppercase block mb-1">Total Pendente</span>
-                                <span className="text-lg font-bold text-orange-600">R$ {selectedReportEvent.total_pending?.toFixed(2)}</span>
+                                <span className="text-lg font-bold text-orange-600 break-words">R$ {selectedReportEvent.total_pending?.toFixed(2)}</span>
                             </div>
                         </div>
 
