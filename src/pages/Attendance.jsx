@@ -39,27 +39,39 @@ export default function Attendance() {
     // -- Queries --
 
     const { data: workers } = useQuery({
-        queryKey: ['workers', churchId],
+        queryKey: ['workers', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from('workers')
-                .select('*, cells(name, gender)')
+                .select('*, cells!inner(name, gender)')
                 .eq('church_id', churchId)
                 .order('name');
+
+            if (genderFilter !== 'all') {
+                query = query.eq('cells.gender', genderFilter);
+            }
+
+            const { data } = await query;
             return data;
         },
         enabled: !!churchId
     });
 
     const { data: passers } = useQuery({
-        queryKey: ['passers', churchId],
+        queryKey: ['passers', churchId, genderFilter],
         queryFn: async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from('passers')
-                .select('*, cells(name, gender)')
+                .select('*, cells!inner(name, gender)')
                 .eq('church_id', churchId)
-                .eq('payment_status', 'paid') // Fixed: 'paid' instead of 'ok'
+                .eq('payment_status', 'paid')
                 .order('name');
+
+            if (genderFilter !== 'all') {
+                query = query.eq('cells.gender', genderFilter);
+            }
+
+            const { data } = await query;
             return data;
         },
         enabled: !!churchId
@@ -192,10 +204,17 @@ export default function Attendance() {
     }, [passers, matchesFilter]);
 
 
+    const attendanceMap = useMemo(() => {
+        const map = new Map();
+        attendance?.forEach(a => {
+            map.set(`${a.person_id}-${a.slot_number}`, a.status);
+        });
+        return map;
+    }, [attendance]);
+
     // -- Handlers --
     const getStatus = (personId, slot) => {
-        const record = attendance?.find(a => a.person_id === personId && a.slot_number === slot);
-        return record?.status || 'none';
+        return attendanceMap.get(`${personId}-${slot}`) || 'none';
     };
 
     const handleToggle = (personId, personType, slot) => {

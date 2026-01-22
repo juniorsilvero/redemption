@@ -847,22 +847,22 @@ export default function Dashboard() {
                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Total Trabalhadores</label>
-                            <input name="total_workers" type="number" min="0" required defaultValue="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            <input name="total_workers" type="number" min="0" required placeholder="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Total Passantes</label>
-                            <input name="total_passers" type="number" min="0" required defaultValue="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            <input name="total_passers" type="number" min="0" required placeholder="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 font-semibold text-slate-800">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Total Recebido (R$)</label>
-                            <input name="total_received" type="number" step="0.01" min="0" required defaultValue="0.00" className="mt-1 block w-full rounded-md border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 border p-2 text-sm" />
+                            <input name="total_received" type="number" step="0.01" min="0" required placeholder="0.00" className="mt-1 block w-full rounded-md border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 border p-2 text-sm" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Total Pendente (R$)</label>
-                            <input name="total_pending" type="number" step="0.01" min="0" required defaultValue="0.00" className="mt-1 block w-full rounded-md border-orange-200 bg-orange-50 text-orange-800 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                            <input name="total_pending" type="number" step="0.01" min="0" required placeholder="0.00" className="mt-1 block w-full rounded-md border-orange-200 bg-orange-50 text-orange-800 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
                         </div>
                     </div>
 
