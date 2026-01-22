@@ -227,15 +227,31 @@ export default function Dashboard() {
         e.preventDefault();
         const formData = new FormData(e.target);
 
+        const gender = formData.get('report_gender'); // 'male' or 'female'
+        const totalWorkers = parseInt(formData.get('total_workers')) || 0;
+        const totalPassers = parseInt(formData.get('total_passers')) || 0;
+        const totalReceived = parseFloat(formData.get('total_received')) || 0;
+        const totalPending = parseFloat(formData.get('total_pending')) || 0;
+
         const data = {
             name: formData.get('name'),
             event_date: formData.get('event_date'),
-            total_workers: parseInt(formData.get('total_workers')) || 0,
-            male_workers: parseInt(formData.get('male_workers')) || 0,
-            female_workers: parseInt(formData.get('female_workers')) || 0,
-            total_passers: parseInt(formData.get('total_passers')) || 0,
-            male_passers: parseInt(formData.get('male_passers')) || 0,
-            female_passers: parseInt(formData.get('female_passers')) || 0,
+
+            // Worker Stats
+            total_workers: totalWorkers,
+            male_workers: gender === 'male' ? totalWorkers : 0,
+            female_workers: gender === 'female' ? totalWorkers : 0,
+
+            // Passer Stats
+            total_passers: totalPassers,
+            male_passers: gender === 'male' ? totalPassers : 0,
+            female_passers: gender === 'female' ? totalPassers : 0,
+
+            // Financials (Mapping totals to 'workers' columns as general storage for this row)
+            workers_paid_amount: totalReceived,
+            passers_paid_amount: 0,
+            workers_pending_amount: totalPending,
+            passers_pending_amount: 0
         };
         addReportMutation.mutate(data);
     };
@@ -368,7 +384,7 @@ export default function Dashboard() {
                             {/* Gender Filter */}
                             <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 ml-auto sm:ml-0">
                                 <Filter className="h-4 w-4" />
-                                <span>Filtro: {genderFilter === 'all' ? 'Geral' : genderFilter === 'male' ? 'Homens' : 'Mulheres'}</span>
+                                <span>Mask: {genderFilter === 'all' ? 'Geral' : genderFilter === 'male' ? 'Homens' : 'Mulheres'}</span>
                             </div>
 
                             {/* Add Report Button */}
@@ -790,76 +806,50 @@ export default function Dashboard() {
                 title="Adicionar Relatório de Evento"
             >
                 <form onSubmit={handleReportSubmit} className="space-y-4">
+
+                    {/* Gender Selection */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Relatório para:</label>
+                        <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="report_gender" value="male" className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" defaultChecked />
+                                <span className="text-sm text-slate-700">Homens</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="report_gender" value="female" className="w-4 h-4 text-pink-600 focus:ring-pink-500 border-gray-300" />
+                                <span className="text-sm text-slate-700">Mulheres</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Nome do Evento</label>
-                        <input name="name" required placeholder="Ex: Retiro Janeiro 2026" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                        <input name="name" required placeholder="Ex: Encontro de Homens Fev/26" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Data do Evento</label>
                         <input name="event_date" type="date" required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <h4 className="font-semibold text-slate-800 text-sm mb-2 border-b pb-1">Trabalhadores</h4>
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Total Trabalhadores</label>
+                            <input name="total_workers" type="number" min="0" required defaultValue="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-600">Total Homens</label>
-                            <input name="male_workers" type="number" min="0" required defaultValue="0"
-                                onChange={(e) => {
-                                    const male = parseInt(e.target.value) || 0;
-                                    const female = parseInt(document.querySelector('input[name="female_workers"]').value) || 0;
-                                    document.querySelector('input[name="total_workers"]').value = male + female;
-                                }}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600">Total Mulheres</label>
-                            <input name="female_workers" type="number" min="0" required defaultValue="0"
-                                onChange={(e) => {
-                                    const female = parseInt(e.target.value) || 0;
-                                    const male = parseInt(document.querySelector('input[name="male_workers"]').value) || 0;
-                                    document.querySelector('input[name="total_workers"]').value = male + female;
-                                }}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-600">Total Geral (Trab.)</label>
-                            <input name="total_workers" type="number" readOnly className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 text-slate-500 border p-2 text-sm" />
+                            <label className="block text-sm font-medium text-gray-700">Total Passantes</label>
+                            <input name="total_passers" type="number" min="0" required defaultValue="0" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <h4 className="font-semibold text-slate-800 text-sm mb-2 border-b pb-1">Passantes</h4>
+                    <div className="grid grid-cols-2 gap-4 font-semibold text-slate-800">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Total Recebido (R$)</label>
+                            <input name="total_received" type="number" step="0.01" min="0" required defaultValue="0.00" className="mt-1 block w-full rounded-md border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 border p-2 text-sm" />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-600">Total Homens</label>
-                            <input name="male_passers" type="number" min="0" required defaultValue="0"
-                                onChange={(e) => {
-                                    const male = parseInt(e.target.value) || 0;
-                                    const female = parseInt(document.querySelector('input[name="female_passers"]').value) || 0;
-                                    document.querySelector('input[name="total_passers"]').value = male + female;
-                                }}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600">Total Mulheres</label>
-                            <input name="female_passers" type="number" min="0" required defaultValue="0"
-                                onChange={(e) => {
-                                    const female = parseInt(e.target.value) || 0;
-                                    const male = parseInt(document.querySelector('input[name="male_passers"]').value) || 0;
-                                    document.querySelector('input[name="total_passers"]').value = male + female;
-                                }}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-xs font-medium text-gray-600">Total Geral (Pass.)</label>
-                            <input name="total_passers" type="number" readOnly className="mt-1 block w-full rounded-md bg-slate-50 border-gray-300 text-slate-500 border p-2 text-sm" />
+                            <label className="block text-sm font-medium text-gray-700">Total Pendente (R$)</label>
+                            <input name="total_pending" type="number" step="0.01" min="0" required defaultValue="0.00" className="mt-1 block w-full rounded-md border-orange-200 bg-orange-50 text-orange-800 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
                         </div>
                     </div>
 
