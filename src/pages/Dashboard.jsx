@@ -200,8 +200,58 @@ export default function Dashboard() {
     };
 
 
+    // ... (previous imports)
+    import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+    import { Filter, Calendar } from 'lucide-react';
+    import { format } from 'date-fns';
+    import { ptBR } from 'date-fns/locale';
+
+    // ... (inside Dashboard component)
+
+    // Fetch Historical Data for Reports
+    const { data: historicalStats } = useQuery({
+        queryKey: ['historicalStats', churchId],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('historical_events')
+                .select('*')
+                .eq('church_id', churchId)
+                .order('event_date', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching history:', error);
+                return [];
+            }
+            return data;
+        },
+        enabled: !!churchId
+    });
+
+    // Process data for charts based on filters
+    const chartData = (historicalStats || []).map(event => ({
+        name: event.name || format(new Date(event.event_date), 'MMM/yy', { locale: ptBR }),
+        date: event.event_date,
+        // Workers
+        workers_total: event.total_workers,
+        workers_male: event.male_workers,
+        workers_female: event.female_workers,
+        // Passers
+        passers_total: event.total_passers,
+        passers_male: event.male_passers,
+        passers_female: event.female_passers,
+        // Financials (Optional for now)
+    }));
+
+    // Chart Colors
+    const COLORS = {
+        male: '#3b82f6', // Blue
+        female: '#ec4899', // Pink
+        all: '#64748b'   // Slate
+    };
+
     return (
         <div className="space-y-6">
+            {/* ... (Header and KPI Cards remain same) ... */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
@@ -229,135 +279,164 @@ export default function Dashboard() {
                 ))}
             </div>
 
-            {/* Modals */}
-            <Modal isOpen={modalType === 'workers'} onClose={() => setModalType(null)} title="Todos os Trabalhadores">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-2">
-                        {stats?.allWorkers?.map(w => (
-                            <div key={w.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                <span className="font-medium text-slate-700">{w.name} {w.surname}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                            {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                        </span>
-                                        {w.passers_count > 0 && (
-                                            <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded leading-none shrink-0">
-                                                {w.passers_count} {w.passers_count === 1 ? 'passante' : 'passantes'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={() => setSelectedInfoPerson(w)}
-                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                                    >
-                                        <Info className="h-4 w-4" />
-                                    </button>
-                                </div>
+            {/* Reports Section */}
+            <div className="grid lg:grid-cols-1 gap-6">
+                <Card className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-indigo-100 rounded-lg">
+                                <Calendar className="h-5 w-5 text-indigo-600" />
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal isOpen={modalType === 'passers'} onClose={() => setModalType(null)} title="Todos os Passantes">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-2">
-                        {stats?.allPassers?.map(p => (
-                            <div key={p.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                <span className="font-medium text-slate-700">{p.name} {p.surname}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-1 rounded-full ${p.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                        {p.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                    </span>
-                                    <button
-                                        onClick={() => setSelectedInfoPerson(p)}
-                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                                    >
-                                        <Info className="h-4 w-4" />
-                                    </button>
-                                </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">Relatório de Eventos</h3>
+                                <p className="text-sm text-slate-500">Histórico de comparecimento</p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal isOpen={modalType === 'revenue'} onClose={() => setModalType(null)} title="Detalhamento de Receita (Pagos)" className="sm:max-w-4xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[60vh]">
-                    {/* Paid Workers */}
-                    <div>
-                        <h4 className="font-semibold text-slate-800 mb-3 sticky top-0 bg-white">Trabalhadores</h4>
-                        <div className="space-y-2">
-                            {stats?.allWorkers?.filter(w => w.payment_status === 'paid').map(w => (
-                                <div key={w.id} className="flex justify-between items-center p-2 bg-indigo-50/50 rounded border border-indigo-100">
-                                    <span className="text-sm text-slate-700">{w.name} {w.surname}</span>
-                                    <span className="text-sm font-medium text-emerald-600">R$ {w.payment_amount.toFixed(2)}</span>
-                                </div>
-                            ))}
+                        </div>
+                        {/* Gender Filter for Chart is global 'genderFilter' from context */}
+                        <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                            <Filter className="h-4 w-4" />
+                            <span>Filtro: {genderFilter === 'all' ? 'Geral' : genderFilter === 'male' ? 'Homens' : 'Mulheres'}</span>
                         </div>
                     </div>
 
-                    {/* Paid Passers */}
-                    <div>
-                        <h4 className="font-semibold text-slate-800 mb-3 sticky top-0 bg-white">Passantes</h4>
-                        <div className="space-y-2">
-                            {stats?.allPassers?.filter(p => p.payment_status === 'paid').map(p => (
-                                <div key={p.id} className="flex justify-between items-center p-2 bg-emerald-50/50 rounded border border-emerald-100">
-                                    <span className="text-sm text-slate-700">{p.name} {p.surname}</span>
-                                    <span className="text-sm font-medium text-emerald-600">R$ {p.payment_amount.toFixed(2)}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </Modal>
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#64748b"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <YAxis
+                                    stroke="#64748b"
+                                    fontSize={12}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
 
-            <Modal isOpen={modalType === 'pending'} onClose={() => setModalType(null)} title="Pagamentos Pendentes">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-4">
-                        {stats?.pendingPayments?.length === 0 ? (
-                            <p className="text-sm text-slate-500">Nenhum pagamento pendente.</p>
-                        ) : (
-                            stats?.pendingPayments?.map((person) => (
-                                <div key={person.id} className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 sm:p-4 border rounded-lg bg-slate-50 items-center">
-                                    <div className="p-2 bg-orange-100 rounded-full shrink-0">
-                                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            <p className="text-sm font-bold text-slate-900">{person.name} {person.surname}</p>
-                                            {person.cell && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-sm">
-                                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
-                                                    {person.cell.name}
+                                {/* Workers Lines */}
+                                {(genderFilter === 'all' || genderFilter === 'male') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="workers_male"
+                                        name="Trabalhadores (H)"
+                                        stroke="#3b82f6"
+                                        strokeWidth={2}
+                                        dot={{ fill: '#3b82f6', r: 4 }}
+                                        activeDot={{ r: 6 }}
+                                    />
+                                )}
+                                {(genderFilter === 'all' || genderFilter === 'female') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="workers_female"
+                                        name="Trabalhadores (M)"
+                                        stroke="#ec4899"
+                                        strokeWidth={2}
+                                        dot={{ fill: '#ec4899', r: 4 }}
+                                        activeDot={{ r: 6 }}
+                                    />
+                                )}
+
+                                {/* Passers Lines - Dashed to distinguish */}
+                                {(genderFilter === 'all' || genderFilter === 'male') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="passers_male"
+                                        name="Passantes (H)"
+                                        stroke="#93c5fd"
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
+                                        dot={{ fill: '#93c5fd', r: 4 }}
+                                    />
+                                )}
+                                {(genderFilter === 'all' || genderFilter === 'female') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="passers_female"
+                                        name="Passantes (M)"
+                                        stroke="#fbcfe8" // Light pink
+                                        strokeWidth={2}
+                                        strokeDasharray="5 5"
+                                        dot={{ fill: '#fbcfe8', r: 4 }}
+                                    />
+                                )}
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* Historical Data Table */}
+                    <div className="mt-8 overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-4 py-3 font-semibold">Evento</th>
+                                    <th className="px-4 py-3 font-semibold text-center">Data</th>
+                                    <th className="px-4 py-3 font-semibold text-center text-blue-600">Trabalhadores</th>
+                                    <th className="px-4 py-3 font-semibold text-center text-pink-600">Passantes</th>
+                                    <th className="px-4 py-3 font-semibold text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {chartData.map((event, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3 font-medium text-slate-900">{event.name}</td>
+                                        <td className="px-4 py-3 text-center text-slate-500">{format(new Date(event.date), 'dd/MM/yyyy')}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <span className="font-semibold text-slate-700">
+                                                    {genderFilter === 'all' ? event.workers_total : genderFilter === 'male' ? event.workers_male : event.workers_female}
                                                 </span>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-medium">{person.type}</p>
-
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
-                                        <div className="text-right">
-                                            <p className="text-sm font-bold text-slate-900 leading-none mb-1">R$ {person.payment_amount?.toFixed(2)}</p>
-                                            <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase tracking-tighter">Pendente</span>
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedInfoPerson(person)}
-                                            className="p-1.5 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
-                                        >
-                                            <Info className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                                {genderFilter === 'all' && (
+                                                    <span className="text-[10px] text-slate-400">
+                                                        ({event.workers_male}H / {event.workers_female}M)
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <span className="font-semibold text-slate-700">
+                                                    {genderFilter === 'all' ? event.passers_total : genderFilter === 'male' ? event.passers_male : event.passers_female}
+                                                </span>
+                                                {genderFilter === 'all' && (
+                                                    <span className="text-[10px] text-slate-400">
+                                                        ({event.passers_male}H / {event.passers_female}M)
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-bold text-slate-900">
+                                            {(genderFilter === 'all' ? event.workers_total + event.passers_total :
+                                                genderFilter === 'male' ? event.workers_male + event.passers_male :
+                                                    event.workers_female + event.passers_female)}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {chartData.length === 0 && (
+                                    <tr>
+                                        <td colSpan="5" className="px-4 py-8 text-center text-slate-500 italic">
+                                            Nenhum histórico de evento encontrado.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-            </Modal>
+                </Card>
+            </div>
 
+            {/* Existing Quick Actions and Pending Cards */}
             <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4">
+                {/* ... (rest of the component) */}
                 {/* Quick Actions - Top on mobile, right on desktop */}
                 <Card className="order-1 lg:order-2 lg:col-span-3">
                     <CardHeader>
