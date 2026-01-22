@@ -21,6 +21,7 @@ export default function Dashboard() {
     const queryClient = useQueryClient();
     const [modalType, setModalType] = useState(null); // 'workers' | 'passers' | 'revenue' | 'pending' | 'addReport' | null
     const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
+    const [selectedReportEvent, setSelectedReportEvent] = useState(null);
 
     // Add Report State
     const [isAddingReport, setIsAddingReport] = useState(false);
@@ -401,7 +402,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="h-[350px] w-full">
+                    <div className="h-[250px] md:h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -475,12 +476,11 @@ export default function Dashboard() {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* Historical Data Table */}
-                    <div className="mt-8 overflow-x-auto">
+                    {/* Historical Data - Desktop Table (hidden on mobile) */}
+                    <div className="mt-8 overflow-x-auto hidden md:block">
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    {/* Columns updated as requested */}
                                     <th className="px-4 py-3 font-semibold">Evento</th>
                                     <th className="px-4 py-3 font-semibold text-center">Data</th>
                                     <th className="px-4 py-3 font-semibold text-center">Gênero</th>
@@ -492,7 +492,7 @@ export default function Dashboard() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {historicalStats?.map((event, idx) => (
-                                    <tr key={event.id || idx} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={event.id || idx} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setSelectedReportEvent(event)}>
                                         <td className="px-4 py-3 font-medium text-slate-900">{event.name}</td>
                                         <td className="px-4 py-3 text-center text-slate-500">{format(new Date(event.event_date), 'dd/MM/yyyy')}</td>
                                         <td className="px-4 py-3 text-center">
@@ -515,6 +515,33 @@ export default function Dashboard() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Historical Data - Mobile Card List (hidden on desktop) */}
+                    <div className="mt-6 space-y-3 md:hidden">
+                        {historicalStats?.map((event, idx) => (
+                            <button
+                                key={event.id || idx}
+                                onClick={() => setSelectedReportEvent(event)}
+                                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100 active:scale-[0.98] transition-all text-left group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${event.gender === 'Homens' ? 'bg-blue-100' : 'bg-pink-100'}`}>
+                                        <Calendar className={`h-4 w-4 ${event.gender === 'Homens' ? 'text-blue-600' : 'text-pink-600'}`} />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-slate-900 text-sm">{event.name}</p>
+                                        <p className="text-xs text-slate-500">{format(new Date(event.event_date), 'dd/MM/yyyy')} • {event.gender}</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                            </button>
+                        ))}
+                        {(!historicalStats || historicalStats.length === 0) && (
+                            <div className="py-8 text-center text-slate-500 italic text-sm">
+                                Nenhum histórico de evento encontrado.
+                            </div>
+                        )}
                     </div>
                 </Card>
             </div>
@@ -860,6 +887,65 @@ export default function Dashboard() {
                 onClose={() => setSelectedInfoPerson(null)}
             />
 
+            {/* Event Details Modal (Mobile/Desktop) */}
+            <Modal
+                isOpen={!!selectedReportEvent}
+                onClose={() => setSelectedReportEvent(null)}
+                title={selectedReportEvent ? `${selectedReportEvent.name} - ${format(new Date(selectedReportEvent.event_date), 'dd/MM/yyyy')}` : 'Detalhes do Evento'}
+            >
+                {selectedReportEvent && (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <span className="text-xs font-medium text-slate-500 uppercase block mb-1">Total Recebido</span>
+                                <span className="text-lg font-bold text-emerald-600">R$ {selectedReportEvent.total_received?.toFixed(2)}</span>
+                            </div>
+                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <span className="text-xs font-medium text-slate-500 uppercase block mb-1">Total Pendente</span>
+                                <span className="text-lg font-bold text-orange-600">R$ {selectedReportEvent.total_pending?.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 pt-2">
+                            <div>
+                                <h4 className="font-semibold text-slate-800 text-sm mb-2 pb-1 border-b">Estatísticas de Pessoas</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex justify-between items-center p-2 bg-blue-50/50 rounded">
+                                        <span className="text-sm text-slate-600">Trabalhadores</span>
+                                        <span className="font-medium text-slate-900">{selectedReportEvent.total_workers}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center p-2 bg-pink-50/50 rounded">
+                                        <span className="text-sm text-slate-600">Passantes</span>
+                                        <span className="font-medium text-slate-900">{selectedReportEvent.total_passers}</span>
+                                    </div>
+                                    <div className="col-span-2 flex justify-between items-center p-2 bg-slate-100 rounded">
+                                        <span className="text-sm font-semibold text-slate-700">Total Geral</span>
+                                        <span className="font-bold text-slate-900">{selectedReportEvent.total_workers + selectedReportEvent.total_passers}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="font-semibold text-slate-800 text-sm mb-2 pb-1 border-b">Detalhes Adicionais</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Gênero</span>
+                                        <span className="font-medium text-slate-700">{selectedReportEvent.gender}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-500">Data</span>
+                                        <span className="font-medium text-slate-700">{format(new Date(selectedReportEvent.event_date), 'dd/MM/yyyy')}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onClick={() => setSelectedReportEvent(null)} className="w-full mt-4 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+                            Fechar
+                        </button>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }
