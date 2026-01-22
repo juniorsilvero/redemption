@@ -10,6 +10,10 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 import { GlobalSearch } from '../components/ui/GlobalSearch';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Filter, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function Dashboard() {
     const { churchId } = useAuth();
@@ -199,14 +203,6 @@ export default function Dashboard() {
         }
     };
 
-
-    // ... (previous imports)
-    import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-    import { Filter, Calendar } from 'lucide-react';
-    import { format } from 'date-fns';
-    import { ptBR } from 'date-fns/locale';
-
-    // ... (inside Dashboard component)
 
     // Fetch Historical Data for Reports
     const { data: historicalStats } = useQuery({
