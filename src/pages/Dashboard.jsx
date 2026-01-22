@@ -210,17 +210,19 @@ export default function Dashboard() {
     // Add Report Mutation
     const addReportMutation = useMutation({
         mutationFn: async (data) => {
+            console.log("Submitting report:", data);
             return supabase.from('historical_events').insert({ ...data, church_id: churchId });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['historicalStats']);
+            queryClient.invalidateQueries(['historicalStats', churchId]);
+            queryClient.invalidateQueries(['dashboardStats']); // Also refresh main stats if relevant
             setModalType(null);
             setIsAddingReport(false);
             toast.success('Relatório adicionado com sucesso!');
         },
         onError: (error) => {
             console.error('Error adding report:', error);
-            toast.error('Erro ao adicionar relatório.');
+            toast.error('Erro ao adicionar relatório: ' + (error.message || 'Erro desconhecido'));
         }
     });
 
