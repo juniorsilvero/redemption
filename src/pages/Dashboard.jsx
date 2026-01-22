@@ -210,7 +210,6 @@ export default function Dashboard() {
     // Add Report Mutation
     const addReportMutation = useMutation({
         mutationFn: async (data) => {
-            console.log("Submitting report:", data);
             return supabase.from('historical_events').insert({ ...data, church_id: churchId });
         },
         onSuccess: () => {
