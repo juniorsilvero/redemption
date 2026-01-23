@@ -320,7 +320,7 @@ export default function Dashboard() {
             </div>
 
             {/* KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {kpiCards.map((card) => (
                     <Card key={card.title} onClick={card.action} className="cursor-pointer hover:shadow-md transition-all active:scale-95">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
