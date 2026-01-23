@@ -6,12 +6,12 @@ import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Users, UserPlus, DollarSign, AlertCircle, ChevronRight, User, Info } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 import { GlobalSearch } from '../components/ui/GlobalSearch';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Filter, Calendar } from 'lucide-react';
+import { Filter, Calendar, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -19,6 +19,7 @@ export default function Dashboard() {
     const { churchId } = useAuth();
     const { genderFilter } = useFilter();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [modalType, setModalType] = useState(null); // 'workers' | 'passers' | 'revenue' | 'pending' | 'addReport' | null
     const [selectedInfoPerson, setSelectedInfoPerson] = useState(null);
     const [selectedReportEvent, setSelectedReportEvent] = useState(null);
@@ -50,6 +51,9 @@ export default function Dashboard() {
             const { data: passers } = cellIds.length > 0
                 ? await supabase.from('passers').select('*').eq('church_id', churchId).in('cell_id', cellIds)
                 : { data: [] };
+
+            const { data: expenses } = await supabase.from('fixed_expenses').select('amount').eq('church_id', churchId);
+            const totalExpenses = expenses?.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0) || 0;
 
             const totalWorkers = workers?.length || 0;
             const totalPassers = passers?.length || 0;
@@ -97,6 +101,7 @@ export default function Dashboard() {
                 totalPassers,
                 totalRevenue,
                 totalPendingValue,
+                totalExpenses,
                 pendingPayments: allPending,
                 allWorkers: workersWithRanking,
                 allPassers: passers,
@@ -132,6 +137,14 @@ export default function Dashboard() {
             color: 'text-emerald-600',
             bgColor: 'bg-emerald-100',
             action: () => setModalType('revenue')
+        },
+        {
+            title: 'Despesas Fixas',
+            value: `R$ ${stats?.totalExpenses?.toFixed(2) || '0.00'}`,
+            icon: Wallet,
+            color: 'text-red-500',
+            bgColor: 'bg-red-100',
+            action: () => navigate('/expenses')
         }
     ];
 

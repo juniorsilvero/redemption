@@ -12,6 +12,7 @@ import Accommodation from './pages/Accommodation';
 import Prayer from './pages/Prayer';
 import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
+import Expenses from './pages/Expenses';
 import Setup from './pages/Setup';
 import { InstallPrompt } from './components/ui/InstallPrompt';
 import { Toaster } from 'react-hot-toast';
@@ -70,6 +71,7 @@ function App() {
                   <Route path="/accommodation" element={<AdminRoute><Accommodation /></AdminRoute>} />
                   <Route path="/prayer" element={<AdminRoute><Prayer /></AdminRoute>} />
                   <Route path="/attendance" element={<AdminRoute><Attendance /></AdminRoute>} />
+                  <Route path="/expenses" element={<AdminRoute><Expenses /></AdminRoute>} />
                   <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
                 </Route>
               </Routes>
