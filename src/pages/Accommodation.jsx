@@ -350,8 +350,13 @@ export default function Accommodation() {
                                 <User className="h-4 w-4 text-slate-400" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">{passer.name} {passer.surname}</p>
-                                <p className="text-xs text-slate-500 truncate">Pendente: R$ {passer.payment_amount.toFixed(2)}</p>
+                                <div className="flex flex-col">
+                                    <p className="text-sm font-medium text-slate-900">{passer.name} {passer.surname}</p>
+                                    <div className="flex gap-2 text-xs text-slate-500">
+                                        <span>Pendente: R$ {passer.payment_amount.toFixed(2)}</span>
+                                        {passer.age && <span>• {passer.age} anos</span>}
+                                    </div>
+                                </div>
                             </div>
                             {/* Mobile Assign Button */}
                             <button
