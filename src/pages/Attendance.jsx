@@ -635,6 +635,21 @@ export default function Attendance() {
                 onSelect={(w) => addFoodAssignmentMutation.mutate({ workerId: w.id, itemName: selectedFoodItem })}
                 title={`Quem vai trazer: ${selectedFoodItem}?`}
             />
+
+            {selectedWorkerInfo && (
+                <WorkerInfoModal
+                    isOpen={!!selectedWorkerInfo}
+                    onClose={() => setSelectedWorkerInfo(null)}
+                    worker={selectedWorkerInfo}
+                    cells={workers?.map(w => w.cells).filter((c, i, a) => a.findIndex(x => x.id === c.id) === i) || []} // Extract unique cells from workers for context if needed, or pass empty array if not critical. 
+                    // Actually checking usage in WorkerInfoModal: 
+                    // const cell = cells?.find(c => c.id === worker.cell_id);
+                    // So we need cells.
+                    allWorkers={workers}
+                    allPassers={passers}
+                    onSwitchWorker={setSelectedWorkerInfo}
+                />
+            )}
         </div>
     );
 }
