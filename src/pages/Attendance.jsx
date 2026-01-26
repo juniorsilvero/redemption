@@ -415,7 +415,8 @@ export default function Attendance() {
             const { data } = await supabase
                 .from('food_assignments')
                 .select('*, workers(*, cells(id, name, gender, card_color))') // Fetch FULL worker info + cell info
-                .eq('church_id', churchId);
+                .eq('church_id', churchId)
+                .order('created_at', { ascending: true });
             return data || [];
         },
         enabled: !!churchId
