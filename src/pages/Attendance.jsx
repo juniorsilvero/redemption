@@ -256,9 +256,9 @@ const FoodDetailsModal = ({
                 </div>
 
                 <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-                    {assignments?.length === 0 ? (
+                    {(!assignments || assignments.length === 0) ? (
                         <div className="text-center py-8 text-slate-400 italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                            Ninguém assigneda para trazer este item ainda.
+                            Ninguém escalado para trazer este item ainda.
                         </div>
                     ) : (
                         assignments.map(assign => (
@@ -641,10 +641,7 @@ export default function Attendance() {
                     isOpen={!!selectedWorkerInfo}
                     onClose={() => setSelectedWorkerInfo(null)}
                     worker={selectedWorkerInfo}
-                    cells={workers?.map(w => w.cells).filter((c, i, a) => a.findIndex(x => x.id === c.id) === i) || []} // Extract unique cells from workers for context if needed, or pass empty array if not critical. 
-                    // Actually checking usage in WorkerInfoModal: 
-                    // const cell = cells?.find(c => c.id === worker.cell_id);
-                    // So we need cells.
+                    cells={(workers || []).map(w => w.cells).filter((c, i, a) => c && a.findIndex(x => x.id === c.id) === i)}
                     allWorkers={workers}
                     allPassers={passers}
                     onSwitchWorker={setSelectedWorkerInfo}
