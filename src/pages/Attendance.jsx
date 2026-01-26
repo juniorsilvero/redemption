@@ -366,7 +366,7 @@ export default function Attendance() {
         queryFn: async () => {
             let query = supabase
                 .from('workers')
-                .select('*, cells!inner(name, gender)')
+                .select('*, cells!inner(id, name, gender, card_color)')
                 .eq('church_id', churchId)
                 .order('name');
 
@@ -385,7 +385,7 @@ export default function Attendance() {
         queryFn: async () => {
             let query = supabase
                 .from('passers')
-                .select('*, cells!inner(name, gender)')
+                .select('*, cells!inner(id, name, gender, card_color)')
                 .eq('church_id', churchId)
                 .eq('payment_status', 'paid') // Fixed: 'paid' instead of 'ok'
                 .order('name');
@@ -414,7 +414,7 @@ export default function Attendance() {
         queryFn: async () => {
             const { data } = await supabase
                 .from('food_assignments')
-                .select('*, workers(*, cells(name, gender))') // Fetch FULL worker info + cell info
+                .select('*, workers(*, cells(id, name, gender, card_color))') // Fetch FULL worker info + cell info
                 .eq('church_id', churchId);
             return data || [];
         },
