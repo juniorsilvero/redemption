@@ -437,7 +437,34 @@ export default function Attendance() {
         mutationFn: async ({ id, currentStatus }) => {
             return supabase.from('food_assignments').update({ delivered: !currentStatus }).eq('id', id);
         },
-        onSuccess: () => queryClient.invalidateQueries(['food_assignments', churchId])
+        onMutate: async ({ id, currentStatus }) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries(['food_assignments', churchId]);
+
+            // Snapshot previous value
+            const previousAssignments = queryClient.getQueryData(['food_assignments', churchId]);
+
+            // Optimistically update cache
+            queryClient.setQueryData(['food_assignments', churchId], (old) => {
+                if (!old) return old;
+                return old.map(assignment =>
+                    assignment.id === id
+                        ? { ...assignment, delivered: !currentStatus }
+                        : assignment
+                );
+            });
+
+            return { previousAssignments };
+        },
+        onError: (err, variables, context) => {
+            if (context?.previousAssignments) {
+                queryClient.setQueryData(['food_assignments', churchId], context.previousAssignments);
+            }
+            toast.error('Erro ao atualizar status');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries(['food_assignments', churchId]);
+        }
     });
 
 
