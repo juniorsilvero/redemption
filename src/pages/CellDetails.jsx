@@ -5,11 +5,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info, BarChart3, ChevronDown, ChevronRight, Link2 } from 'lucide-react';
+import { Users, UserPlus, Trash2, Edit2, AlertCircle, Info, BarChart3, ChevronDown, ChevronRight, Link2, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn, compressImage } from '../lib/utils';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 import { CellFrequencyModal } from '../components/ui/CellFrequencyModal';
+import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
 
 
 export default function CellDetails() {
@@ -27,6 +28,8 @@ export default function CellDetails() {
     const [isFrequencyModalOpen, setIsFrequencyModalOpen] = useState(false);
     const [isWorkersOpen, setIsWorkersOpen] = useState(false);
     const [isPassersOpen, setIsPassersOpen] = useState(false);
+    const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+    const [selectedPdfPassers, setSelectedPdfPassers] = useState([]);
 
 
 
@@ -267,6 +270,40 @@ export default function CellDetails() {
         }
     };
 
+    const handleOpenPdfModal = () => {
+        setSelectedPdfPassers(passers?.map(p => p.id) || []);
+        setIsPdfModalOpen(true);
+    };
+
+    const handleTogglePdfPasser = (passerId) => {
+        setSelectedPdfPassers(prev =>
+            prev.includes(passerId)
+                ? prev.filter(id => id !== passerId)
+                : [...prev, passerId]
+        );
+    };
+
+    const handleSelectAllPdfPassers = () => {
+        if (selectedPdfPassers.length === passers?.length) {
+            setSelectedPdfPassers([]);
+        } else {
+            setSelectedPdfPassers(passers?.map(p => p.id) || []);
+        }
+    };
+
+    const handleGeneratePdfs = () => {
+        const toGenerate = passers?.filter(p => selectedPdfPassers.includes(p.id)) || [];
+        if (toGenerate.length === 0) {
+            toast.error('Selecione ao menos um passante.');
+            return;
+        }
+        toGenerate.forEach(passer => {
+            generateRegistrationPDF(passer, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', (passer.payment_amount || 290).toFixed(2));
+        });
+        setIsPdfModalOpen(false);
+        toast.success(`${toGenerate.length} PDF(s) gerado(s) com sucesso!`);
+    };
+
     const handleDeleteWorker = (workerId) => {
         if (window.confirm('Tem certeza que deseja excluir este trabalhador?')) {
             deleteWorkerMutation.mutate(workerId);
@@ -458,12 +495,21 @@ export default function CellDetails() {
                             </CardTitle>
                         </div>
                         {passers?.length > 0 && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteAllPassers(); }}
-                                className="text-[10px] font-bold uppercase text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100 shrink-0 relative z-10"
-                            >
-                                Excluir Todos
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleOpenPdfModal(); }}
+                                    className="flex items-center gap-1 text-[10px] font-bold uppercase text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors border border-indigo-100 shrink-0 relative z-10"
+                                >
+                                    <FileText className="h-3 w-3" />
+                                    Gerar PDF
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteAllPassers(); }}
+                                    className="text-[10px] font-bold uppercase text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors border border-red-100 shrink-0 relative z-10"
+                                >
+                                    Excluir Todos
+                                </button>
+                            </div>
                         )}
                     </CardHeader>
 
@@ -722,6 +768,94 @@ export default function CellDetails() {
                 onClose={() => setSelectedInfoPerson(null)}
                 onSwitchWorker={setSelectedInfoPerson}
             />
+
+            {/* Modal de Geração de PDF dos Passantes */}
+            <Modal
+                isOpen={isPdfModalOpen}
+                onClose={() => setIsPdfModalOpen(false)}
+                title="Gerar PDF das Fichas"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-500">Selecione os passantes para gerar o PDF da ficha de inscrição.</p>
+
+                    {/* Selecionar todos */}
+                    <div
+                        className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors"
+                        onClick={handleSelectAllPdfPassers}
+                    >
+                        <div className={cn(
+                            "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
+                            selectedPdfPassers.length === passers?.length
+                                ? "bg-indigo-600 border-indigo-600"
+                                : "border-slate-300 bg-white"
+                        )}>
+                            {selectedPdfPassers.length === passers?.length && (
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            )}
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700">
+                            {selectedPdfPassers.length === passers?.length ? 'Desmarcar todos' : 'Selecionar todos'}
+                        </span>
+                        <span className="ml-auto text-xs text-slate-400">{selectedPdfPassers.length}/{passers?.length} selecionados</span>
+                    </div>
+
+                    {/* Lista de passantes */}
+                    <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto rounded-lg border border-slate-200">
+                        {passers?.map((passer) => (
+                            <div
+                                key={passer.id}
+                                className="flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                                onClick={() => handleTogglePdfPasser(passer.id)}
+                            >
+                                <div className={cn(
+                                    "w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors",
+                                    selectedPdfPassers.includes(passer.id)
+                                        ? "bg-indigo-600 border-indigo-600"
+                                        : "border-slate-300 bg-white"
+                                )}>
+                                    {selectedPdfPassers.includes(passer.id) && (
+                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-slate-900 truncate">{passer.name} {passer.surname}</p>
+                                    <p className="text-xs text-slate-400">{passer.phone || 'Sem telefone'}{passer.age ? ` · ${passer.age} anos` : ''}</p>
+                                </div>
+                                <span className={cn(
+                                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                                    passer.payment_status === 'paid'
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-red-50 text-red-700"
+                                )}>
+                                    {passer.payment_status === 'paid' ? 'Pago' : 'Pendente'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Botões de ação */}
+                    <div className="flex gap-3 pt-1">
+                        <button
+                            onClick={handleGeneratePdfs}
+                            disabled={selectedPdfPassers.length === 0}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <FileText className="h-4 w-4" />
+                            Gerar {selectedPdfPassers.length > 0 ? `${selectedPdfPassers.length} ` : ''}PDF{selectedPdfPassers.length !== 1 ? 's' : ''}
+                        </button>
+                        <button
+                            onClick={() => setIsPdfModalOpen(false)}
+                            className="flex-1 rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
             <CellFrequencyModal
                 isOpen={isFrequencyModalOpen}
