@@ -16,6 +16,7 @@ import Expenses from './pages/Expenses';
 import Setup from './pages/Setup';
 import FichaCadastro from './pages/FichaCadastro';
 import { InstallPrompt } from './components/ui/InstallPrompt';
+import { ScrollToTop } from './components/ui/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ function App() {
         <AuthProvider>
           <FilterProvider>
             <Router>
+              <ScrollToTop />
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/setup" element={<Setup />} />
