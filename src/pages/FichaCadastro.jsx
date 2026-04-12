@@ -235,7 +235,7 @@ export default function FichaCadastro() {
                     </p>
 
                     <button
-                        onClick={() => generateRegistrationPDF(submittedData, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', defaultPrice.toFixed(2))}
+                        onClick={() => generateRegistrationPDF(submittedData, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', defaultPrice)}
                         className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
                     >
                         <FileText className="h-5 w-5" />
@@ -283,7 +283,7 @@ export default function FichaCadastro() {
                         </div>
                         <div className="text-right">
                             <span className="block text-[10px] text-indigo-200 uppercase font-bold tracking-wider">Valor da Inscrição</span>
-                            <span className="text-xl font-black text-white">R$ {defaultPrice.toFixed(2)}</span>
+                            <span className="text-xl font-black text-white">R$ {defaultPrice % 1 === 0 ? defaultPrice.toFixed(0) : defaultPrice.toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -346,10 +346,11 @@ export default function FichaCadastro() {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp</label>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Telefone / WhatsApp *</label>
                             <input
                                 name="phone"
                                 type="tel"
+                                required
                                 placeholder="(00) 00000-0000"
                                 className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                             />
@@ -357,20 +358,22 @@ export default function FichaCadastro() {
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Data de Nascimento</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Data de Nascimento *</label>
                                 <input
                                     name="birth_date"
                                     type="date"
+                                    required
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Idade</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Idade *</label>
                                 <input
                                     name="age"
                                     type="number"
+                                    required
                                     value={ageValue}
                                     onChange={(e) => setAgeValue(e.target.value)}
                                     placeholder="Ex: 25"
@@ -389,9 +392,10 @@ export default function FichaCadastro() {
                         )}
 
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Endereço (Rua e Número)</label>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Endereço (Rua e Número) *</label>
                             <input
                                 name="address"
+                                required
                                 placeholder="Ex: Rua das Flores, 123"
                                 className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                             />
@@ -399,25 +403,28 @@ export default function FichaCadastro() {
 
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div className="sm:col-span-1">
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Bairro</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Bairro *</label>
                                 <input
                                     name="neighborhood"
+                                    required
                                     placeholder="Bairro"
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 />
                             </div>
                             <div className="sm:col-span-1">
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Cidade</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Cidade *</label>
                                 <input
                                     name="city"
+                                    required
                                     placeholder="Cidade"
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 />
                             </div>
                             <div className="sm:col-span-1">
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Estado</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Estado *</label>
                                 <select
                                     name="state"
+                                    required
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 >
                                     <option value="">UF</option>
@@ -433,17 +440,19 @@ export default function FichaCadastro() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1">Telefone de um Familiar 1</label>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Telefone de um Familiar 1 *</label>
                                         <input
                                             name="family_contact_1"
+                                            required
                                             placeholder="(00) 00000-0000"
                                             className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1">Grau de Parentesco</label>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Grau de Parentesco *</label>
                                         <input
                                             name="family_relationship_1"
+                                            required
                                             placeholder="Ex: Mãe, Pai, Irmão..."
                                             className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                         />
@@ -474,9 +483,10 @@ export default function FichaCadastro() {
                         {/* Responsible Worker */}
                         {workers && workers.length > 0 && (
                             <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Responsável (Trabalhador)</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Responsável (Trabalhador) *</label>
                                 <select
                                     name="responsible_worker_id"
+                                    required
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 >
                                     <option value="">Selecione um responsável</option>

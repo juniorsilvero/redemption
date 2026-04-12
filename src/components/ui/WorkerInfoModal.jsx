@@ -207,7 +207,11 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                     : "bg-orange-50 text-orange-700 border-orange-100"
                             )}>
                                 <span>{worker.payment_status === 'paid' ? 'Pago' : 'Pendente'}</span>
-                                {worker.payment_amount && <span>- R$ {worker.payment_amount}</span>}
+                                {worker.payment_amount && (
+                                    <span>- R$ {Number(worker.payment_amount) % 1 === 0 
+                                        ? Number(worker.payment_amount).toFixed(0) 
+                                        : Number(worker.payment_amount).toFixed(2)}</span>
+                                )}
                             </div>
                         </div>
                     )}

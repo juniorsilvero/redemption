@@ -21,13 +21,14 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
     doc.text('Ficha de Inscrição', margin + 5, currentY + 2);
     
     // Right side text (Price)
+    const formattedPrice = Number(price) % 1 === 0 ? Number(price).toFixed(0) : Number(price).toFixed(2);
     doc.setTextColor(200, 0, 0); // Red
     doc.setFontSize(10);
     doc.text('Valor da', 140, currentY - 2);
     doc.text('inscrição:', 140, currentY + 2);
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
-    doc.text(`R$ ${price}`, 175, currentY + 2);
+    doc.text(`R$ ${formattedPrice}`, 175, currentY + 2);
     
     doc.setFontSize(8);
     doc.text('Incluso Transporte,', 140, currentY + 7);
