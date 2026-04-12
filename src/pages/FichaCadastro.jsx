@@ -392,6 +392,47 @@ export default function FichaCadastro() {
                             </div>
                         </div>
 
+                        {/* Rules and Information */}
+                        <div className="border-t border-slate-100 pt-5 space-y-4">
+                            <div className="bg-slate-900 rounded-lg p-3">
+                                <h3 className="text-[10px] font-black text-white text-center uppercase tracking-[0.2em]">Informações Gerais</h3>
+                            </div>
+                            
+                            <ul className="space-y-3 px-1">
+                                <li className="flex gap-2">
+                                    <span className="text-red-500 font-bold shrink-0">•</span>
+                                    <p className="text-[11px] font-bold text-red-600 uppercase leading-tight">
+                                        NÃO DEVOLVEMOS O DINHEIRO DA INSCRIÇÃO, EM HIPÓTESE ALGUMA.
+                                    </p>
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="text-slate-400 font-bold shrink-0">•</span>
+                                    <p className="text-[11px] font-bold text-slate-700 uppercase leading-tight">
+                                        É NECESSÁRIO A AUTORIZAÇÃO DOS RESPONSÁVEIS PARA OS MENORES DE 18 ANOS.
+                                    </p>
+                                </li>
+                                <li className="flex gap-2">
+                                    <span className="text-slate-400 font-bold shrink-0">•</span>
+                                    <p className="text-[11px] font-bold text-slate-700 uppercase leading-tight">
+                                        NÃO É PERMITIDO A IDA DE: CRIANÇAS (0 A 11 ANOS), GRÁVIDAS EM QUALQUER TEMPO DE GESTAÇÃO, PESSOAS IDOSAS A PARTIR DE 60 ANOS, E PESSOAS COM DOENÇAS CRÔNICAS, E QUE NECESSITEM DE CUIDADOS ESPECIAIS.
+                                    </p>
+                                </li>
+                            </ul>
+
+                            <div className="bg-slate-900 rounded-lg p-3">
+                                <h3 className="text-[10px] font-black text-white text-center uppercase tracking-[0.2em]">Pagamentos e Condições</h3>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="border border-slate-200 rounded-lg p-3 text-center">
+                                    <p className="text-[11px] font-bold text-slate-800 uppercase">No dia só aceitamos pagamentos em dinheiro</p>
+                                </div>
+                                <div className="border border-slate-200 rounded-lg p-3 text-center">
+                                    <p className="text-[11px] font-bold text-slate-800 uppercase">Pagamento com cartão até 1 dia antes</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Submit */}
                         <button
                             type="submit"
