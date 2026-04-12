@@ -4,11 +4,13 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { toast, Toaster } from 'react-hot-toast';
 import { compressImage } from '../lib/utils';
-import { CheckCircle2, Upload, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Upload, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
 
 export default function FichaCadastro() {
     const { cellId } = useParams();
     const [submitted, setSubmitted] = useState(false);
+    const [submittedData, setSubmittedData] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [photoFile, setPhotoFile] = useState(null);
@@ -68,7 +70,8 @@ export default function FichaCadastro() {
             const { error } = await supabase.from('passers').insert(formPayload);
             if (error) throw error;
         },
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
+            setSubmittedData({ ...variables });
             setSubmitted(true);
         },
         onError: (err) => {
@@ -186,9 +189,22 @@ export default function FichaCadastro() {
                     <p className="text-lg text-emerald-600 font-medium italic mb-6">
                         "Esse encontro vai mudar sua vida"
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 mb-6">
                         Em breve nossa equipe entrará em contato. 🙏
                     </p>
+
+                    <button
+                        onClick={() => generateRegistrationPDF(submittedData, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', defaultPrice.toFixed(2))}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+                    >
+                        <FileText className="h-5 w-5" />
+                        Gerar PDF da Inscrição
+                    </button>
+                    {submittedData?.age < 18 && (
+                        <p className="text-xs text-red-500 mt-3 font-medium">
+                            Como você é menor de idade, não se esqueça de imprimir o PDF e pegar a assinatura do seu responsável!
+                        </p>
+                    )}
                 </div>
             </div>
         );
@@ -240,9 +256,15 @@ export default function FichaCadastro() {
                 <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
 
                     {/* Form header */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-5">
-                        <h2 className="text-lg font-bold text-white">Ficha de Cadastro</h2>
-                        <p className="text-indigo-100/80 text-xs mt-0.5">Preencha seus dados para participar do encontro</p>
+                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-5 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Ficha de Cadastro</h2>
+                            <p className="text-indigo-100/80 text-xs mt-0.5">Preencha seus dados para participar do encontro</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="block text-[10px] text-indigo-200 uppercase font-bold tracking-wider">Valor da Inscrição</span>
+                            <span className="text-xl font-black text-white">R$ {defaultPrice.toFixed(2)}</span>
+                        </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-5 space-y-5">
@@ -341,7 +363,7 @@ export default function FichaCadastro() {
                             <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-2 animate-pulse">
                                 <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
                                 <p className="text-[11px] font-bold text-red-600 leading-tight">
-                                    MENOR DE IDADE: É OBRIGATÓRIA A AUTORIZAÇÃO DOS PAIS OU RESPONSÁVEIS PARA PARTICIPAR.
+                                    MENOR DE IDADE: Finalize o cadastro, gere o PDF, imprima e peça para o responsável assinar e entregar para o trabalhador responsável por você no encontro.
                                 </p>
                             </div>
                         )}
