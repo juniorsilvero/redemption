@@ -139,8 +139,32 @@ export default function FichaCadastro() {
             setIsUploading(false);
         }
     };
+    
+    // --- COMPUTED ---
+    const isLoading = isUploading || submitMutation.isPending;
+    
+    const showMinorWarning = useMemo(() => {
+        if (!birthDate && !ageValue) return false;
 
-    // --- STATES ---
+        const currentYear = new Date().getFullYear();
+        
+        // Check by birth date first (more accurate)
+        if (birthDate) {
+            const birthYear = new Date(birthDate).getFullYear();
+            // If they turn 18 this year or are already 18+, no warning
+            if (currentYear - birthYear >= 18) return false;
+            return true;
+        }
+
+        // Fallback to manual age input
+        if (ageValue) {
+            return parseInt(ageValue) < 18;
+        }
+
+        return false;
+    }, [birthDate, ageValue]);
+
+    // --- RENDER STATES ---
     if (cellLoading) {
         return (
             <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
@@ -210,28 +234,7 @@ export default function FichaCadastro() {
         );
     }
 
-    const isLoading = isUploading || submitMutation.isPending;
-    
-    const showMinorWarning = useMemo(() => {
-        if (!birthDate && !ageValue) return false;
 
-        const currentYear = new Date().getFullYear();
-        
-        // Check by birth date first (more accurate)
-        if (birthDate) {
-            const birthYear = new Date(birthDate).getFullYear();
-            // If they turn 18 this year or are already 18+, no warning
-            if (currentYear - birthYear >= 18) return false;
-            return true;
-        }
-
-        // Fallback to manual age input
-        if (ageValue) {
-            return parseInt(ageValue) < 18;
-        }
-
-        return false;
-    }, [birthDate, ageValue]);
 
     return (
         <div className="min-h-screen bg-[#F8F9FA] font-[Poppins,sans-serif]">
