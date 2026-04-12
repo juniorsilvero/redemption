@@ -67,8 +67,7 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
 
     // FORM FIELDS
     // ROW 1
-    drawBox(margin, currentY, 130, 8, 'Nome Completo:', `${data.name} ${data.surname}`);
-    drawBox(margin + 132, currentY, 50, 8, 'Sexo:', '    Feminino     Masculino');
+    drawBox(margin, currentY, 182, 8, 'Nome Completo:', `${data.name} ${data.surname}`);
     currentY += 10;
 
     // ROW 2

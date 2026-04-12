@@ -290,7 +290,12 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                             {/* Address */}
                             <div className="bg-slate-50 p-2 rounded border border-slate-100 col-span-2">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Endereço</p>
-                                <p className="text-xs font-medium text-slate-700 break-words">{worker.address || '-'}</p>
+                                <p className="text-xs font-medium text-slate-700 break-words">
+                                    {worker.address || '-'}
+                                    {worker.neighborhood && `, ${worker.neighborhood}`}
+                                    {worker.city && `, ${worker.city}`}
+                                    {worker.state && ` - ${worker.state}`}
+                                </p>
                             </div>
 
                             {/* Age / Birth Date */}
@@ -316,12 +321,14 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                         <div className="flex items-center gap-2 text-xs text-slate-700">
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                             {worker.family_contact_1}
+                                            {worker.family_relationship_1 && <span className="text-slate-400 italic">({worker.family_relationship_1})</span>}
                                         </div>
                                     )}
                                     {worker.family_contact_2 && (
                                         <div className="flex items-center gap-2 text-xs text-slate-700">
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                             {worker.family_contact_2}
+                                            {worker.family_relationship_2 && <span className="text-slate-400 italic">({worker.family_relationship_2})</span>}
                                         </div>
                                     )}
                                 </div>
