@@ -14,6 +14,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Filter, Calendar, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PersonPaymentCard } from '../components/dashboard/PersonPaymentCard';
 
 export default function Dashboard() {
     const { churchId } = useAuth();
@@ -139,12 +140,12 @@ export default function Dashboard() {
             action: () => setModalType('revenue')
         },
         {
-            title: 'Despesas Fixas',
-            value: `R$ ${stats?.totalExpenses?.toFixed(2) || '0.00'}`,
-            icon: Wallet,
-            color: 'text-red-500',
-            bgColor: 'bg-red-100',
-            action: () => navigate('/expenses')
+            title: 'Pagamentos Pendentes',
+            value: `R$ ${stats?.totalPendingValue?.toFixed(2) || '0.00'}`,
+            icon: AlertCircle,
+            color: 'text-orange-600',
+            bgColor: 'bg-orange-100',
+            action: () => setModalType('pending')
         }
     ];
 
@@ -338,10 +339,29 @@ export default function Dashboard() {
                 ))}
             </div>
 
-            {/* Quick Actions and Pending Cards Grid */}
+            {/* Large Cards Grid */}
             <div className="flex flex-col lg:grid lg:grid-cols-7 gap-4">
+                {/* Fixed Expenses Summary Card */}
+                <Card
+                    className="order-1 lg:order-1 lg:col-span-4 cursor-pointer hover:shadow-md transition-all active:scale-95 group"
+                    onClick={() => navigate('/expenses')}
+                >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600 group-hover:text-red-700 transition-colors">Despesas Fixas</CardTitle>
+                        <div className="p-2 rounded-full bg-red-100 group-hover:bg-red-200 transition-colors">
+                            <Wallet className="h-4 w-4 text-red-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-slate-900">R$ {stats?.totalExpenses?.toFixed(2) || '0.00'}</div>
+                        <p className="text-xs text-slate-500 mt-1">
+                            Clique para gerenciar despesas.
+                        </p>
+                    </CardContent>
+                </Card>
+
                 {/* Quick Actions */}
-                <Card className="order-1 lg:order-2 lg:col-span-3">
+                <Card className="order-2 lg:order-2 lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Ações Rápidas</CardTitle>
                     </CardHeader>
@@ -361,25 +381,6 @@ export default function Dashboard() {
                         <Link to="/accommodation" className="flex w-full items-center justify-center rounded-[var(--radius-card)] bg-white px-3 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-inset ring-[var(--color-accent)]/30 hover:bg-indigo-50 transition-colors">
                             Gerenciar Acomodações
                         </Link>
-                    </CardContent>
-                </Card>
-
-                {/* Pending Payments Section - Summary Card */}
-                <Card
-                    className="order-2 lg:order-1 lg:col-span-4 cursor-pointer hover:shadow-md transition-all active:scale-95 group"
-                    onClick={() => setModalType('pending')}
-                >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-600 group-hover:text-orange-700 transition-colors">Pagamentos Pendentes</CardTitle>
-                        <div className="p-2 rounded-full bg-orange-100 group-hover:bg-orange-200 transition-colors">
-                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">R$ {stats?.totalPendingValue?.toFixed(2) || '0.00'}</div>
-                        <p className="text-xs text-slate-500 mt-1">
-                            {stats?.pendingPayments?.length || 0} pessoas pendentes. <span className="text-indigo-600 font-medium">Clique para ver detalhes.</span>
-                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -616,74 +617,77 @@ export default function Dashboard() {
             </Modal>
 
             <Modal isOpen={modalType === 'revenue'} onClose={() => setModalType(null)} title="Detalhamento de Receita (Pagos)" className="sm:max-w-4xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[60vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[70vh] p-1">
                     {/* Paid Workers */}
                     <div>
-                        <h4 className="font-semibold text-slate-800 mb-3 sticky top-0 bg-white">Trabalhadores</h4>
-                        <div className="space-y-2">
-                            {stats?.allWorkers?.filter(w => w.payment_status === 'paid').map(w => (
-                                <div key={w.id} className="flex justify-between items-center p-2 bg-indigo-50/50 rounded border border-indigo-100">
-                                    <span className="text-sm text-slate-700">{w.name} {w.surname}</span>
-                                    <span className="text-sm font-medium text-emerald-600">R$ {w.payment_amount.toFixed(2)}</span>
-                                </div>
-                            ))}
+                        <h4 className="font-bold text-slate-900 mb-4 sticky top-0 bg-white py-2 z-10 border-b border-slate-100 flex items-center justify-between">
+                            <span>Trabalhadores</span>
+                            <span className="text-xs font-normal text-slate-500">{stats?.allWorkers?.filter(w => w.payment_status === 'paid').length || 0} pagos</span>
+                        </h4>
+                        <div className="space-y-3">
+                            {stats?.allWorkers?.filter(w => w.payment_status === 'paid').length === 0 ? (
+                                <p className="text-sm text-slate-500 italic py-4">Nenhum trabalhador com pagamento confirmado.</p>
+                            ) : (
+                                stats?.allWorkers?.filter(w => w.payment_status === 'paid').map(person => (
+                                    <PersonPaymentCard key={person.id} person={person} type="Trabalhador" status="paid" cells={stats?.cells} onInfo={() => setSelectedInfoPerson(person)} />
+                                ))
+                            )}
                         </div>
                     </div>
 
                     {/* Paid Passers */}
                     <div>
-                        <h4 className="font-semibold text-slate-800 mb-3 sticky top-0 bg-white">Passantes</h4>
-                        <div className="space-y-2">
-                            {stats?.allPassers?.filter(p => p.payment_status === 'paid').map(p => (
-                                <div key={p.id} className="flex justify-between items-center p-2 bg-emerald-50/50 rounded border border-emerald-100">
-                                    <span className="text-sm text-slate-700">{p.name} {p.surname}</span>
-                                    <span className="text-sm font-medium text-emerald-600">R$ {p.payment_amount.toFixed(2)}</span>
-                                </div>
-                            ))}
+                        <h4 className="font-bold text-slate-900 mb-4 sticky top-0 bg-white py-2 z-10 border-b border-slate-100 flex items-center justify-between">
+                            <span>Passantes</span>
+                            <span className="text-xs font-normal text-slate-500">{stats?.allPassers?.filter(p => p.payment_status === 'paid').length || 0} pagos</span>
+                        </h4>
+                        <div className="space-y-3">
+                            {stats?.allPassers?.filter(p => p.payment_status === 'paid').length === 0 ? (
+                                <p className="text-sm text-slate-500 italic py-4">Nenhum passante com pagamento confirmado.</p>
+                            ) : (
+                                stats?.allPassers?.filter(p => p.payment_status === 'paid').map(person => (
+                                    <PersonPaymentCard key={person.id} person={person} type="Passante" status="paid" cells={stats?.cells} onInfo={() => setSelectedInfoPerson(person)} />
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
             </Modal>
 
-            <Modal isOpen={modalType === 'pending'} onClose={() => setModalType(null)} title="Pagamentos Pendentes">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-4">
-                        {stats?.pendingPayments?.length === 0 ? (
-                            <p className="text-sm text-slate-500">Nenhum pagamento pendente.</p>
-                        ) : (
-                            stats?.pendingPayments?.map((person) => (
-                                <div key={person.id} className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 sm:p-4 border rounded-lg bg-slate-50 items-center">
-                                    <div className="p-2 bg-orange-100 rounded-full shrink-0">
-                                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            <p className="text-sm font-bold text-slate-900">{person.name} {person.surname}</p>
-                                            {person.cell && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-sm">
-                                                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: person.cell.card_color }}></span>
-                                                    {person.cell.name}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-medium">{person.type}</p>
+            <Modal isOpen={modalType === 'pending'} onClose={() => setModalType(null)} title="Pagamentos Pendentes" className="sm:max-w-4xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto max-h-[70vh] p-1">
+                    {/* Pending Workers */}
+                    <div>
+                        <h4 className="font-bold text-slate-900 mb-4 sticky top-0 bg-white py-2 z-10 border-b border-slate-100 flex items-center justify-between">
+                            <span>Trabalhadores</span>
+                            <span className="text-xs font-normal text-slate-500">{stats?.pendingPayments?.filter(p => p.type === 'Trabalhador').length || 0} pendentes</span>
+                        </h4>
+                        <div className="space-y-3">
+                            {stats?.pendingPayments?.filter(p => p.type === 'Trabalhador').length === 0 ? (
+                                <p className="text-sm text-slate-500 italic py-4">Nenhum trabalhador pendente.</p>
+                            ) : (
+                                stats?.pendingPayments?.filter(p => p.type === 'Trabalhador').map(person => (
+                                    <PersonPaymentCard key={person.id} person={person} type="Trabalhador" status="pending" cells={stats?.cells} onInfo={() => setSelectedInfoPerson(person)} />
+                                ))
+                            )}
+                        </div>
+                    </div>
 
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4 shrink-0">
-                                        <div className="text-right">
-                                            <p className="text-sm font-bold text-slate-900 leading-none mb-1">R$ {person.payment_amount?.toFixed(2)}</p>
-                                            <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 ring-1 ring-inset ring-orange-600/20 uppercase tracking-tighter">Pendente</span>
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedInfoPerson(person)}
-                                            className="p-1.5 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
-                                        >
-                                            <Info className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                    {/* Pending Passers */}
+                    <div>
+                        <h4 className="font-bold text-slate-900 mb-4 sticky top-0 bg-white py-2 z-10 border-b border-slate-100 flex items-center justify-between">
+                            <span>Passantes</span>
+                            <span className="text-xs font-normal text-slate-500">{stats?.pendingPayments?.filter(p => p.type === 'Passante').length || 0} pendentes</span>
+                        </h4>
+                        <div className="space-y-3">
+                            {stats?.pendingPayments?.filter(p => p.type === 'Passante').length === 0 ? (
+                                <p className="text-sm text-slate-500 italic py-4">Nenhum passante pendente.</p>
+                            ) : (
+                                stats?.pendingPayments?.filter(p => p.type === 'Passante').map(person => (
+                                    <PersonPaymentCard key={person.id} person={person} type="Passante" status="pending" cells={stats?.cells} onInfo={() => setSelectedInfoPerson(person)} />
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             </Modal>
@@ -899,6 +903,7 @@ export default function Dashboard() {
                 allPassers={stats?.allPassers}
                 isOpen={!!selectedInfoPerson}
                 onClose={() => setSelectedInfoPerson(null)}
+                onSwitchWorker={setSelectedInfoPerson}
             />
 
             {/* Event Details Modal (Mobile/Desktop) */}

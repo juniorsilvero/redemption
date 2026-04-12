@@ -200,6 +200,7 @@ export function GlobalSearch() {
                     cells={allCells}
                     allWorkers={allWorkers}
                     allPassers={allPassers}
+                    onSwitchWorker={setSelectedPerson}
                 />
             )}
         </>

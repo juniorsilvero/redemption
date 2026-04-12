@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Modal } from './Modal';
-import { User, Users, X, ZoomIn, Calendar, Clock, Home, Briefcase, Crown, MapPin, AlertCircle, Pill, Activity, DollarSign } from 'lucide-react';
+import { User, Users, X, ZoomIn, Calendar, Clock, Home, Briefcase, Crown, MapPin, AlertCircle, Pill, Activity, DollarSign, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { format, differenceInYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -130,9 +131,14 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
         ? allWorkers?.find(w => w.id === worker.responsible_worker_id)
         : null;
 
-    const handleSwitchWorker = (targetWorker) => {
-        if (targetWorker && onSwitchWorker) {
-            onSwitchWorker(targetWorker);
+    const handleSwitchWorker = (targetPerson, type) => {
+        if (targetPerson && onSwitchWorker) {
+            // Ensure the person object has the correct type identifier for the modal
+            const personWithType = { 
+                ...targetPerson, 
+                type: type || (('is_room_leader' in targetPerson) ? 'worker' : 'passer')
+            };
+            onSwitchWorker(personWithType);
         }
     };
 
@@ -168,9 +174,16 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                         {isWorkerType ? 'Trabalhador' : 'Passante'}
                     </span>
                     {cell && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm" style={{ backgroundColor: cell.card_color }}>
+                        <Link
+                            to={`/cells/${cell.id}`}
+                            onClick={onClose}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer ring-1 ring-white/20"
+                            style={{ backgroundColor: cell.card_color }}
+                            title="Ir para gestão da célula"
+                        >
                             {cell.name}
-                        </span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                        </Link>
                     )}
                 </div>
             </div>
@@ -202,12 +215,17 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
 
                 {/* Responsible Link & Extra Info */}
                 {!isWorkerType && responsibleWorker && (
-                    <div
-                        className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
-                        onClick={() => handleSwitchWorker(responsibleWorker)}
+                    <button
+                        type="button"
+                        className="w-full bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center justify-between text-left hover:bg-blue-100 transition-colors group"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSwitchWorker(responsibleWorker, 'worker');
+                        }}
                     >
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden">
+                            <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                                 {responsibleWorker.photo_url ? (
                                     <img src={responsibleWorker.photo_url} alt="" className="w-full h-full object-cover" />
                                 ) : (
@@ -216,11 +234,13 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">Responsável por este passante</p>
-                                <p className="text-sm font-semibold text-blue-900">{responsibleWorker.name} {responsibleWorker.surname}</p>
+                                <p className="text-sm font-bold text-blue-900 leading-tight">{responsibleWorker.name} {responsibleWorker.surname}</p>
                             </div>
                         </div>
-                        <ZoomIn className="w-4 h-4 text-blue-400" />
-                    </div>
+                        <div className="p-1.5 rounded-full bg-white text-blue-500 shadow-sm group-hover:scale-110 transition-transform">
+                            <ZoomIn className="w-4 h-4" />
+                        </div>
+                    </button>
                 )}
 
                 {isWorkerType && responsiblePassers?.length > 0 && (
@@ -230,10 +250,15 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                         </h4>
                         <div className="space-y-2">
                             {responsiblePassers.map(passer => (
-                                <div
+                                <button
                                     key={passer.id}
-                                    className="bg-slate-50 border border-slate-100 p-2 rounded-lg flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors"
-                                    onClick={() => handleSwitchWorker(passer)}
+                                    type="button"
+                                    className="w-full bg-slate-50 border border-slate-100 p-2 rounded-lg flex items-center justify-between text-left hover:bg-slate-100 transition-colors group"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleSwitchWorker(passer, 'passer');
+                                    }}
                                 >
                                     <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
@@ -248,8 +273,10 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                             <p className="text-[10px] text-slate-500">{passer.status || 'Ativo'}</p>
                                         </div>
                                     </div>
-                                    <ZoomIn className="w-3 h-3 text-slate-400" />
-                                </div>
+                                    <div className="p-1 rounded-full bg-white text-slate-400 shadow-xs group-hover:scale-110 transition-transform">
+                                        <ZoomIn className="w-3 h-3" />
+                                    </div>
+                                </button>
                             ))}
                         </div>
                     </div>

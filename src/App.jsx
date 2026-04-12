@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
 import Expenses from './pages/Expenses';
 import Setup from './pages/Setup';
+import FichaCadastro from './pages/FichaCadastro';
 import { InstallPrompt } from './components/ui/InstallPrompt';
 import { Toaster } from 'react-hot-toast';
 
@@ -62,6 +63,7 @@ function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/setup" element={<Setup />} />
+                <Route path="/ficha/:cellId" element={<FichaCadastro />} />
 
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<AdminRoute><Dashboard /></AdminRoute>} />

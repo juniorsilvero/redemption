@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { toast } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Key, Edit2, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Plus, Trash2, Key, Edit2, ShieldCheck, ShieldOff, Save, ChevronDown, ChevronRight } from 'lucide-react';
 
 // User Management Component
 function UserManagement() {
@@ -514,6 +514,8 @@ function AdminPromotion() {
 export default function Settings() {
     const { isAdmin, churchId } = useAuth();
     const queryClient = useQueryClient();
+    const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+    const [isAdminPromotionOpen, setIsAdminPromotionOpen] = useState(false);
 
     if (!isAdmin) {
         return <div className="p-4 text-red-500">Acesso negado. Apenas administradores.</div>;
@@ -564,9 +566,48 @@ export default function Settings() {
 
 
 
+    // Fetch existing prices from settings table
+    const { data: savedSettings } = useQuery({
+        queryKey: ['settings', churchId],
+        queryFn: async () => {
+            const { data } = await supabase
+                .from('settings')
+                .select('key, value')
+                .eq('church_id', churchId)
+                .in('key', ['worker_price', 'passer_price']);
+            const map = {};
+            (data || []).forEach(s => { map[s.key] = s.value; });
+            return map;
+        },
+        enabled: !!churchId
+    });
+
+    const saveSettingsMutation = useMutation({
+        mutationFn: async ({ workerPrice, passerPrice }) => {
+            const upserts = [
+                { church_id: churchId, key: 'worker_price', value: String(workerPrice), updated_at: new Date().toISOString() },
+                { church_id: churchId, key: 'passer_price', value: String(passerPrice), updated_at: new Date().toISOString() },
+            ];
+            const { error } = await supabase.from('settings').upsert(upserts, { onConflict: 'church_id,key' });
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['settings', churchId]);
+            toast.success('Preços atualizados com sucesso!');
+        },
+        onError: (err) => {
+            console.error(err);
+            toast.error('Erro ao salvar preços. Verifique as configurações do banco.');
+        }
+    });
+
     const handleSavePrices = (e) => {
         e.preventDefault();
-        toast.success('Preços atualizados com sucesso');
+        const formData = new FormData(e.target);
+        saveSettingsMutation.mutate({
+            workerPrice: parseFloat(formData.get('worker_price')),
+            passerPrice: parseFloat(formData.get('passer_price')),
+        });
     };
 
     return (
@@ -590,7 +631,14 @@ export default function Settings() {
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">R$</span>
                                     </div>
-                                    <input type="number" step="0.01" defaultValue="170.00" className="block w-full rounded-md border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 border p-2" />
+                                    <input
+                                        name="worker_price"
+                                        type="number"
+                                        step="0.01"
+                                        defaultValue={savedSettings?.worker_price ?? '170.00'}
+                                        key={savedSettings?.worker_price}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 border p-2"
+                                    />
                                 </div>
                             </div>
                             <div>
@@ -599,11 +647,23 @@ export default function Settings() {
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                         <span className="text-gray-500 sm:text-sm">R$</span>
                                     </div>
-                                    <input type="number" step="0.01" defaultValue="290.00" className="block w-full rounded-md border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 border p-2" />
+                                    <input
+                                        name="passer_price"
+                                        type="number"
+                                        step="0.01"
+                                        defaultValue={savedSettings?.passer_price ?? '290.00'}
+                                        key={savedSettings?.passer_price}
+                                        className="block w-full rounded-md border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 border p-2"
+                                    />
                                 </div>
                             </div>
-                            <button type="submit" className="w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                Salvar Preços
+                            <button
+                                type="submit"
+                                disabled={saveSettingsMutation.isPending}
+                                className="w-full flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
+                            >
+                                <Save className="h-4 w-4" />
+                                {saveSettingsMutation.isPending ? 'Salvando...' : 'Salvar Preços'}
                             </button>
                         </form>
                     </CardContent>
@@ -678,25 +738,41 @@ export default function Settings() {
 
                 {/* User Management */}
                 <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Gerenciamento de Usuários (Líderes)</CardTitle>
+                    <CardHeader 
+                        className="cursor-pointer hover:bg-slate-50 transition-colors"
+                        onClick={() => setIsUserManagementOpen(!isUserManagementOpen)}
+                    >
+                        <CardTitle className="flex items-center justify-between w-full">
+                            <span>Gerenciamento de Usuários (Líderes)</span>
+                            {isUserManagementOpen ? <ChevronDown className="h-5 w-5 text-slate-400" /> : <ChevronRight className="h-5 w-5 text-slate-400" />}
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <UserManagement />
-                    </CardContent>
+                    {isUserManagementOpen && (
+                        <CardContent>
+                            <UserManagement />
+                        </CardContent>
+                    )}
                 </Card>
 
                 {/* Admin Promotion */}
                 <Card className="md:col-span-2 border-indigo-100 bg-indigo-50/30">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ShieldCheck className="h-5 w-5 text-indigo-600" />
-                            Gerenciamento de Administradores
+                    <CardHeader 
+                        className="cursor-pointer hover:bg-indigo-50 transition-colors"
+                        onClick={() => setIsAdminPromotionOpen(!isAdminPromotionOpen)}
+                    >
+                        <CardTitle className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="h-5 w-5 text-indigo-600" />
+                                <span>Gerenciamento de Administradores</span>
+                            </div>
+                            {isAdminPromotionOpen ? <ChevronDown className="h-5 w-5 text-indigo-400" /> : <ChevronRight className="h-5 w-5 text-indigo-400" />}
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <AdminPromotion />
-                    </CardContent>
+                    {isAdminPromotionOpen && (
+                        <CardContent>
+                            <AdminPromotion />
+                        </CardContent>
+                    )}
                 </Card>
 
                 {/* Maintenance / Data Cleanup */}

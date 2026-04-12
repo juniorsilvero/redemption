@@ -6,7 +6,7 @@ import { useFilter } from '../context/FilterContext';
 import { supabase } from '../lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { Plus, User, Trash2, Edit, FileText, Info } from 'lucide-react';
+import { Plus, User, Trash2, Edit, FileText, Info, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateRoomPDF } from '../utils/pdfGenerator';
 import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
@@ -556,20 +556,38 @@ export default function Accommodation() {
                                     <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Líderes do Quarto</p>
                                     <div className="flex flex-wrap gap-2">
                                         {roomLeaders.map(leader => (
-                                            <button
+                                            <div
                                                 key={leader.id}
-                                                onClick={() => { setViewingRoom(null); setViewingPasserInfo({ ...leader, type: 'worker' }); }}
-                                                className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                className="flex items-center gap-2 px-2 py-1.5 bg-indigo-50 rounded-lg border border-indigo-100 group"
                                             >
-                                                <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center overflow-hidden">
-                                                    {leader.photo_url ? (
-                                                        <img src={leader.photo_url} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <User className="w-4 h-4 text-indigo-600" />
-                                                    )}
-                                                </div>
-                                                <span className="text-sm font-medium text-indigo-900">{leader.name}</span>
-                                            </button>
+                                                <button
+                                                    onClick={() => { setViewingRoom(null); setViewingPasserInfo({ ...leader, type: 'worker' }); }}
+                                                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                                >
+                                                    <div className="w-7 h-7 rounded-full bg-indigo-200 flex items-center justify-center overflow-hidden">
+                                                        {leader.photo_url ? (
+                                                            <img src={leader.photo_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <User className="w-3.5 h-3.5 text-indigo-600" />
+                                                        )}
+                                                    </div>
+                                                    <span className="text-sm font-medium text-indigo-900">{leader.name}</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (window.confirm(`Remover ${leader.name} da liderança deste quarto?`)) {
+                                                            const newLeaderIds = viewingRoom.room_leader_ids.filter(id => id !== leader.id);
+                                                            createRoomMutation.mutate({ id: viewingRoom.id, room_leader_ids: newLeaderIds });
+                                                            setViewingRoom({ ...viewingRoom, room_leader_ids: newLeaderIds });
+                                                        }
+                                                    }}
+                                                    className="p-1 rounded-full text-indigo-300 hover:text-red-500 hover:bg-red-50 transition-all ml-1"
+                                                    title="Remover líder"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -642,6 +660,10 @@ export default function Accommodation() {
                 allPassers={passers}
                 isOpen={!!viewingPasserInfo || !!viewingLeader}
                 onClose={() => { setViewingPasserInfo(null); setViewingLeader(null); }}
+                onSwitchWorker={(person) => {
+                    setViewingPasserInfo(person);
+                    setViewingLeader(null);
+                }}
             />
 
 
