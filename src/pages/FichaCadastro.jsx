@@ -7,8 +7,6 @@ import { compressImage } from '../lib/utils';
 import { CheckCircle2, Upload, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
 
-import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
-
 const ESTADOS_BRASIL = [
     { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
     { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
