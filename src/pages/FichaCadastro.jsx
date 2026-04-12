@@ -207,8 +207,8 @@ export default function FichaCadastro() {
                     style={{ backgroundColor: cell.card_color || '#6366f1' }}
                 />
                 <div>
-                    <p className="text-xs text-slate-400 leading-none">Inscrição para</p>
-                    <h1 className="text-base font-semibold leading-tight">{cell.name}</h1>
+                    <p className="text-[10px] text-slate-300 leading-none uppercase tracking-wider mb-1">Inscrição para</p>
+                    <h1 className="text-base font-bold leading-tight text-white">{cell.name}</h1>
                 </div>
             </div>
 
