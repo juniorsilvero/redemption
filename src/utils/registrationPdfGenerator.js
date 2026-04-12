@@ -82,14 +82,9 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
     currentY += 12;
 
     // ROW 3
-    drawBox(margin, currentY, 182, 8, 'Endereço:', data.address || '');
+    const fullAddress = `${data.address || ''}${data.neighborhood ? ', ' + data.neighborhood : ''}${data.city ? ', ' + data.city : ''}${data.state ? ' - ' + data.state : ''}`;
+    drawBox(margin, currentY, 182, 8, 'Endereço:', fullAddress);
     currentY += 10;
-
-    // ROW 4
-    drawBox(margin, currentY, 60, 8, 'Bairro:', '');
-    drawBox(margin + 62, currentY, 80, 8, 'Cidade:', '');
-    drawBox(margin + 144, currentY, 38, 8, 'Estado:', '');
-    currentY += 12;
 
     // Preenchimento Obrigatório
     doc.setTextColor(200, 0, 0);
@@ -100,10 +95,10 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
 
     // ROW 5 & 6
     drawBox(margin, currentY, 100, 8, 'Telefone de um familiar:', data.family_contact_1 || '');
-    drawBox(margin + 102, currentY, 80, 8, 'Grau Parentesco:', '');
+    drawBox(margin + 102, currentY, 80, 8, 'Grau Parentesco:', data.family_relationship_1 || '');
     currentY += 10;
     drawBox(margin, currentY, 100, 8, 'Telefone de um familiar:', data.family_contact_2 || '');
-    drawBox(margin + 102, currentY, 80, 8, 'Grau Parentesco:', '');
+    drawBox(margin + 102, currentY, 80, 8, 'Grau Parentesco:', data.family_relationship_2 || '');
     currentY += 14;
 
     // INFORMAÇÕES IMPORTANTES

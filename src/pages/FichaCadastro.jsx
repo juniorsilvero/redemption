@@ -7,6 +7,20 @@ import { compressImage } from '../lib/utils';
 import { CheckCircle2, Upload, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
 
+import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
+
+const ESTADOS_BRASIL = [
+    { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
+    { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
+    { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
+    { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+    { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
+    { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' },
+    { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' },
+    { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' },
+    { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
+];
+
 export default function FichaCadastro() {
     const { cellId } = useParams();
     const [submitted, setSubmitted] = useState(false);
@@ -122,8 +136,13 @@ export default function FichaCadastro() {
                 birth_date: formData.get('birth_date') || null,
                 age: formData.get('age') ? parseInt(formData.get('age')) : null,
                 address: formData.get('address'),
+                neighborhood: formData.get('neighborhood'),
+                city: formData.get('city'),
+                state: formData.get('state'),
                 family_contact_1: formData.get('family_contact_1'),
+                family_relationship_1: formData.get('family_relationship_1'),
                 family_contact_2: formData.get('family_contact_2'),
+                family_relationship_2: formData.get('family_relationship_2'),
                 food_restrictions: formData.get('food_restrictions'),
                 controlled_medication: formData.get('controlled_medication'),
                 physical_restrictions: formData.get('physical_restrictions'),
@@ -372,34 +391,84 @@ export default function FichaCadastro() {
                         )}
 
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Endereço</label>
-                            <textarea
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Endereço (Rua e Número)</label>
+                            <input
                                 name="address"
-                                rows={2}
-                                placeholder="Rua, número, bairro, cidade..."
-                                className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition resize-none"
+                                placeholder="Ex: Rua das Flores, 123"
+                                className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                             />
                         </div>
 
-                        {/* Contacts */}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div className="sm:col-span-1">
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Bairro</label>
+                                <input
+                                    name="neighborhood"
+                                    placeholder="Bairro"
+                                    className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                />
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Cidade</label>
+                                <input
+                                    name="city"
+                                    placeholder="Cidade"
+                                    className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                />
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Estado</label>
+                                <select
+                                    name="state"
+                                    className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                >
+                                    <option value="">UF</option>
+                                    {ESTADOS_BRASIL.map(uf => (
+                                        <option key={uf.sigla} value={uf.sigla}>{uf.sigla} - {uf.nome}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="border-t border-slate-100 pt-4">
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Contatos de Emergência</p>
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Familiar 1</label>
-                                    <input
-                                        name="family_contact_1"
-                                        placeholder="(número) + parentesco"
-                                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
-                                    />
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Telefone de um Familiar 1</label>
+                                        <input
+                                            name="family_contact_1"
+                                            placeholder="(00) 00000-0000"
+                                            className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Grau de Parentesco</label>
+                                        <input
+                                            name="family_relationship_1"
+                                            placeholder="Ex: Mãe, Pai, Irmão..."
+                                            className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Familiar 2</label>
-                                    <input
-                                        name="family_contact_2"
-                                        placeholder="(número) + parentesco"
-                                        className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
-                                    />
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Telefone de um Familiar 2</label>
+                                        <input
+                                            name="family_contact_2"
+                                            placeholder="(00) 00000-0000"
+                                            className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Grau de Parentesco</label>
+                                        <input
+                                            name="family_relationship_2"
+                                            placeholder="Ex: Mãe, Pai, Irmão..."
+                                            className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
