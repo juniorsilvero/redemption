@@ -300,7 +300,7 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                                     {worker.age ? <span>{worker.age} anos</span> : <span>-</span>}
                                     {worker.birth_date && (
                                         <div className="text-slate-400 text-[10px] mt-0.5">
-                                            {format(new Date(worker.birth_date), 'dd/MM/yyyy', { locale: ptBR })}
+                                            {format(new Date(worker.birth_date + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                                         </div>
                                     )}
                                 </div>
