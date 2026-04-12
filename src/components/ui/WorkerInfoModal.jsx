@@ -429,28 +429,28 @@ export const WorkerInfoModal = React.memo(function WorkerInfoModal({ worker, cel
                     )}
 
                     {/* Restrictions (if any) */}
-                    {(worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
+                    {(!isWorkerType || worker.food_restrictions || worker.controlled_medication || worker.physical_restrictions) && (
                         <div className="pt-2 border-t border-slate-100">
                             <h4 className="flex items-center gap-1.5 text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">
                                 <AlertCircle className="w-3 h-3 text-red-500" /> Observações
                             </h4>
                             <div className="space-y-1">
-                                {worker.food_restrictions && (
+                                {(worker.food_restrictions || !isWorkerType) && (
                                     <div className="text-xs bg-red-50 p-2 rounded border border-red-100">
                                         <span className="font-bold text-red-700 block text-[10px] uppercase">Restrição Alimentar</span>
-                                        <span className="text-slate-700">{worker.food_restrictions}</span>
+                                        <span className="text-slate-700">{worker.food_restrictions || 'Não'}</span>
                                     </div>
                                 )}
-                                {worker.controlled_medication && (
+                                {(worker.controlled_medication || !isWorkerType) && (
                                     <div className="text-xs bg-amber-50 p-2 rounded border border-amber-100">
                                         <span className="font-bold text-amber-700 block text-[10px] uppercase">Medicamento</span>
-                                        <span className="text-slate-700">{worker.controlled_medication}</span>
+                                        <span className="text-slate-700">{worker.controlled_medication || 'Não'}</span>
                                     </div>
                                 )}
-                                {worker.physical_restrictions && (
+                                {(worker.physical_restrictions || !isWorkerType) && (
                                     <div className="text-xs bg-blue-50 p-2 rounded border border-blue-100">
                                         <span className="font-bold text-blue-700 block text-[10px] uppercase">Restrição Física</span>
-                                        <span className="text-slate-700">{worker.physical_restrictions}</span>
+                                        <span className="text-slate-700">{worker.physical_restrictions || 'Não'}</span>
                                     </div>
                                 )}
                             </div>

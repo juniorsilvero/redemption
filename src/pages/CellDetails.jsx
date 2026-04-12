@@ -298,7 +298,14 @@ export default function CellDetails() {
             return;
         }
         toGenerate.forEach(passer => {
-            generateRegistrationPDF(passer, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', (passer.payment_amount || 290).toFixed(2));
+            const responsibleWorker = workers?.find(w => w.id === passer.responsible_worker_id);
+            const enrichedPasser = {
+                ...passer,
+                cell_name: cell?.name,
+                cell_color: cell?.card_color,
+                responsible_worker_name: responsibleWorker ? `${responsibleWorker.name} ${responsibleWorker.surname}` : null
+            };
+            generateRegistrationPDF(enrichedPasser, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', (passer.payment_amount || 290).toFixed(2));
         });
         setIsPdfModalOpen(false);
         toast.success(`${toGenerate.length} PDF(s) gerado(s) com sucesso!`);
