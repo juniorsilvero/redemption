@@ -12,6 +12,18 @@ import { WorkerInfoModal } from '../components/ui/WorkerInfoModal';
 import { CellFrequencyModal } from '../components/ui/CellFrequencyModal';
 import { generateRegistrationPDF } from '../utils/registrationPdfGenerator';
 
+const ESTADOS_BRASIL = [
+    { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
+    { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
+    { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
+    { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+    { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
+    { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' },
+    { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' },
+    { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' },
+    { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
+];
+
 
 export default function CellDetails() {
     const { id } = useParams();
@@ -238,8 +250,13 @@ export default function CellDetails() {
                 birth_date: formData.get('birth_date') || null,
                 age: formData.get('age') ? parseInt(formData.get('age')) : null,
                 address: formData.get('address'),
+                neighborhood: formData.get('neighborhood'),
+                city: formData.get('city'),
+                state: formData.get('state'),
                 family_contact_1: formData.get('family_contact_1'),
+                family_relationship_1: formData.get('family_relationship_1'),
                 family_contact_2: formData.get('family_contact_2'),
+                family_relationship_2: formData.get('family_relationship_2'),
                 food_restrictions: formData.get('food_restrictions'),
                 controlled_medication: formData.get('controlled_medication'),
                 physical_restrictions: formData.get('physical_restrictions'),
@@ -707,19 +724,53 @@ export default function CellDetails() {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Endereço</label>
-                            <textarea name="address" rows="2" defaultValue={editingPasser?.address} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"></textarea>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Endereço (Rua e Número)</label>
+                                <input name="address" defaultValue={editingPasser?.address} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label className="block text-[10px] font-medium text-gray-700 uppercase">Bairro</label>
+                                    <input name="neighborhood" defaultValue={editingPasser?.neighborhood} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-medium text-gray-700 uppercase">Cidade</label>
+                                    <input name="city" defaultValue={editingPasser?.city} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-medium text-gray-700 uppercase">Estado</label>
+                                    <select name="state" defaultValue={editingPasser?.state} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm">
+                                        <option value="">UF</option>
+                                        {ESTADOS_BRASIL.map(uf => (
+                                            <option key={uf.sigla} value={uf.sigla}>{uf.sigla}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Contato Familiar 1</label>
-                                <input name="family_contact_1" defaultValue={editingPasser?.family_contact_1} placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                        <div className="space-y-4 pt-2 border-t border-slate-100">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contatos de Emergência</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Familiar 1 (Tel)</label>
+                                    <input name="family_contact_1" defaultValue={editingPasser?.family_contact_1} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Parentesco</label>
+                                    <input name="family_relationship_1" defaultValue={editingPasser?.family_relationship_1} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Contato Familiar 2</label>
-                                <input name="family_contact_2" defaultValue={editingPasser?.family_contact_2} placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Familiar 2 (Tel)</label>
+                                    <input name="family_contact_2" defaultValue={editingPasser?.family_contact_2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Parentesco</label>
+                                    <input name="family_relationship_2" defaultValue={editingPasser?.family_relationship_2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
+                                </div>
                             </div>
                         </div>
 

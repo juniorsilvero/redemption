@@ -842,26 +842,6 @@ export default function Dashboard() {
                                         <label className="block text-sm font-medium text-gray-700">Data de Nascimento</label>
                                         <input name="birth_date" type="date" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Idade</label>
-                                        <input name="age" type="number" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Endereço</label>
-                                    <textarea name="address" rows="2" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm"></textarea>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Contato Familiar 1</label>
-                                        <input name="family_contact_1" placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Contato Familiar 2</label>
-                                        <input name="family_contact_2" placeholder="(número) + parentesco" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 border p-2 text-sm" />
-                                    </div>
                                 </div>
 
                                 <div className="space-y-3">
