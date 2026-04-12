@@ -217,9 +217,9 @@ export default function FichaCadastro() {
                 <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-100 overflow-hidden">
 
                     {/* Form header */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-5 text-white">
-                        <h2 className="text-lg font-bold">Ficha de Cadastro</h2>
-                        <p className="text-indigo-200 text-xs mt-0.5">Preencha seus dados para participar do encontro</p>
+                    <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-5">
+                        <h2 className="text-lg font-bold text-white">Ficha de Cadastro</h2>
+                        <p className="text-indigo-100/80 text-xs mt-0.5">Preencha seus dados para participar do encontro</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-5 space-y-5">
