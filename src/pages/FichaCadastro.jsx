@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
@@ -12,6 +12,8 @@ export default function FichaCadastro() {
     const [isUploading, setIsUploading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [photoFile, setPhotoFile] = useState(null);
+    const [birthDate, setBirthDate] = useState('');
+    const [ageValue, setAgeValue] = useState('');
 
     // Fetch cell data (public)
     const { data: cell, isLoading: cellLoading, isError: cellError } = useQuery({
@@ -193,6 +195,27 @@ export default function FichaCadastro() {
     }
 
     const isLoading = isUploading || submitMutation.isPending;
+    
+    const showMinorWarning = useMemo(() => {
+        if (!birthDate && !ageValue) return false;
+
+        const currentYear = new Date().getFullYear();
+        
+        // Check by birth date first (more accurate)
+        if (birthDate) {
+            const birthYear = new Date(birthDate).getFullYear();
+            // If they turn 18 this year or are already 18+, no warning
+            if (currentYear - birthYear >= 18) return false;
+            return true;
+        }
+
+        // Fallback to manual age input
+        if (ageValue) {
+            return parseInt(ageValue) < 18;
+        }
+
+        return false;
+    }, [birthDate, ageValue]);
 
     return (
         <div className="min-h-screen bg-[#F8F9FA] font-[Poppins,sans-serif]">
@@ -296,6 +319,8 @@ export default function FichaCadastro() {
                                 <input
                                     name="birth_date"
                                     type="date"
+                                    value={birthDate}
+                                    onChange={(e) => setBirthDate(e.target.value)}
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 />
                             </div>
@@ -304,11 +329,22 @@ export default function FichaCadastro() {
                                 <input
                                     name="age"
                                     type="number"
+                                    value={ageValue}
+                                    onChange={(e) => setAgeValue(e.target.value)}
                                     placeholder="Ex: 25"
                                     className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition"
                                 />
                             </div>
                         </div>
+
+                        {showMinorWarning && (
+                            <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-start gap-2 animate-pulse">
+                                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+                                <p className="text-[11px] font-bold text-red-600 leading-tight">
+                                    MENOR DE IDADE: É OBRIGATÓRIA A AUTORIZAÇÃO DOS PAIS OU RESPONSÁVEIS PARA PARTICIPAR.
+                                </p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-xs font-medium text-slate-600 mb-1">Endereço</label>
