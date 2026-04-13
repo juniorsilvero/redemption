@@ -76,10 +76,14 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
     // Helper to draw color dot
     const drawColorDot = (x, y, color) => {
         try {
-            const hex = color || '#000000';
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
+            let hex = color || '#000000';
+            // Handle shorthand hex colors like #f00
+            if (hex.length === 4) {
+                hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+            }
+            const r = parseInt(hex.slice(1, 3), 16) || 0;
+            const g = parseInt(hex.slice(3, 5), 16) || 0;
+            const b = parseInt(hex.slice(5, 7), 16) || 0;
             doc.setFillColor(r, g, b);
             doc.circle(x, y, 1.5, 'F');
         } catch (e) {
@@ -92,31 +96,38 @@ export const generateRegistrationPDF = (data, churchName = 'IGREJA INTERNACIONAL
     // ROW 1: Name, Responsible, and Cell Info
     doc.setDrawColor(0);
     doc.roundedRect(margin, currentY, 182, 8, 1, 1, 'S');
+    
+    // Name Part
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text('Nome:', margin + 2, currentY + 5);
-    const nameWidth = doc.getTextWidth('Nome:');
+    const nameLabelWidth = doc.getTextWidth('Nome:');
     doc.setFont('helvetica', 'normal');
-    doc.text(`${data.name} ${data.surname}`, margin + 2 + nameWidth + 2, currentY + 5);
+    // Limit name width to avoid overlap with cell info
+    const fullName = `${data.name || ''} ${data.surname || ''}`;
+    doc.text(fullName, margin + 2 + nameLabelWidth + 2, currentY + 5, { maxWidth: 90 });
     
-    // Add Responsible and Cell on the same row if space allows or simplified
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    let infoX = margin + 110;
+    // Cell and Responsible Info (Right-aligned area)
+    let infoX = margin + 105; // Moved slightly left to give more room
     
     // Cell Info with Dot
     if (data.cell_name) {
         drawColorDot(infoX, currentY + 4, data.cell_color);
         doc.setTextColor(0);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
         doc.text(data.cell_name, infoX + 4, currentY + 5);
+        // Advance infoX by text width + dot space + gap
         infoX += doc.getTextWidth(data.cell_name) + 12;
     }
     
     // Responsible Worker
     if (data.responsible_worker_name) {
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
         doc.text('Resp:', infoX, currentY + 5);
         doc.setFont('helvetica', 'normal');
-        doc.text(data.responsible_worker_name, infoX + 8, currentY + 5);
+        doc.text(String(data.responsible_worker_name), infoX + 8, currentY + 5, { maxWidth: 50 });
     }
     doc.setTextColor(0);
     currentY += 10;

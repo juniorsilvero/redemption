@@ -235,7 +235,16 @@ export default function FichaCadastro() {
                     </p>
 
                     <button
-                        onClick={() => generateRegistrationPDF(submittedData, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', defaultPrice)}
+                        onClick={() => {
+                            const responsibleWorker = workers?.find(w => w.id === submittedData.responsible_worker_id);
+                            const enrichedData = {
+                                ...submittedData,
+                                cell_name: cell?.name,
+                                cell_color: cell?.card_color,
+                                responsible_worker_name: responsibleWorker ? `${responsibleWorker.name} ${responsibleWorker.surname}` : null
+                            };
+                            generateRegistrationPDF(enrichedData, 'IGREJA INTERNACIONAL GERAÇÃO PROFÉTICA', defaultPrice);
+                        }}
                         className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
                     >
                         <FileText className="h-5 w-5" />
