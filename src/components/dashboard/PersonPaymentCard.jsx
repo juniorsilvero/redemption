@@ -35,13 +35,21 @@ export function PersonPaymentCard({ person, type, status, cells, onInfo }) {
                     <p className={`text-sm font-bold leading-none ${isPaid ? 'text-emerald-600' : 'text-slate-900'}`}>
                         R$ {person.payment_amount?.toFixed(2)}
                     </p>
-                    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tighter ring-1 ring-inset ${
-                        isPaid 
-                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' 
-                        : 'bg-orange-50 text-orange-700 ring-orange-600/20'
-                    }`}>
-                        {isPaid ? 'Pago' : 'Pendente'}
-                    </span>
+                    <div className="flex flex-col items-end gap-1 mt-1">
+                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tighter ring-1 ring-inset ${
+                            isPaid 
+                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' 
+                            : 'bg-orange-50 text-orange-700 ring-orange-600/20'
+                        }`}>
+                            {isPaid ? 'Pago' : 'Pendente'}
+                        </span>
+                        
+                        {person.passers_count > 0 && (
+                            <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded leading-none shrink-0 whitespace-nowrap">
+                                {person.passers_count} {person.passers_count === 1 ? 'passante' : 'passantes'}
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <button
                     onClick={onInfo}

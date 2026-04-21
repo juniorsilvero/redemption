@@ -581,55 +581,35 @@ export default function Dashboard() {
             </div>
 
             {/* Modals */}
-            <Modal isOpen={modalType === 'workers'} onClose={() => setModalType(null)} title="Todos os Trabalhadores">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-2">
+            <Modal isOpen={modalType === 'workers'} onClose={() => setModalType(null)} title="Todos os Trabalhadores" className="sm:max-w-4xl">
+                <div className="overflow-y-auto max-h-[70vh] p-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {stats?.allWorkers?.map(w => (
-                            <div key={w.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                <span className="font-medium text-slate-700">{w.name} {w.surname}</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${w.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                            {w.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                        </span>
-                                        {w.passers_count > 0 && (
-                                            <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded leading-none shrink-0">
-                                                {w.passers_count} {w.passers_count === 1 ? 'passante' : 'passantes'}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={() => setSelectedInfoPerson(w)}
-                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                                    >
-                                        <Info className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
+                            <PersonPaymentCard 
+                                key={w.id} 
+                                person={w} 
+                                type="Trabalhador" 
+                                status={w.payment_status} 
+                                cells={stats?.cells} 
+                                onInfo={() => setSelectedInfoPerson(w)} 
+                            />
                         ))}
                     </div>
                 </div>
             </Modal>
 
-            <Modal isOpen={modalType === 'passers'} onClose={() => setModalType(null)} title="Todos os Passantes">
-                <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="space-y-2">
+            <Modal isOpen={modalType === 'passers'} onClose={() => setModalType(null)} title="Todos os Passantes" className="sm:max-w-4xl">
+                <div className="overflow-y-auto max-h-[70vh] p-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {stats?.allPassers?.map(p => (
-                            <div key={p.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                <span className="font-medium text-slate-700">{p.name} {p.surname}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-1 rounded-full ${p.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                        {p.payment_status === 'paid' ? 'Pago' : 'Pendente'}
-                                    </span>
-                                    <button
-                                        onClick={() => setSelectedInfoPerson(p)}
-                                        className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
-                                    >
-                                        <Info className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
+                            <PersonPaymentCard 
+                                key={p.id} 
+                                person={p} 
+                                type="Passante" 
+                                status={p.payment_status} 
+                                cells={stats?.cells} 
+                                onInfo={() => setSelectedInfoPerson(p)} 
+                            />
                         ))}
                     </div>
                 </div>
